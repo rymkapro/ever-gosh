@@ -1,0 +1,406 @@
+/** Core imports. */
+@import "./reset.scss";
+@import "./fonts.scss";
+@import "./functions.scss";
+@import "./mixins.scss";
+
+/** Variables. */
+$layoutWidth: 1440;
+$containerWidth: 1240;
+
+$sm: em(479.98);
+$md: em(767.98);
+$lg: em(991.98);
+
+$fontSize: rem(16);
+
+$colorMuted: #57606a;
+$colorBorder: #d0d7de;
+$colorLink: #0969da;
+
+/** Common styles. */
+html,
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
+        "Helvetica Neue", sans-serif;
+    font-size: $fontSize;
+    background-color: #f9f9f9;
+}
+
+#root {
+    height: 100%;
+}
+
+.wrapper {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.--container {
+    max-width: calc($containerWidth + 30) + px;
+    padding: 0 rem(15);
+    margin: 0 auto;
+}
+
+.--fa {
+    &-before {
+        margin-right: rem(5);
+    }
+}
+
+.--red {
+    color: red;
+}
+
+.badge {
+    display: inline-block;
+    font-size: rem(12);
+    font-weight: 500;
+    line-height: calc(20 / 12);
+    color: $colorMuted;
+    border: rem(1) solid $colorBorder;
+    border-radius: rem(24);
+    padding: 0 rem(7);
+}
+
+.alert {
+    border-radius: rem(6);
+    font-size: rem(14);
+    padding: rem(12) rem(14);
+
+    &--danger {
+        background-color: orangered;
+        color: #ffffff;
+    }
+}
+
+.repo-list {
+    border: rem(1) solid $colorBorder;
+    border-radius: rem(6);
+
+    &__item {
+        padding: rem(16);
+
+        &:not(:last-child) {
+            border-bottom: rem(1) solid $colorBorder;
+        }
+    }
+
+    &__header {
+        display: flex;
+        align-items: center;
+        margin-bottom: rem(5);
+    }
+
+    &__name {
+        flex: 1 1 auto;
+        color: $colorLink;
+        font-size: rem(16);
+        font-weight: 600;
+    }
+
+    &__name a {
+        color: inherit;
+    }
+
+    &__description {
+        font-size: rem(14);
+        color: $colorMuted;
+    }
+
+    &__footer {
+        margin: rem(9) rem(-10) rem(-5) rem(-10);
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    &__meta {
+        padding: rem(5) rem(10);
+        color: $colorMuted;
+        font-size: rem(12);
+    }
+}
+
+.repo-nav {
+    display: flex;
+    align-items: center;
+    column-gap: rem(15);
+    margin-bottom: rem(16);
+
+    &__branch {
+        min-width: rem(130);
+    }
+
+    &__path ul {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        color: $colorMuted;
+        font-weight: 600;
+    }
+
+    &__path li::after {
+        content: "/";
+        margin: 0 rem(5);
+    }
+
+    &__path li a {
+        color: $colorLink;
+    }
+
+    &__path li a:hover {
+        text-decoration: underline;
+    }
+}
+
+.repo-tree {
+    overflow: hidden;
+    border-radius: rem(6);
+    border: rem(1) solid $colorBorder;
+
+    &__item {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        align-items: center;
+        padding: rem(12) rem(16);
+        color: $colorMuted;
+        font-size: rem(14);
+
+        &:not(:last-child) {
+            border-bottom: rem(1) solid $colorBorder;
+        }
+
+        &:hover {
+            background-color: #f6f8fa;
+        }
+    }
+
+    &__item--single {
+        grid-template-columns: 1fr;
+    }
+
+    &__item--single a {
+        font-weight: 600;
+        color: $colorLink;
+    }
+
+    &__name {
+        display: flex;
+        align-items: center;
+    }
+
+    &__name svg {
+        width: rem(16);
+        height: rem(16);
+        margin-right: rem(8);
+    }
+
+    &__name a {
+        color: inherit;
+
+        &:hover {
+            text-decoration: underline;
+            color: $colorLink;
+        }
+    }
+}
+
+.react-tabs {
+    &__tab-list {
+        display: flex;
+        margin: 0 0 rem(-1) 0;
+    }
+
+    &__tab {
+        padding: rem(12) rem(15);
+        font-size: rem(14);
+        color: $colorMuted;
+        line-height: calc(23 / 14);
+        cursor: pointer;
+
+        &--selected {
+            font-weight: 600;
+            background-color: #ffffff;
+            border-right: rem(1) solid $colorBorder;
+            border-left: rem(1) solid $colorBorder;
+        }
+
+        &--selected:first-child {
+            border-left: 0;
+        }
+    }
+
+    &__tab-panel {
+        background-color: #ffffff;
+
+        &--selected {
+            border-top: rem(1) solid $colorBorder;
+        }
+    }
+}
+
+/** Header. */
+.header {
+    padding: rem(5) 0;
+    background-color: rgb(93, 77, 236);
+
+    &__container {
+        min-height: rem(62);
+        display: flex;
+        align-items: center;
+    }
+
+    &__logo {
+        display: flex;
+        align-items: center;
+        color: #ffffff;
+        font-size: rem(24);
+        font-weight: 800;
+    }
+
+    &__logo img {
+        min-height: 100%;
+        max-height: rem(34);
+        margin-right: rem(14);
+    }
+}
+
+/** Main block */
+.main {
+    flex: 1 1 auto;
+}
+
+// Home page.
+.pagehome {
+    padding: rem(30) 0;
+}
+.block-explore {
+    &__container {
+        max-width: rem(960);
+    }
+
+    &__title {
+        font-size: rem(20);
+        font-weight: 600;
+        margin-bottom: rem(20);
+    }
+}
+
+// Repository page.
+.pagerepo {
+    &__header {
+        border-bottom: rem(1) solid $colorBorder;
+        padding: rem(22) 0;
+        background-color: #f6f8fa;
+        margin-bottom: rem(32);
+    }
+
+    &__title {
+        font-size: rem(20);
+        color: $colorLink;
+        font-weight: 400;
+        display: flex;
+        column-gap: rem(10);
+        align-items: center;
+    }
+
+    &__title a {
+        color: inherit;
+    }
+
+    &__index {
+        display: flex;
+        column-gap: rem(20);
+    }
+}
+.repoindex {
+    &__content {
+        flex: 1 1 auto;
+    }
+
+    &__aside {
+        flex: 0 1 rem(296);
+    }
+
+    &__subtitle {
+        font-size: rem(16);
+        margin-bottom: rem(16);
+        font-weight: 600;
+    }
+
+    &__description {
+        margin-bottom: rem(16);
+        color: #24292f;
+        line-height: calc(24 / 16);
+    }
+
+    &__meta {
+        display: flex;
+        flex-direction: column;
+        row-gap: rem(8);
+    }
+
+    &__meta-item {
+        color: $colorMuted;
+        font-size: rem(14);
+    }
+}
+.repoblob {
+    &__header {
+        padding: rem(8) rem(16);
+        font-size: rem(12);
+        background-color: #f6f8fa;
+        border-bottom: rem(1) solid $colorBorder;
+        display: flex;
+        align-items: center;
+        column-gap: rem(10);
+    }
+
+    &__name {
+        flex: 1 1 auto;
+        font-family: monospace;
+        font-weight: 600;
+        color: $colorMuted;
+    }
+
+    &__action {
+        display: block;
+        padding: rem(5);
+        color: $colorMuted;
+
+        &:hover {
+            color: $colorLink;
+        }
+    }
+
+    &__viewer {
+        overflow: hidden;
+        border-radius: rem(6);
+        border: rem(1) solid $colorBorder;
+    }
+
+    &__code.markdown-body {
+        padding: rem(10) rem(20);
+    }
+}
+.repoedit {
+    &__editor {
+        overflow: hidden;
+        border-radius: rem(6);
+        border: rem(1) solid $colorBorder;
+    }
+
+    &__filename {
+        border: rem(1) solid $colorBorder;
+        border-radius: rem(6);
+        font-size: rem(14);
+        line-height: calc(20 / 14);
+        padding: rem(5) rem(12);
+    }
+
+    &__diff.markdown-body {
+        padding: rem(10) rem(20);
+    }
+}

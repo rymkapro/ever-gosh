@@ -1,26 +1,37 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+import { Route, Routes } from "react-router-dom";
+
+import "./scss/style.scss";
+import Header from "./components/Header";
+import HomePage from "./pages/Home";
+import RepositoryPageLayout from "./pages/RepositoryPage/Layout";
+import RepositoryPageIndex from "./pages/RepositoryPage/IndexOutlet";
+import RepositoryPageTree from "./pages/RepositoryPage/TreeOutlet";
+import RepositoryPageBlob from "./pages/RepositoryPage/BlobOutlet";
+import RepositoryPageEdit from "./pages/RepositoryPage/EditOutlet";
+
+
+const App = () => {
+    return (
+        <div className="wrapper">
+            <Header />
+            <main className="main">
+                <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/repo/:address" element={<RepositoryPageLayout />}>
+                        <Route index element={<RepositoryPageIndex />} />
+                        <Route path="tree/:branch" element={<RepositoryPageIndex />} />
+                        <Route path="tree/:branch/*" element={<RepositoryPageTree />} />
+                        <Route path="blob/:branch/*" element={<RepositoryPageBlob />} />
+                        <Route path="edit/:branch/*" element={<RepositoryPageEdit />} />
+                    </Route>
+                    <Route path="*" element={<p>No match</p>} />
+                </Routes>
+            </main>
+            <footer className="footer"></footer>
+        </div>
+    );
 }
 
 export default App;

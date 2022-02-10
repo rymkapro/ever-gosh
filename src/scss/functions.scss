@@ -1,0 +1,9 @@
+/** Converting pixels to rems. */
+@function rem($value) {
+    @return calc($value / 16) + rem;
+}
+
+/** Converting pixels to rems. */
+@function em($value) {
+    @return calc($value / 16) + em;
+}
