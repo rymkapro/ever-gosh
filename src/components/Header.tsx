@@ -10,7 +10,7 @@ const Header = () => {
             <div className="header__container --container">
                 <Link to="/" className="header__logo">
                     <img src={logo} alt="Logo" />
-                    EverHub
+                    GOSH
                 </Link>
             </div>
         </header>
