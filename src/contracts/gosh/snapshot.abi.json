@@ -1,0 +1,90 @@
+{
+	"ABI version": 2,
+	"version": "2.2",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"value0","type":"uint256"},
+				{"name":"rootrepo","type":"address"},
+				{"name":"nameBranch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployNewSnapshot",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setSnapshot",
+			"inputs": [
+				{"name":"snaphot","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setSnapshotCode",
+			"inputs": [
+				{"name":"code","type":"cell"},
+				{"name":"data","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getSnapshot",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "getNameBranch",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "getBranchAdress",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "upgrade",
+			"inputs": [
+				{"name":"state","type":"cell"}
+			],
+			"outputs": [
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"version","type":"string"},
+		{"name":"pubkey","type":"uint256"},
+		{"name":"_rootRepo","type":"address"},
+		{"name":"_snapshot","type":"string"},
+		{"name":"_nameBranch","type":"string"},
+		{"name":"m_codeSnapshot","type":"cell"},
+		{"name":"m_dataSnapshot","type":"cell"}
+	]
+}

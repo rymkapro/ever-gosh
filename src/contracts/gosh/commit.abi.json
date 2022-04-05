@@ -1,0 +1,97 @@
+{
+	"ABI version": 2,
+	"version": "2.2",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"value0","type":"uint256"},
+				{"name":"nameCommit","type":"string"},
+				{"name":"nameBranch","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"parent","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployBlob",
+			"inputs": [
+				{"name":"nameBlob","type":"string"},
+				{"name":"fullblob","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setBlob",
+			"inputs": [
+				{"name":"code","type":"cell"},
+				{"name":"data","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getBlobs",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address[]"}
+			]
+		},
+		{
+			"name": "getParent",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getNameCommit",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "getNameBranch",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "getRepoAdress",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"version","type":"string"},
+		{"name":"pubkey","type":"uint256"},
+		{"name":"_rootRepo","type":"address"},
+		{"name":"_nameCommit","type":"string"},
+		{"name":"_nameBranch","type":"string"},
+		{"name":"_commit","type":"string"},
+		{"name":"check","type":"bool"},
+		{"name":"_blob","type":"address[]"},
+		{"name":"m_BlobCode","type":"cell"},
+		{"name":"m_BlobData","type":"cell"},
+		{"name":"_parent","type":"address"}
+	]
+}

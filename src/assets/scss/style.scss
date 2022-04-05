@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "react-toastify/scss/main";
+
+html,
+body,
+#root {
+    height: 100%;
+    @apply bg-white;
+}
+
+.tab--active {
+    @apply bg-blue-600;
+    @apply text-white;
+}
