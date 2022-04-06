@@ -2,7 +2,7 @@ import { signerKeys, TonClient } from "@eversdk/core";
 import WalletABI from "./contracts/wallets/SafeMultisigWallet.abi.json";
 import wallet from "./contracts/wallets/SafeMultisigWallet.json";
 import { Account } from "@eversdk/appkit";
-import { Id, toast, ToastOptions, UpdateOptions } from "react-toastify";
+import { toast } from "react-toastify";
 
 
 /**
@@ -29,29 +29,12 @@ export const toEvers = (value: any, round: number = 3): number => {
 }
 
 /**
- * Decode ever accout data
- * @param account
- * @param data
+ * Convert from evers to nanoevers
+ * @param value
  * @returns
  */
-export const decodeAccountData = async (account: Account, data?: string): Promise<any> => {
-    if (!data) data = (await account.getAccount()).data as string;
-    if (!data) return undefined;
-
-    const result = await account.client.abi.decode_account_data({
-        abi: account.abi,
-        data
-    });
-    return result.data;
-}
-
-/**
- * Check if GOSH repository, commit, etc. code and data are set
- * @param decodedData
- * @returns
- */
-export const isGoshDataSet = (decodedData: any): boolean => {
-    return !Object.values(decodedData).some((value: any) => value === 'te6ccgEBAQEAAgAAAA==')
+export const fromEvers = (value: number): number => {
+    return value * 10 ** 9;
 }
 
 /**
@@ -88,34 +71,3 @@ export const ToastOptionsShortcuts = {
         className: 'mx-auto'
     }
 }
-
-// export const Toasts = {
-//     onCopy(content?: string) {
-//         toast.success(content ?? 'Copied', {
-//             ...ToastOptionsShortcuts.Message,
-//             style: { width: '50%' },
-//             className: 'mx-auto'
-//         })
-//     },
-//     onPromisePending(content: any, options?: ToastOptions): Id {
-//         return toast.loading(content, options);
-//     },
-//     onPromiseSuccess(id: Id, options?: UpdateOptions) {
-//         toast.update(id, {
-//             ...ToastOptionsShortcuts.Default,
-//             type: toast.TYPE.SUCCESS,
-//             isLoading: false,
-//             autoClose: 2000,
-//             ...options
-//         });
-//     },
-//     onPromiseError(id: Id, options?: UpdateOptions) {
-//         toast.update(id, {
-//             ...ToastOptionsShortcuts.Default,
-//             type: toast.TYPE.ERROR,
-//             isLoading: false,
-//             pauseOnFocusLoss: true,
-//             ...options
-//         });
-//     }
-// }

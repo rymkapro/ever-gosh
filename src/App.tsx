@@ -9,6 +9,10 @@ import HomePage from "./pages/Home";
 import SignupPage from "./pages/Signup";
 import SigninPage from "./pages/Signin";
 import AccountPage from "./pages/Account";
+import RepositoriesPage from "./pages/Repositories";
+import RepositoryCreatePage from "./pages/RepositoryCreate";
+import RepositoryLayout from "./pages/RepositoryLayout";
+import RepositoryPage from "./pages/Repository";
 
 import "./assets/scss/style.scss";
 
@@ -33,6 +37,13 @@ const App = () => {
                     <Route path="/account/signup" element={<SignupPage />} />
                     <Route path="/account" element={<ProtectedLayout />}>
                         <Route index element={<AccountPage />} />
+                    </Route>
+                    <Route path="/repositories" element={<ProtectedLayout />}>
+                        <Route index element={<RepositoriesPage />} />
+                        <Route path="create" element={<RepositoryCreatePage />} />
+                        <Route path=":name" element={<RepositoryLayout />}>
+                            <Route index element={<RepositoryPage />} />
+                        </Route>
                     </Route>
 
                     {/* <Route path="/repo/:address" element={<RepositoryPageLayout />}>

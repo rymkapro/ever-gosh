@@ -4,12 +4,10 @@ import * as Yup from "yup";
 import TextareaField from "../../components/FormikForms/TextareaField";
 import SwitchField from "../../components/FormikForms/SwitchField";
 import { useEverClient } from "../../hooks/ever.hooks";
-import { signerKeys } from "@eversdk/core";
-import { Account } from "@eversdk/appkit";
-import { GoshABI, GoshTVC } from "../../contracts/gosh/gosh";
 import { useSetRecoilState } from "recoil";
 import { userStateAtom } from "../../store/user.state";
 import { useNavigate } from "react-router-dom";
+import { GoshRoot } from "../../types/classes";
 
 
 type TFormValues = {
@@ -25,15 +23,13 @@ const SignupPage = () => {
 
     const onFormSubmit = async (values: TFormValues) => {
         console.debug('[Signup form] - Submit values', values);
-        // Derive keys from phrase and create signer
+        // Derive keys from phrase and create GoshRoot object
         const keys = await everClient.crypto.mnemonic_derive_sign_keys({ phrase: values.phrase });
-        const signer = signerKeys(keys);
+        const root = new GoshRoot(everClient, { keys });
+        await root.load();
 
-        // Create GOSH root account and get address
-        const root = new Account({ abi: GoshABI, tvc: GoshTVC }, { signer, client: everClient });
-        const address = await root.getAddress();
-
-        setUserState({ address, phrase: values.phrase });
+        // Update user state and redirect
+        setUserState({ address: root.details?.address, phrase: values.phrase });
         navigate('/account', { replace: true });
     }
 

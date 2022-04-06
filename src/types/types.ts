@@ -3,9 +3,7 @@ import { Abi, ClientConfig, KeyPair, TonClient } from "@eversdk/core";
 
 
 export type TEverState = {
-    config?: ClientConfig;
-    configHex: string;
-    client: TonClient;
+    config: ClientConfig;
 }
 
 export type TUserState = {
@@ -26,12 +24,59 @@ interface IContract {
     abi: any;
     tvc?: string;
     account: Account;
-    keys?: KeyPair;
-    address?: string;
+}
+
+export type IGoshBranch = {
+    name: string;
+    commit: string;
+    snapshot: string;
 }
 
 export interface IGoshRoot extends IContract {
+    details?: {
+        address: string;
+        balance: number;
+        acc_type: number;
+        code?: string;
+        data: {
+            raw?: string;
+            decoded?: {
+                version: string;
+                m_RepositoryCode: string;
+                m_RepositoryData: string;
+                m_CommitCode: string;
+                m_CommitData: string;
+                m_BlobCode: string;
+                m_BlobData: string;
+                m_SnapshotCode: string;
+                m_SnapshotData: string;
+            };
+        }
+    };
+    isDeploying: boolean;
 
+    get isDeployed(): boolean;
+    load(): Promise<void>;
+    subscribeAccount(callback: (details: IGoshRoot['details']) => void): Promise<void>;
+    deploy(): Promise<void>;
+    createRepository(name: string): Promise<string>;
+    getRepositoryAddress(name: string): Promise<string>;
+    getRepositories(): Promise<IGoshRepository[]>;
+}
+
+export interface IGoshRepository extends IContract {
+    name: string;
+    address: string;
+
+    getBranches(): Promise<IGoshBranch[]>;
+    getBranch(name: string): Promise<IGoshBranch>;
+    createBranch(name: string, fromName: string): Promise<void>;
+    deleteBranch(name: string): Promise<void>;
+    createCommit(branchName: string, name: string, data: string): Promise<void>;
+}
+
+export interface IGoshCommit extends IContract {
+    address: string;
 }
 
 // export interface IOrganization {

@@ -3,13 +3,10 @@ import { Form, Formik, Field } from "formik";
 import * as Yup from "yup";
 import TextareaField from "../../components/FormikForms/TextareaField";
 import { useEverClient } from "../../hooks/ever.hooks";
-import { signerKeys } from "@eversdk/core";
-import { Account, AccountType } from "@eversdk/appkit";
-import { GoshABI, GoshTVC } from "../../contracts/gosh/gosh";
 import { useSetRecoilState } from "recoil";
 import { userStateAtom } from "../../store/user.state";
 import { useNavigate } from "react-router-dom";
-import { decodeAccountData, isGoshDataSet } from "../../helpers";
+import { GoshRoot } from "../../types/classes";
 
 
 type TFormValues = {
@@ -23,19 +20,14 @@ const SigninPage = () => {
 
     const onFormSubmit = async (values: TFormValues) => {
         console.debug('[Signin form] - Submit values', values);
-        // Derive keys from phrase and create signer
+        // Derive keys from phrase and create GoshRoot object
         const keys = await everClient.crypto.mnemonic_derive_sign_keys({ phrase: values.phrase });
-        const signer = signerKeys(keys);
-
-        // Create GOSH root account and get address, acc_type
-        const root = new Account({ abi: GoshABI, tvc: GoshTVC }, { signer, client: everClient });
-        const address = await root.getAddress();
-        setUserState({ address, phrase: values.phrase });
+        const root = new GoshRoot(everClient, { keys });
+        await root.load();
 
         // Check if account is fully deployed and redirect
-        const { acc_type, data } = await root.getAccount();
-        const decodedData = await decodeAccountData(root, data);
-        acc_type === AccountType.active && isGoshDataSet(decodedData)
+        setUserState({ address: root.details?.address, phrase: values.phrase });
+        root.isDeployed
             ? navigate('/repositories', { replace: true })
             : navigate('/account', { replace: true });
     }
