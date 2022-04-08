@@ -22,6 +22,8 @@ export const useGoshRoot = () => {
         }
 
         create();
+
+        return () => { }
     }, [client, userState]);
 
     return goshRoot;

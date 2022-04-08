@@ -8,6 +8,7 @@ import { useSetRecoilState } from "recoil";
 import { userStateAtom } from "../../store/user.state";
 import { useNavigate } from "react-router-dom";
 import { GoshRoot } from "../../types/classes";
+import Spinner from "../../components/Spinner";
 
 
 type TFormValues = {
@@ -87,6 +88,7 @@ const SignupPage = () => {
                                     disabled={isSubmitting || !values.isConfirmed}
                                     className="px-3 py-3 text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600 disabled:opacity-75 rounded w-full font-medium"
                                 >
+                                    {isSubmitting && <Spinner className="mr-2" size={'lg'} />}
                                     Create account
                                 </button>
                             </div>

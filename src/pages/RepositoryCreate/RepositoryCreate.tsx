@@ -4,6 +4,7 @@ import * as Yup from "yup";
 import TextField from "../../components/FormikForms/TextField";
 import { useGoshRoot } from "../../hooks/gosh.hooks";
 import { useNavigate } from "react-router-dom";
+import Spinner from "../../components/Spinner";
 
 
 type TFormValues = {
@@ -59,6 +60,7 @@ const RepositoryCreatePage = () => {
                                     disabled={isSubmitting || !goshRoot}
                                     className="px-3 py-3 text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600 disabled:opacity-75 rounded w-full font-medium"
                                 >
+                                    {isSubmitting && <Spinner className="mr-2" size={'lg'} />}
                                     Create repository
                                 </button>
                             </div>

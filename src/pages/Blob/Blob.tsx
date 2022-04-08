@@ -6,6 +6,7 @@ import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import { Form, Formik } from "formik";
 import ReactMarkdown from 'react-markdown'
+import Spinner from "../../components/Spinner";
 
 
 type TFormCommitValues = {
@@ -128,12 +129,14 @@ const BlobPage = () => {
                                     type="submit"
                                     disabled={isSubmitting || !editing.isDirty}
                                 >
+                                    {isSubmitting && <Spinner className="mr-2" />}
                                     Commit changes
                                 </button>
 
                                 <button
                                     className="px-3 py-1.5 text-sm text-white bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600 disabled:opacity-75 rounded font-medium"
                                     type="button"
+                                    disabled={isSubmitting}
                                     onClick={() => setEditing({
                                         ...editing,
                                         isEditing: false

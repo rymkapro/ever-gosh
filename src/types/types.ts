@@ -80,7 +80,7 @@ export interface IGoshRepository extends IContract {
     createCommit(
         branchName: string,
         data: string,
-        blobs: { name: string; content: string }[]
+        blobs: { name: string; content: string; }[]
     ): Promise<void>;
     getCommitAddress(branchName: string, name: string): Promise<string>;
 }

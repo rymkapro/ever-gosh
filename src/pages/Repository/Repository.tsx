@@ -88,7 +88,12 @@ const RepositoryPage = () => {
                         </div> */}
                         <div className="text-gray-500 text-sm">
                             <span className="text-xs mr-1">Last commit:</span>
-                            {blob.lastCommitName}
+                            <Link
+                                className="underline"
+                                to={`/repositories/${repoName}/commit/${branchName}:${blob.lastCommitName}`}
+                            >
+                                {blob.lastCommitName}
+                            </Link>
                         </div>
                     </div>
                 ))}

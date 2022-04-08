@@ -6,6 +6,7 @@ import { IGoshBranch } from "../../types/types";
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
 import TextField from "../../components/FormikForms/TextField";
 import Editor from "@monaco-editor/react";
+import Spinner from "../../components/Spinner";
 
 
 type TFormValues = {
@@ -78,6 +79,7 @@ const BlobCreatePage = () => {
                                 type="submit"
                                 disabled={isSubmitting}
                             >
+                                {isSubmitting && <Spinner className="mr-2" />}
                                 Create blob
                             </button>
                         </div>
@@ -87,6 +89,7 @@ const BlobCreatePage = () => {
                             wrapperProps={{
                                 className: 'mt-5 py-3 border rounded overflow-hidden'
                             }}
+                            language="markdown"
                             onChange={(value) => setFieldValue('blobContent', value)}
                         />
                     </Form>
