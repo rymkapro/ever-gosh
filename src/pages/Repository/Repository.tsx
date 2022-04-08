@@ -1,108 +1,105 @@
 import React, { useEffect, useState } from "react";
-import { useOutletContext } from "react-router-dom";
-import { IGoshBranch, IGoshCommit, IGoshRepository } from "../../types/types";
+import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { IGoshBlob, IGoshBranch } from "../../types/types";
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
-import { Combobox } from "@headlessui/react";
-import { ChevronDownIcon } from "@heroicons/react/solid";
-import { GoshCommit } from "../../types/classes";
+import BranchSelect from "../../components/BranchSelect";
 
 
 const RepositoryPage = () => {
     const { goshRepository } = useOutletContext<TRepositoryLayoutOutletContext>();
+    const { repoName, branchName = 'master' } = useParams();
+    const navigate = useNavigate();
     const [branches, setBranches] = useState<IGoshBranch[]>([]);
-    const [branch, setBranch] = useState<IGoshBranch>()
+    const [branch, setBranch] = useState<IGoshBranch>();
+    const [tree, setTree] = useState<(IGoshBlob['meta'] & { lastCommitName: string })[]>();
 
-    const getCommits = async (repository: IGoshRepository, branchName: string) => {
-        const branch = await repository.getBranch(branchName);
-        console.log('Branch', branch);
+    // const getCommits = async (repository: IGoshRepository, branchName: string) => {
+    //     const branch = await repository.getBranch(branchName);
 
-        const commits: IGoshCommit[] = [];
-        while (true) {
-            if (!branch.commit) break;
-            const commit = new GoshCommit(repository.account.client, branch.commit);
-            commits.push(commit);
-            const parent = await commit.getParent();
-            if (!parent) break;
-        }
-        console.log('Repo addr', repository.address);
-        console.log('Commits', commits);
-    }
+    //     const commits: IGoshCommit[] = [];
+    //     let commitAddress = branch.commit;
+
+    //     while (commitAddress) {
+    //         const commit = new GoshCommit(repository.account.client, commitAddress);
+    //         await commit.load();
+    //         console.log('Commit blobs', await commit.getBlobs());
+    //         commitAddress = commit.meta?.parent || '';
+    //         commits.push(commit);
+    //     }
+    //     setCommits(commits);
+    // }
 
     useEffect(() => {
         const initState = async () => {
             const branches = await goshRepository.getBranches();
-            const master = await goshRepository.getBranch('master');
-            // console.log(master, goshRepository.address);
-
+            const branch = branches.find((branch) => branch.name === branchName);
+            if (branch) {
+                await branch.snapshot.load();
+                setBranch(branch);
+                setTree(branch.snapshot.meta?.content);
+            }
             setBranches(branches);
-            setBranch(master);
         }
 
         initState();
-        getCommits(goshRepository, 'master');
-    }, [goshRepository]);
+    }, [goshRepository, branchName]);
 
+    // useEffect(() => {
+    //     if (branch) {
+    //         setCommits(undefined);
+    //         getCommits(goshRepository, branch.name);
+    //     }
+    // }, [goshRepository, branch]);
+
+    if (!branch) return <p>Loading...</p>;
     return (
         <div>
-            <Combobox
-                value={branch}
-                onChange={(value) => setBranch(value)}
-                as="div"
-                className="relative inline-block"
-            >
-                <div className="relative inline-flex gap-x-3 items-center overflow-hidden border rounded px-2 py-1">
-                    <Combobox.Input
-                        onChange={(event) => { }}
-                        displayValue={(branch: IGoshBranch) => branch.name}
-                        className="text-gray-700 border-none focus:ring-0 outline-none w-auto"
-                    />
-                    <Combobox.Button className="">
-                        <ChevronDownIcon className="w-4 h-4 text-gray-400" aria-hidden="true" />
-                    </Combobox.Button>
-                </div>
-                <Combobox.Options className="absolute w-full py-1 mt-1 overflow-auto text-base bg-white rounded shadow-md max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                    {branches.map((branch) => (
-                        <Combobox.Option
-                            key={branch.name}
-                            value={branch}
-                            className="cursor-default select-none relative py-2 px-4"
-                        >
-                            {branch.name}
-                        </Combobox.Option>
-                    ))}
-                </Combobox.Options>
-            </Combobox>
+            <div className="flex items-center justify-between gap-3">
+                <BranchSelect
+                    branch={branch}
+                    branches={branches}
+                    onChange={(selected) => {
+                        if (selected) {
+                            navigate(`repository/${repoName}/tree/${selected.name}`);
+                        }
+                    }} />
 
-            <div className="flex flex-col gap-3 mt-5">
-                {/* <button
-                    className="px-3 py-1 border rounded"
-                    onClick={async () => {
-                        await goshRepository.createBranch('dev', 'master');
-                        console.log('Branch created');
+                <Link
+                    to={`/repositories/${repoName}/blobs/${branchName}/create`}
+                    className="px-3 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600 disabled:opacity-75 rounded font-medium"
+                >
+                    Create blob
+                </Link>
+            </div>
 
-                    }}
-                >
-                    Create branch
-                </button>
-                <button
-                    className="px-3 py-1 border rounded"
-                    onClick={async () => {
-                        await goshRepository.deleteBranch('dev');
-                        console.log('Branch deleted');
+            <div className="mt-5 border rounded px-5">
+                {tree === undefined && (
+                    <p className="text-sm text-gray-500 text-center py-3">
+                        Loading tree...
+                    </p>
+                )}
 
-                    }}
-                >
-                    Delete branch
-                </button>
-                <button
-                    className="px-3 py-1 border rounded"
-                    onClick={async () => {
-                        await goshRepository.createCommit('master', 'name-0', 'changes-0');
-                        console.log('Commit created');
-                    }}
-                >
-                    Create commit
-                </button> */}
+                {tree && !tree?.length && (
+                    <p className="text-sm text-gray-500 text-center py-3">
+                        There are no files yet
+                    </p>
+                )}
+
+                {Boolean(tree?.length) && tree?.map((blob, index) => (
+                    <div
+                        key={index}
+                        className="flex gap-x-4 py-3 border-b border-gray-300 last:border-b-0"
+                    >
+                        <div className="basis-1/3 text-gray-600 text-sm font-medium">
+                            <Link
+                                to={`/repositories/${repoName}/blob/${branchName}/${blob?.name}`}
+                            >
+                                {blob?.name}
+                            </Link>
+                        </div>
+                        <div className="text-gray-500 text-sm">{blob.lastCommitName}</div>
+                    </div>
+                ))}
             </div>
         </div>
     );

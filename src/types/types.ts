@@ -29,7 +29,7 @@ interface IContract {
 export type IGoshBranch = {
     name: string;
     commit: string;
-    snapshot: string;
+    snapshot: IGoshSnapshot;
 }
 
 export interface IGoshRoot extends IContract {
@@ -72,11 +72,41 @@ export interface IGoshRepository extends IContract {
     getBranch(name: string): Promise<IGoshBranch>;
     createBranch(name: string, fromName: string): Promise<void>;
     deleteBranch(name: string): Promise<void>;
-    createCommit(branchName: string, name: string, data: string): Promise<void>;
+    createCommit(
+        branchName: string,
+        name: string,
+        data: string,
+        blobs: { name: string; content: string }[]
+    ): Promise<void>;
 }
 
 export interface IGoshCommit extends IContract {
     address: string;
+    meta?: {
+        branchName: string;
+        name: string;
+        parent: string;
+        content: string;
+    }
+}
+
+export interface IGoshBlob extends IContract {
+    address: string;
+    meta?: {
+        name: string;
+        rootCommit: string;
+        content: string;
+    }
+}
+
+export interface IGoshSnapshot extends IContract {
+    address: string;
+    meta?: {
+        content: (IGoshBlob['meta'] & { lastCommitName: string })[];
+    };
+
+    load(): Promise<void>;
+    setSnapshot(snapshot: string): Promise<void>;
 }
 
 // export interface IOrganization {
