@@ -78,7 +78,7 @@ const CommitsPage = () => {
                     >
                         <Link
                             className="underline"
-                            to={`/repositories/${repoName}/commit/${commit.meta?.sha}`}
+                            to={`/repositories/${repoName}/commit/${branchName}:${commit.meta?.sha}`}
                         >
                             {commit.meta?.sha}
                         </Link>

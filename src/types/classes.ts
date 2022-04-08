@@ -410,7 +410,7 @@ export class GoshCommit implements IGoshCommit {
         branchName: string;
         sha: string;
         parent: string;
-        content: string;
+        content: any[];
     }
 
     constructor(client: TonClient, address: string) {
@@ -424,7 +424,7 @@ export class GoshCommit implements IGoshCommit {
             branchName: meta.branch,
             sha: meta.sha,
             parent: meta.parent,
-            content: meta.content
+            content: JSON.parse(meta.content)
         }
     }
 

@@ -82,6 +82,7 @@ export interface IGoshRepository extends IContract {
         data: string,
         blobs: { name: string; content: string }[]
     ): Promise<void>;
+    getCommitAddress(branchName: string, name: string): Promise<string>;
 }
 
 export interface IGoshCommit extends IContract {
@@ -90,7 +91,7 @@ export interface IGoshCommit extends IContract {
         branchName: string;
         sha: string;
         parent: string;
-        content: string;
+        content: any[];
     }
 }
 

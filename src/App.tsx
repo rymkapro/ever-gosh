@@ -16,6 +16,7 @@ import RepositoryPage from "./pages/Repository";
 import BlobCreatePage from "./pages/BlobCreate";
 import BlobPage from "./pages/Blob";
 import CommitsPage from "./pages/Commits";
+import CommitPage from "./pages/Commit";
 
 import "./assets/scss/style.scss";
 
@@ -50,6 +51,7 @@ const App = () => {
                             <Route path="blobs/:branchName/create" element={<BlobCreatePage />} />
                             <Route path="blobs/:branchName/:blobName" element={<BlobPage />} />
                             <Route path="commits/:branchName" element={<CommitsPage />} />
+                            <Route path="commit/:commitName" element={<CommitPage />} />
                         </Route>
                     </Route>
                     <Route path="*" element={<p>No match (404)</p>} />
