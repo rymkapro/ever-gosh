@@ -3,6 +3,7 @@ import WalletABI from "./contracts/wallets/SafeMultisigWallet.abi.json";
 import { Account } from "@eversdk/appkit";
 import { toast } from "react-toastify";
 import { SHA1 } from "crypto-js";
+import { Buffer } from "buffer";
 
 
 export const getEndpoints = (): string[] => {
@@ -84,7 +85,7 @@ export const fromEvers = (value: number): number => {
 export const sha1 = (data: string, type: 'blob' | 'commit'): string => {
     let content = data;
     if (type === 'commit') content += '\n';
-    const size = Buffer.byteLength(content, 'utf-8');
+    const size = Buffer.from(content, 'utf-8').byteLength;
     const object = `${type} ${size}\0${content}`;
     const hash = SHA1(object)
     return hash.toString();
