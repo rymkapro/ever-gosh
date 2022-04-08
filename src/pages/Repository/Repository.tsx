@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
-import { IGoshBlob, IGoshBranch } from "../../types/types";
+import { IGoshBranch, TGoshSnapshotMetaContentItem } from "../../types/types";
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
 import BranchSelect from "../../components/BranchSelect";
 
@@ -11,23 +11,7 @@ const RepositoryPage = () => {
     const navigate = useNavigate();
     const [branches, setBranches] = useState<IGoshBranch[]>([]);
     const [branch, setBranch] = useState<IGoshBranch>();
-    const [tree, setTree] = useState<(IGoshBlob['meta'] & { lastCommitName: string })[]>();
-
-    // const getCommits = async (repository: IGoshRepository, branchName: string) => {
-    //     const branch = await repository.getBranch(branchName);
-
-    //     const commits: IGoshCommit[] = [];
-    //     let commitAddress = branch.commit;
-
-    //     while (commitAddress) {
-    //         const commit = new GoshCommit(repository.account.client, commitAddress);
-    //         await commit.load();
-    //         console.log('Commit blobs', await commit.getBlobs());
-    //         commitAddress = commit.meta?.parent || '';
-    //         commits.push(commit);
-    //     }
-    //     setCommits(commits);
-    // }
+    const [tree, setTree] = useState<TGoshSnapshotMetaContentItem[]>();
 
     useEffect(() => {
         const initState = async () => {
@@ -44,14 +28,6 @@ const RepositoryPage = () => {
         initState();
     }, [goshRepository, branchName]);
 
-    // useEffect(() => {
-    //     if (branch) {
-    //         setCommits(undefined);
-    //         getCommits(goshRepository, branch.name);
-    //     }
-    // }, [goshRepository, branch]);
-
-    if (!branch) return <p>Loading...</p>;
     return (
         <div>
             <div className="flex items-center justify-between gap-3">
@@ -64,12 +40,20 @@ const RepositoryPage = () => {
                         }
                     }} />
 
-                <Link
-                    to={`/repositories/${repoName}/blobs/${branchName}/create`}
-                    className="px-3 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600 disabled:opacity-75 rounded font-medium"
-                >
-                    Create blob
-                </Link>
+                <div className="flex gap-3">
+                    <Link
+                        to={`/repositories/${repoName}/commits/${branchName}`}
+                        className="px-3 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600 disabled:opacity-75 rounded font-medium"
+                    >
+                        Commits
+                    </Link>
+                    <Link
+                        to={`/repositories/${repoName}/blobs/${branchName}/create`}
+                        className="px-3 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600 disabled:opacity-75 rounded font-medium"
+                    >
+                        Create blob
+                    </Link>
+                </div>
             </div>
 
             <div className="mt-5 border rounded px-5">
@@ -90,14 +74,22 @@ const RepositoryPage = () => {
                         key={index}
                         className="flex gap-x-4 py-3 border-b border-gray-300 last:border-b-0"
                     >
-                        <div className="basis-1/3 text-gray-600 text-sm font-medium">
+                        <div className="basis-1/4 text-gray-600 text-sm font-medium">
                             <Link
-                                to={`/repositories/${repoName}/blob/${branchName}/${blob?.name}`}
+                                className="underline"
+                                to={`/repositories/${repoName}/blobs/${branchName}/${blob?.sha}`}
                             >
                                 {blob?.name}
                             </Link>
                         </div>
-                        <div className="text-gray-500 text-sm">{blob.lastCommitName}</div>
+                        {/* <div className="text-gray-500 text-sm">
+                            <span className="text-xs mr-1">SHA1:</span>
+                            {blob.sha}
+                        </div> */}
+                        <div className="text-gray-500 text-sm">
+                            <span className="text-xs mr-1">Last commit:</span>
+                            {blob.lastCommitName}
+                        </div>
                     </div>
                 ))}
             </div>

@@ -1,17 +1,14 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import BranchSelect from "../../components/BranchSelect";
-import { IGoshBlob, IGoshBranch } from "../../types/types";
+import { IGoshBranch, TGoshSnapshotMetaContentItem } from "../../types/types";
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
 import Editor, { useMonaco } from "@monaco-editor/react";
-import { Field, Form, Formik } from "formik";
-import TextField from "../../components/FormikForms/TextField";
-import * as Yup from "yup";
+import { Form, Formik } from "formik";
 import ReactMarkdown from 'react-markdown'
 
 
 type TFormCommitValues = {
-    commitName: string;
     blobContent: string;
 }
 
@@ -23,7 +20,7 @@ const BlobPage = () => {
     const [branches, setBranches] = useState<IGoshBranch[]>([]);
     const [branch, setBranch] = useState<IGoshBranch>();
     const [editing, setEditing] = useState<{
-        blob?: IGoshBlob['meta'] & { lastCommitName: string };
+        blob?: TGoshSnapshotMetaContentItem;
         isEditing: boolean;
         isDirty: boolean;
     }>({
@@ -33,14 +30,25 @@ const BlobPage = () => {
     });
 
     const onCommitChanges = async (values: TFormCommitValues) => {
-        console.log(values);
-        if (!branchName || !blobName) return;
-        await goshRepository.createCommit(
-            branchName,
-            values.commitName,
-            JSON.stringify([{ name: blobName, original: editing.blob?.content, modified: values.blobContent }]),
-            [{ name: blobName, content: values.blobContent }]
-        );
+        if (!branchName || !editing.blob) return;
+
+        try {
+            await goshRepository.createCommit(
+                branchName,
+                JSON.stringify([{
+                    name: editing.blob.name,
+                    original: editing.blob?.content,
+                    modified: values.blobContent
+                }]),
+                [{
+                    name: editing.blob.name,
+                    content: values.blobContent
+                }]
+            );
+            navigate(`/repositories/${repoName}/tree/${branchName}`);
+        } catch (e: any) {
+            alert(e.message);
+        }
     }
 
     useEffect(() => {
@@ -52,7 +60,7 @@ const BlobPage = () => {
                 setBranch(branch);
                 setEditing((currVal) => ({
                     ...currVal,
-                    blob: branch.snapshot.meta?.content.find((item) => item.name === blobName)
+                    blob: branch.snapshot.meta?.content.find((item) => item.sha === blobName)
                 }));
             }
             setBranches(branches);
@@ -66,11 +74,12 @@ const BlobPage = () => {
         if (monaco && codeElement) {
             monaco.editor.colorizeElement(codeElement, { mimeType: 'text/markdown' });
         }
-    }, [monaco])
+    }, [monaco]);
 
-    if (!branch) return <p>Loading...</p>;
     return (
         <div>
+            <h2 className="text-gray-700 text-xl font-semibold mb-5">Read/update blob</h2>
+
             <div className="flex items-center justify-between gap-3 mb-5">
                 <div>
                     <BranchSelect
@@ -83,7 +92,7 @@ const BlobPage = () => {
                         }}
                     />
                     <span className="mx-3">/</span>
-                    <span>{blobName}</span>
+                    <span>{editing.blob?.name}</span>
                 </div>
 
                 {!editing.isEditing && (
@@ -110,23 +119,10 @@ const BlobPage = () => {
                 <Formik
                     initialValues={{ commitName: '', blobContent: editing.blob.content }}
                     onSubmit={onCommitChanges}
-                    validationSchema={Yup.object().shape({
-                        commitName: Yup.string().required(' ')
-                    })}
                 >
                     {({ isSubmitting, values, setFieldValue }) => (
                         <Form>
-                            <div className="flex gap-x-3">
-                                <Field
-                                    name="commitName"
-                                    component={TextField}
-                                    inputClassName="grow"
-                                    inputProps={{
-                                        placeholder: 'Commit name',
-                                        autoComplete: 'off'
-                                    }}
-                                />
-
+                            <div className="flex gap-x-3 justify-end">
                                 <button
                                     className="px-3 py-1.5 text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600 disabled:opacity-75 rounded font-medium"
                                     type="submit"

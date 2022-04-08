@@ -12,8 +12,16 @@ import {
     GoshSnapshotTVC,
     GoshTVC
 } from "../contracts/gosh/gosh";
-import { fromEvers, getGiverData, giver } from "../helpers";
-import { IGoshBlob, IGoshBranch, IGoshCommit, IGoshRepository, IGoshRoot, IGoshSnapshot } from "./types";
+import { fromEvers, getGiverData, giver, sha1 } from "../helpers";
+import {
+    IGoshBlob,
+    IGoshBranch,
+    IGoshCommit,
+    IGoshRepository,
+    IGoshRoot,
+    IGoshSnapshot,
+    TGoshSnapshotMetaContentItem
+} from "./types";
 
 
 export class GoshRoot implements IGoshRoot {
@@ -318,24 +326,23 @@ export class GoshRepository implements IGoshRepository {
      * We can use simple `account.run` method to pay from repository contract,
      * but it pays too much, so we create branch via payload from wallet
      * @param branchName
-     * @param name
      * @param data
      * @param blobs
      */
     async createCommit(
         branchName: string,
-        name: string,
         data: string,
         blobs: { name: string; content: string }[] = []
     ): Promise<void> {
         // Deploy commit
+        const commitName = sha1(data, 'commit');
         const { body } = await this.account.client.abi.encode_message_body({
             abi: this.account.abi,
             call_set: {
                 function_name: 'deployCommit',
                 input: {
                     nameBranch: branchName,
-                    nameCommit: name,
+                    nameCommit: commitName,
                     fullCommit: data
                 }
             },
@@ -345,7 +352,7 @@ export class GoshRepository implements IGoshRepository {
         await giver(this.account.client, this.address, fromEvers(5), body);
 
         // Get commit address, create commit object
-        const commitAddress = await this.getCommitAddress(branchName, name);
+        const commitAddress = await this.getCommitAddress(branchName, commitName);
         const commit = new GoshCommit(this.account.client, commitAddress);
 
         // Get snapshot and load meta
@@ -359,21 +366,24 @@ export class GoshRepository implements IGoshRepository {
             blobs.map(async (blob) => {
                 if (!snapshot.meta) return;
 
-                const item = {
-                    name: blob.name,
-                    content: blob.content,
-                    rootCommit: commitAddress,
-                    lastCommitName: name
-                }
-
                 const foundIndex = snapshot.meta?.content.findIndex((metaItem) => (
-                    metaItem && metaItem.name === item.name
+                    metaItem && metaItem.name === blob.name
                 )) ?? -1;
                 if (foundIndex < 0) {
-                    await commit.createBlob(blob.name, blob.content);
-                    snapshot.meta.content.push(item);
+                    await commit.createBlob(blob.content);
+                    snapshot.meta.content.push({
+                        sha: sha1(blob.content, 'blob'),
+                        rootCommit: commitAddress,
+                        content: blob.content,
+                        name: blob.name,
+                        lastCommitName: commitName
+                    });
                 } else {
-                    snapshot.meta.content[foundIndex] = item;
+                    snapshot.meta.content[foundIndex] = {
+                        ...snapshot.meta.content[foundIndex],
+                        content: blob.content,
+                        lastCommitName: commitName
+                    };
                 }
             })
         );
@@ -398,7 +408,7 @@ export class GoshCommit implements IGoshCommit {
     address: string;
     meta?: {
         branchName: string;
-        name: string;
+        sha: string;
         parent: string;
         content: string;
     }
@@ -412,7 +422,7 @@ export class GoshCommit implements IGoshCommit {
         const meta = await this.getCommit();
         this.meta = {
             branchName: meta.branch,
-            name: meta.sha,
+            sha: meta.sha,
             parent: meta.parent,
             content: meta.content
         }
@@ -438,8 +448,14 @@ export class GoshCommit implements IGoshCommit {
         return result.decoded?.output.value0;
     }
 
-    async createBlob(name: string, content: string): Promise<void> {
-        await this.account.run('deployBlob', { nameBlob: name, fullBlob: content });
+    async createBlob(content: string): Promise<void> {
+        await this.account.run(
+            'deployBlob',
+            {
+                nameBlob: sha1(content, 'blob'),
+                fullBlob: content
+            }
+        );
     }
 }
 
@@ -447,7 +463,7 @@ class GoshBlob implements IGoshBlob {
     abi: any = GoshBlobABI;
     account: Account;
     address: string;
-    meta?: { name: string; rootCommit: string; content: string; };
+    meta?: { sha: string; rootCommit: string; content: string; };
 
     constructor(client: TonClient, address: string) {
         this.address = address;
@@ -460,7 +476,7 @@ class GoshSnapshot implements IGoshSnapshot {
     account: Account;
     address: string;
     meta?: {
-        content: (IGoshBlob['meta'] & { lastCommitName: string })[];
+        content: TGoshSnapshotMetaContentItem[];
     };
 
     constructor(client: TonClient, address: string) {

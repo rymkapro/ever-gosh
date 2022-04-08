@@ -2,6 +2,7 @@ import { signerKeys, TonClient } from "@eversdk/core";
 import WalletABI from "./contracts/wallets/SafeMultisigWallet.abi.json";
 import { Account } from "@eversdk/appkit";
 import { toast } from "react-toastify";
+import { SHA1 } from "crypto-js";
 
 
 export const getEndpoints = (): string[] => {
@@ -78,6 +79,15 @@ export const toEvers = (value: any, round: number = 3): number => {
  */
 export const fromEvers = (value: number): number => {
     return value * 10 ** 9;
+}
+
+export const sha1 = (data: string, type: 'blob' | 'commit'): string => {
+    let content = data;
+    if (type === 'commit') content += '\n';
+    const size = Buffer.byteLength(content, 'utf-8');
+    const object = `${type} ${size}\0${content}`;
+    const hash = SHA1(object)
+    return hash.toString();
 }
 
 /**

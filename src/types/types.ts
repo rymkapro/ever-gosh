@@ -32,6 +32,11 @@ export type IGoshBranch = {
     snapshot: IGoshSnapshot;
 }
 
+export type TGoshSnapshotMetaContentItem = IGoshBlob['meta'] & {
+    name: string;
+    lastCommitName: string;
+}
+
 export interface IGoshRoot extends IContract {
     details?: {
         address: string;
@@ -74,7 +79,6 @@ export interface IGoshRepository extends IContract {
     deleteBranch(name: string): Promise<void>;
     createCommit(
         branchName: string,
-        name: string,
         data: string,
         blobs: { name: string; content: string }[]
     ): Promise<void>;
@@ -84,7 +88,7 @@ export interface IGoshCommit extends IContract {
     address: string;
     meta?: {
         branchName: string;
-        name: string;
+        sha: string;
         parent: string;
         content: string;
     }
@@ -93,7 +97,7 @@ export interface IGoshCommit extends IContract {
 export interface IGoshBlob extends IContract {
     address: string;
     meta?: {
-        name: string;
+        sha: string;
         rootCommit: string;
         content: string;
     }
@@ -102,7 +106,7 @@ export interface IGoshBlob extends IContract {
 export interface IGoshSnapshot extends IContract {
     address: string;
     meta?: {
-        content: (IGoshBlob['meta'] & { lastCommitName: string })[];
+        content: TGoshSnapshotMetaContentItem[];
     };
 
     load(): Promise<void>;
