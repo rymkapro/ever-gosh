@@ -2,7 +2,7 @@ import React, { Fragment } from 'react';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
 import { XIcon, MenuIcon } from '@heroicons/react/outline';
 
-import logo from '../../assets/images/logo.svg';
+import logoWhite from '../../assets/images/logo-white.svg';
 import { classNames, shortString } from '../../utils';
 import { Link } from 'react-router-dom';
 import { useRecoilValue, useResetRecoilState } from 'recoil';
@@ -15,7 +15,7 @@ const Header = () => {
 
     return (
         <header>
-            <Disclosure as="nav" className="bg-blue-900 drop-shadow-md">
+            <Disclosure as="nav" className="bg-extblue drop-shadow-md">
                 {({ open }) => (
                     <>
                         <div className="px-2 sm:px-6">
@@ -38,8 +38,7 @@ const Header = () => {
                                     className="flex flex-1 items-center justify-center sm:justify-start sm:items-stretch"
                                 >
                                     <Link to="/" className="flex flex-shrink-0 items-center">
-                                        <img src={logo} alt="Logo" className="block h-6 sm:h-8 w-auto mr-4 text-slate-50" />
-                                        <span className="text-lg sm:text-xl font-semibold text-slate-50">Ever GOSH</span>
+                                        <img src={logoWhite} alt="Logo" className="block h-8 w-auto mr-4" />
                                     </Link>
                                 </div>
 
