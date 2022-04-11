@@ -46,7 +46,6 @@ const SigninPage = () => {
                                 <Field
                                     name="phrase"
                                     component={TextareaField}
-                                    label="Seed phrase"
                                     inputProps={{
                                         autoComplete: 'off',
                                         placeholder: 'GOSH root seed phrase'

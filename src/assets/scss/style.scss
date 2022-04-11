@@ -32,3 +32,7 @@ body,
     @apply border;
     @apply rounded;
 }
+
+.input--textarea {
+    @apply focus:ring-1;
+}

@@ -17,12 +17,12 @@ const HomePage = () => {
                     Lorem ipsum dolor sit amet consectetur adipisicing elit. Quaerat dignissimos consectetur quos
                     incidunt laudantium, consequatur adipisci ducimus culpa
                 </p>
-                <div className="mt-5 sm:mt-8 sm:flex justify-center gap-x-8">
+                <div className="mt-4 sm:mt-10 sm:flex justify-center gap-x-8">
                     {userState.address ? (
                         <div>
                             <Link
                                 to="/repositories"
-                                className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
+                                className="block btn--blue px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-medium text-white"
                             >
                                 Repositories
                             </Link>
@@ -32,7 +32,7 @@ const HomePage = () => {
                             <div>
                                 <Link
                                     to="/account/signin"
-                                    className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
+                                    className="block btn--blue px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-medium text-white"
                                 >
                                     Sign in
                                 </Link>
@@ -40,7 +40,7 @@ const HomePage = () => {
                             <div>
                                 <Link
                                     to="/account/signup"
-                                    className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
+                                    className="block btn--blue px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-medium text-white"
                                 >
                                     Create account
                                 </Link>
