@@ -1,5 +1,5 @@
 import { Account } from "@eversdk/appkit";
-import { Abi, ClientConfig, KeyPair, TonClient } from "@eversdk/core";
+import { ClientConfig } from "@eversdk/core";
 
 
 export type TEverState = {
@@ -20,23 +20,31 @@ export type TAccountData = {
     data?: string;
 }
 
+export type TGoshBranch = {
+    name: string;
+    commitAddr: string;
+    snapshot: IGoshSnapshot;
+}
+
+export type TGoshSnapshotMetaContentItem = {
+    name: string;
+    address: string;
+    firstCommitSha: string;
+    lastCommitSha: string;
+    lastCommitMsg: string;
+}
+
+export type TDiffData = {
+    modifiedStartLineNumber: number;
+    modifiedEndLineNumber: number;
+    originalLines: string[];
+}
+
 interface IContract {
     abi: any;
     tvc?: string;
     account: Account;
 }
-
-export type IGoshBranch = {
-    name: string;
-    commit: string;
-    snapshot: IGoshSnapshot;
-}
-
-export type TGoshSnapshotMetaContentItem = IGoshBlob['meta'] & {
-    name: string;
-    lastCommitName: string;
-}
-
 export interface IGoshRoot extends IContract {
     details?: {
         address: string;
@@ -65,24 +73,24 @@ export interface IGoshRoot extends IContract {
     subscribeAccount(callback: (details: IGoshRoot['details']) => void): Promise<void>;
     deploy(): Promise<void>;
     createRepository(name: string): Promise<string>;
-    getRepositoryAddress(name: string): Promise<string>;
-    getRepositories(): Promise<IGoshRepository[]>;
+    getRepositoryAddr(name: string): Promise<string>;
 }
 
 export interface IGoshRepository extends IContract {
     name: string;
     address: string;
 
-    getBranches(): Promise<IGoshBranch[]>;
-    getBranch(name: string): Promise<IGoshBranch>;
+    getBranches(): Promise<TGoshBranch[]>;
+    getBranch(name: string): Promise<TGoshBranch>;
     createBranch(name: string, fromName: string): Promise<void>;
     deleteBranch(name: string): Promise<void>;
     createCommit(
         branchName: string,
-        data: string,
+        message: string,
+        data: { name: string; diff: TDiffData[] }[],
         blobs: { name: string; content: string; }[]
     ): Promise<void>;
-    getCommitAddress(branchName: string, name: string): Promise<string>;
+    getCommitAddr(branchName: string, commitSha: string): Promise<string>;
 }
 
 export interface IGoshCommit extends IContract {
@@ -90,17 +98,32 @@ export interface IGoshCommit extends IContract {
     meta?: {
         branchName: string;
         sha: string;
-        parent: string;
-        content: any[];
+        content: {
+            message: string;
+            blobs: {
+                name: string;
+                sha: string;
+                diff: TDiffData[];
+            }[];
+        }
+        parentAddr: string;
     }
+
+    load(): Promise<void>;
+    getCommit(): Promise<any>;
+    getName(): Promise<string>;
+    getParent(): Promise<string>;
+    getBlobs(): Promise<string[]>;
+    getBlobAddr(blobSha: string): Promise<string>;
+    createBlob(content: string, sha?: string): Promise<string>;
 }
 
 export interface IGoshBlob extends IContract {
     address: string;
     meta?: {
         sha: string;
-        rootCommit: string;
         content: string;
+        commitAddr: string;
     }
 }
 
@@ -111,59 +134,6 @@ export interface IGoshSnapshot extends IContract {
     };
 
     load(): Promise<void>;
-    setSnapshot(snapshot: string): Promise<void>;
+    getSnapshot(): Promise<any>;
+    setSnapshot(content: TGoshSnapshotMetaContentItem[]): Promise<void>;
 }
-
-// export interface IOrganization {
-//     id: string | null;
-//     name: string;
-//     email: string;
-
-//     create(): void;
-//     update(): void;
-//     save(): void;
-// }
-
-
-// export enum ERepositoryType {
-//     PRIVATE,
-//     PUBLIC
-// }
-
-// export type TRepositoryItem = {
-//     address: string;
-//     name: string;
-//     type: string;
-//     description?: string;
-//     language?: string;
-//     license?: string;
-//     updated: string;
-// }
-
-// export type TRepositoryBranch = {
-//     name: string;
-//     tree: TRepositoryTreeItem[];
-// }
-
-// export type TRepositoryTreeItem = {
-//     name: string;
-//     isBlob: boolean;
-//     commit: string;
-//     content?: string;
-//     language?: string;
-// }
-
-// export interface IRepository {
-//     address: string;
-//     name: string;
-//     type: ERepositoryType;
-//     description?: string;
-//     language?: string;
-//     license?: string;
-//     updated?: string;
-
-//     getTypeString(): string;
-//     getBranches(): Promise<string[]>;
-//     getTree(branch: string, path?: string): Promise<TRepositoryTreeItem[]>;
-//     getBlob(branch: string, path: string): Promise<TRepositoryTreeItem | undefined>
-// }

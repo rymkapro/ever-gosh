@@ -1,7 +1,9 @@
+import { TonClient } from "@eversdk/core";
 import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
+import { createGoshRootFromPhrase } from "../helpers";
 import { userStateAtom } from "../store/user.state";
-import { GoshRepository, GoshRoot } from "../types/classes";
+import { GoshRepository } from "../types/classes";
 import { IGoshRepository, IGoshRoot } from "../types/types";
 import { useEverClient } from "./ever.hooks";
 
@@ -12,16 +14,14 @@ export const useGoshRoot = () => {
     const userState = useRecoilValue(userStateAtom);
     const [goshRoot, setGoshRoot] = useState<IGoshRoot>();
 
-    useEffect(() => {
-        const create = async () => {
-            if (!userState.phrase) return;
-            const keys = await client.crypto.mnemonic_derive_sign_keys({ phrase: userState.phrase });
-            const root = new GoshRoot(client, { keys, address: userState.address });
-            await root.load();
-            setGoshRoot(root);
-        }
+    const createGoshRoot = async (client: TonClient, phrase: string, address: string) => {
+        const root = await createGoshRootFromPhrase(client, phrase, address);
+        setGoshRoot(root);
+    }
 
-        create();
+    useEffect(() => {
+        const { phrase, address } = userState;
+        if (client && phrase && address) createGoshRoot(client, phrase, address);
 
         return () => { }
     }, [client, userState]);
@@ -34,15 +34,14 @@ export const useGoshRepository = (name?: string) => {
     const goshRoot = useGoshRoot();
     const [goshRepository, setGoshRepository] = useState<IGoshRepository>();
 
-    useEffect(() => {
-        const create = async () => {
-            if (!goshRoot || !name) return;
-            const address = await goshRoot.getRepositoryAddress(name);
-            const repository = new GoshRepository(goshRoot.account.client, name, address);
-            setGoshRepository(repository);
-        }
+    const createGoshRepository = async (root: IGoshRoot, name: string) => {
+        const address = await root.getRepositoryAddr(name);
+        const repository = new GoshRepository(root.account.client, name, address);
+        setGoshRepository(repository);
+    }
 
-        create();
+    useEffect(() => {
+        if (goshRoot && name) createGoshRepository(goshRoot, name);
     }, [goshRoot, name]);
 
     return goshRepository;

@@ -4,6 +4,8 @@ import { Account } from "@eversdk/appkit";
 import { toast } from "react-toastify";
 import { SHA1 } from "crypto-js";
 import { Buffer } from "buffer";
+import { GoshRoot } from "./types/classes";
+import { IGoshRepository, IGoshRoot, TDiffData, TGoshBranch } from "./types/types";
 
 
 export const getEndpoints = (): string[] => {
@@ -43,6 +45,84 @@ export const getGiverData = (): any => {
     }
 }
 
+export const createGoshRootFromPhrase = async (
+    client: TonClient,
+    phrase: string,
+    address?: string
+): Promise<IGoshRoot> => {
+    const keys = await client.crypto.mnemonic_derive_sign_keys({ phrase });
+    const root = new GoshRoot(client, { keys, address });
+    await root.load();
+    return root;
+}
+
+export const getGoshRepositoryBranches = async (
+    repo: IGoshRepository,
+    selectedBranchName?: string
+): Promise<[TGoshBranch[], TGoshBranch | undefined]> => {
+    const branches = await repo.getBranches();
+    const branch = branches.find((branch) => branch.name === selectedBranchName);
+    return [branches, branch];
+}
+
+/**
+ * Generate commit diff content
+ * @param monaco Monaco object from `useMonaco` hook
+ */
+export const generateDiff = async (
+    monaco: any,
+    modified: string,
+    original?: string
+): Promise<TDiffData[]> => {
+    return new Promise((resolve, reject) => {
+        if (!monaco) reject('Can not create diff (Diff editor is not initialized)');
+
+        // Create hidden monaco diff editor and get diff
+        const originalModel = monaco.editor.createModel(original, 'markdown');
+        const modifiedModel = monaco.editor.createModel(modified, 'markdown');
+
+        const diffContainer = document.createElement('div');
+        const diffEditor = monaco.editor.createDiffEditor(diffContainer);
+        diffEditor.setModel({ original: originalModel, modified: modifiedModel });
+        diffEditor.onDidUpdateDiff(() => {
+            const content = diffEditor.getOriginalEditor().getValue().split('\n');
+            const changes = diffEditor.getLineChanges();
+            const diff: TDiffData[] = [];
+            changes.forEach((item: any) => {
+                const {
+                    originalStartLineNumber,
+                    originalEndLineNumber,
+                    modifiedStartLineNumber,
+                    modifiedEndLineNumber
+                } = item;
+
+                const lines = [];
+                for (let line = originalStartLineNumber - 1; line < originalEndLineNumber; line++) {
+                    lines.push(content[line]);
+                }
+                diff.push({ modifiedStartLineNumber, modifiedEndLineNumber, originalLines: lines });
+            });
+            resolve(diff);
+        });
+    });
+}
+
+export const restoreFromDiff = (modified: string, diff: TDiffData[]): string => {
+    const restored = [];
+    const source = modified.split('\n');
+    for (let mL = 0; mL < source.length; mL++) {
+        const changed = diff.find((item) => item.modifiedStartLineNumber - 1 === mL);
+        if (changed) {
+            if (changed.modifiedEndLineNumber === 0) restored.push(source[mL]);
+            restored.push(...changed.originalLines);
+            if (changed.modifiedEndLineNumber > 0) mL = changed.modifiedEndLineNumber - 1;
+        } else {
+            restored.push(source[mL]);
+        }
+    }
+    // console.log('Restored', restored);
+    return restored.join('\n');
+}
 
 /**
  * SafeMultisigWallet as a giver
@@ -59,7 +139,7 @@ export const giver = async (
     const wallet = getGiverData();
     const signer = signerKeys(wallet.keys);
     const account = new Account({ abi: WalletABI }, { client, address: wallet.address, signer });
-    await account.run('submitTransaction', { dest: address, value, bounce: false, allBalance: false, payload });
+    await account.run('sendTransaction', { dest: address, value, bounce: false, flags: 1, payload });
 }
 
 /**

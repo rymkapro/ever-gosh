@@ -15,11 +15,12 @@ import {
 import { fromEvers, getGiverData, giver, sha1 } from "../helpers";
 import {
     IGoshBlob,
-    IGoshBranch,
+    TGoshBranch,
     IGoshCommit,
     IGoshRepository,
     IGoshRoot,
     IGoshSnapshot,
+    TDiffData,
     TGoshSnapshotMetaContentItem
 } from "./types";
 
@@ -195,9 +196,9 @@ export class GoshRoot implements IGoshRoot {
         await giver(this.account.client, this.details.address, fromEvers(2.65), encoded.body);
 
         // Get deployed repository address and topup it.
-        const repoAddress = await this.getRepositoryAddress(name);
-        if (!repoAddress) throw Error('Error getting repository address after deploy');
-        await giver(this.account.client, repoAddress, fromEvers(30));
+        const repoAddr = await this.getRepositoryAddr(name);
+        if (!repoAddr) throw Error('Error getting repository address after deploy');
+        await giver(this.account.client, repoAddr, fromEvers(30));
 
         // TODO: Remove in future
         // Store created repository address in local storage
@@ -206,26 +207,14 @@ export class GoshRoot implements IGoshRoot {
         storage[this.details.address].push(name);
         localStorage.setItem('repositories', JSON.stringify(storage));
 
-        return repoAddress;
+        return repoAddr;
     }
 
     /** Get repository address by it's name */
-    async getRepositoryAddress(name: string): Promise<string> {
+    async getRepositoryAddr(name: string): Promise<string> {
         if (!this.details?.address) throw Error('GoshRoot address is not set');
         const result = await this.account.runLocal('getAddrRepository', { name });
         return result.decoded?.output.value0;
-    }
-
-    /** Get repositories list */
-    async getRepositories(): Promise<IGoshRepository[]> {
-        if (!this.details?.address) throw Error('GoshRoot address is not set');
-
-        const storage: { [key: string]: any } = JSON.parse(localStorage.getItem('repositories') ?? '{}');
-        const repos = (storage[this.details.address] ?? []).map(async (name: string) => {
-            const address = await this.getRepositoryAddress(name);
-            return new GoshRepository(this.account.client, name, address);
-        });
-        return Promise.all(repos);
     }
 
     /** Update account details from request of subscription */
@@ -276,21 +265,21 @@ export class GoshRepository implements IGoshRepository {
         this.account = new Account({ abi: this.abi }, { client, address });
     }
 
-    async getBranches(): Promise<IGoshBranch[]> {
+    async getBranches(): Promise<TGoshBranch[]> {
         const result = await this.account.runLocal('getAllAddress', {});
         return result.decoded?.output.value0.map((item: any) => ({
             name: item.key,
-            commit: item.value,
+            commitAddr: item.value,
             snapshot: new GoshSnapshot(this.account.client, item.snapshot)
         }));
     }
 
-    async getBranch(name: string): Promise<IGoshBranch> {
+    async getBranch(name: string): Promise<TGoshBranch> {
         const result = await this.account.runLocal('getAddrBranch', { name });
         const decoded = result.decoded?.output.value0;
         return {
             name: decoded.key,
-            commit: decoded.value,
+            commitAddr: decoded.value,
             snapshot: new GoshSnapshot(this.account.client, decoded.snapshot)
         }
     }
@@ -331,19 +320,39 @@ export class GoshRepository implements IGoshRepository {
      */
     async createCommit(
         branchName: string,
-        data: string,
+        message: string,
+        data: { name: string; diff: TDiffData[] }[],
         blobs: { name: string; content: string }[] = []
     ): Promise<void> {
+        // Generate blobs sha
+        const blobsWithSha = blobs.map((blob) => ({
+            ...blob,
+            sha: sha1(blob.content, 'blob')
+        }));
+
+        // Create `fullCommit` data
+        const commitData = {
+            message,
+            blobs: data.map((item) => {
+                const blob = blobsWithSha.find((blob) => blob.name === item.name);
+                if (!blob) throw Error(`Can not find blob '${item.name}' in blobs`);
+                return {
+                    ...item,
+                    sha: blob.sha
+                };
+            })
+        }
+
         // Deploy commit
-        const commitName = sha1(data, 'commit');
+        const commitSha = sha1(JSON.stringify(commitData), 'commit');
         const { body } = await this.account.client.abi.encode_message_body({
             abi: this.account.abi,
             call_set: {
                 function_name: 'deployCommit',
                 input: {
                     nameBranch: branchName,
-                    nameCommit: commitName,
-                    fullCommit: data
+                    nameCommit: commitSha,
+                    fullCommit: JSON.stringify(commitData)
                 }
             },
             is_internal: true,
@@ -352,50 +361,55 @@ export class GoshRepository implements IGoshRepository {
         await giver(this.account.client, this.address, fromEvers(5), body);
 
         // Get commit address, create commit object
-        const commitAddress = await this.getCommitAddress(branchName, commitName);
-        const commit = new GoshCommit(this.account.client, commitAddress);
+        const commitAddr = await this.getCommitAddr(branchName, commitSha);
+        console.debug('[Commit addr]:', commitAddr);
+        const commit = new GoshCommit(this.account.client, commitAddr);
 
         // Get snapshot and load meta
         const snapshot = (await this.getBranch(branchName)).snapshot;
         await snapshot.load();
         if (!snapshot.meta) throw Error('Snapshot meta is not loaded');
 
-        // Search for blobs name in snapshot and deploy blob if not exists.
-        // Update snapshot with any blob
+        // Map all blobs and deploy them;
+        // Update branch snapshot
         await Promise.all(
-            blobs.map(async (blob) => {
+            blobsWithSha.map(async (blob) => {
                 if (!snapshot.meta) return;
 
+                const blobSha = await commit.createBlob(blob.content, blob.sha);
+                const blobAddr = await commit.getBlobAddr(blobSha);
+                console.debug('[Blob addr]:', blobAddr);
                 const foundIndex = snapshot.meta?.content.findIndex((metaItem) => (
                     metaItem && metaItem.name === blob.name
                 )) ?? -1;
                 if (foundIndex < 0) {
-                    await commit.createBlob(blob.content);
                     snapshot.meta.content.push({
-                        sha: sha1(blob.content, 'blob'),
-                        rootCommit: commitAddress,
-                        content: blob.content,
                         name: blob.name,
-                        lastCommitName: commitName
+                        address: blobAddr,
+                        firstCommitSha: commitSha,
+                        lastCommitSha: commitSha,
+                        lastCommitMsg: message
                     });
                 } else {
                     snapshot.meta.content[foundIndex] = {
                         ...snapshot.meta.content[foundIndex],
-                        content: blob.content,
-                        lastCommitName: commitName
+                        address: blobAddr,
+                        lastCommitSha: commitSha,
+                        lastCommitMsg: message
                     };
                 }
             })
         );
-        await snapshot.setSnapshot(JSON.stringify(snapshot.meta?.content));
+        console.debug('[Snapshot addr]:', snapshot.address);
+        await snapshot.setSnapshot(snapshot.meta?.content);
     }
 
-    async getCommitAddress(branchName: string, name: string): Promise<string> {
+    async getCommitAddr(branchName: string, commitSha: string): Promise<string> {
         const result = await this.account.runLocal(
             'getCommitAddr',
             {
                 nameBranch: branchName,
-                nameCommit: name
+                nameCommit: commitSha
             }
         );
         return result.decoded?.output.value0;
@@ -409,8 +423,15 @@ export class GoshCommit implements IGoshCommit {
     meta?: {
         branchName: string;
         sha: string;
-        parent: string;
-        content: any[];
+        content: {
+            message: string;
+            blobs: {
+                name: string;
+                sha: string;
+                diff: TDiffData[];
+            }[];
+        }
+        parentAddr: string;
     }
 
     constructor(client: TonClient, address: string) {
@@ -423,8 +444,8 @@ export class GoshCommit implements IGoshCommit {
         this.meta = {
             branchName: meta.branch,
             sha: meta.sha,
-            parent: meta.parent,
-            content: JSON.parse(meta.content)
+            content: JSON.parse(meta.content),
+            parentAddr: meta.parent,
         }
     }
 
@@ -448,26 +469,50 @@ export class GoshCommit implements IGoshCommit {
         return result.decoded?.output.value0;
     }
 
-    async createBlob(content: string): Promise<void> {
+    async getBlobAddr(blobSha: string): Promise<string> {
+        const result = await this.account.runLocal(
+            'getBlobAddr',
+            { nameBlob: blobSha }
+        );
+        return result.decoded?.output.value0;
+    }
+
+    async createBlob(content: string, sha?: string): Promise<string> {
+        const blobSha = sha || sha1(content, 'blob');
         await this.account.run(
             'deployBlob',
             {
-                nameBlob: sha1(content, 'blob'),
+                nameBlob: blobSha,
                 fullBlob: content
             }
         );
+        return blobSha;
     }
 }
 
-class GoshBlob implements IGoshBlob {
+export class GoshBlob implements IGoshBlob {
     abi: any = GoshBlobABI;
     account: Account;
     address: string;
-    meta?: { sha: string; rootCommit: string; content: string; };
+    meta?: { sha: string; content: string; commitAddr: string; };
 
     constructor(client: TonClient, address: string) {
         this.address = address;
         this.account = new Account({ abi: this.abi }, { client, address });
+    }
+
+    async load(): Promise<void> {
+        const meta = await this.getBlob();
+        this.meta = {
+            sha: meta.sha,
+            content: meta.content,
+            commitAddr: meta.commit,
+        }
+    }
+
+    async getBlob(): Promise<any> {
+        const result = await this.account.runLocal('getBlob', {});
+        return result.decoded?.output;
     }
 }
 
@@ -499,11 +544,15 @@ class GoshSnapshot implements IGoshSnapshot {
     /**
      * Set snapshot
      * `msg.pubkey() == pubkey` (giver) or `msg.sender == _rootRepo` required
-     * @param snapshot
+     * @param content
      */
-    async setSnapshot(snapshot: string): Promise<void> {
+    async setSnapshot(content: TGoshSnapshotMetaContentItem[]): Promise<void> {
         const wallet = getGiverData();
         const signer = signerKeys(wallet.keys);
-        await this.account.run('setSnapshot', { snaphot: snapshot }, { signer });
+        await this.account.run(
+            'setSnapshot',
+            { snaphot: JSON.stringify(content) },
+            { signer }
+        );
     }
 }

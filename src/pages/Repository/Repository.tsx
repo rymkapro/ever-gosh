@@ -1,22 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
-import { IGoshBranch, TGoshSnapshotMetaContentItem } from "../../types/types";
+import { IGoshRepository, TGoshBranch, TGoshSnapshotMetaContentItem } from "../../types/types";
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
 import BranchSelect from "../../components/BranchSelect";
+import { getGoshRepositoryBranches } from "../../helpers";
 
 
 const RepositoryPage = () => {
     const { goshRepository } = useOutletContext<TRepositoryLayoutOutletContext>();
     const { repoName, branchName = 'master' } = useParams();
     const navigate = useNavigate();
-    const [branches, setBranches] = useState<IGoshBranch[]>([]);
-    const [branch, setBranch] = useState<IGoshBranch>();
+    const [branches, setBranches] = useState<TGoshBranch[]>([]);
+    const [branch, setBranch] = useState<TGoshBranch>();
     const [tree, setTree] = useState<TGoshSnapshotMetaContentItem[]>();
 
     useEffect(() => {
-        const initState = async () => {
-            const branches = await goshRepository.getBranches();
-            const branch = branches.find((branch) => branch.name === branchName);
+        const initState = async (repo: IGoshRepository, currBranchName: string) => {
+            const [branches, branch] = await getGoshRepositoryBranches(repo, currBranchName);
             if (branch) {
                 await branch.snapshot.load();
                 setBranch(branch);
@@ -25,7 +25,7 @@ const RepositoryPage = () => {
             setBranches(branches);
         }
 
-        initState();
+        initState(goshRepository, branchName);
     }, [goshRepository, branchName]);
 
     return (
@@ -76,23 +76,18 @@ const RepositoryPage = () => {
                     >
                         <div className="basis-1/4 text-gray-600 text-sm font-medium">
                             <Link
-                                className="underline"
-                                to={`/repositories/${repoName}/blobs/${branchName}/${blob?.sha}`}
+                                className="hover:underline"
+                                to={`/repositories/${repoName}/blob/${branchName}/${blob?.name}`}
                             >
                                 {blob?.name}
                             </Link>
                         </div>
-                        {/* <div className="text-gray-500 text-sm">
-                            <span className="text-xs mr-1">SHA1:</span>
-                            {blob.sha}
-                        </div> */}
                         <div className="text-gray-500 text-sm">
-                            <span className="text-xs mr-1">Last commit:</span>
                             <Link
-                                className="underline"
-                                to={`/repositories/${repoName}/commit/${branchName}:${blob.lastCommitName}`}
+                                className="hover:underline"
+                                to={`/repositories/${repoName}/commit/${branchName}:${blob.lastCommitSha}`}
                             >
-                                {blob.lastCommitName}
+                                {blob.lastCommitMsg}
                             </Link>
                         </div>
                     </div>

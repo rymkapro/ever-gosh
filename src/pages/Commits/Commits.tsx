@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import BranchSelect from "../../components/BranchSelect";
+import { getGoshRepositoryBranches } from "../../helpers";
 import { GoshCommit } from "../../types/classes";
-import { IGoshBranch, IGoshCommit, IGoshRepository } from "../../types/types";
+import { TGoshBranch, IGoshCommit, IGoshRepository } from "../../types/types";
+import { shortString } from "../../utils";
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
 
 
@@ -10,38 +12,33 @@ const CommitsPage = () => {
     const { goshRepository } = useOutletContext<TRepositoryLayoutOutletContext>();
     const { repoName, branchName = 'master' } = useParams();
     const navigate = useNavigate();
-    const [branches, setBranches] = useState<IGoshBranch[]>([]);
-    const [branch, setBranch] = useState<IGoshBranch>();
+    const [branches, setBranches] = useState<TGoshBranch[]>([]);
+    const [branch, setBranch] = useState<TGoshBranch>();
     const [commits, setCommits] = useState<IGoshCommit[]>();
 
-    const getCommits = async (repository: IGoshRepository, branchName: string) => {
-        const branch = await repository.getBranch(branchName);
-
+    const getCommits = async (repo: IGoshRepository, branch: TGoshBranch) => {
         const commits: IGoshCommit[] = [];
-        let commitAddress = branch.commit;
-
-        while (commitAddress) {
-            const commit = new GoshCommit(repository.account.client, commitAddress);
+        let commitAddr = branch.commitAddr;
+        while (commitAddr) {
+            const commit = new GoshCommit(repo.account.client, commitAddr);
             await commit.load();
-            commitAddress = commit.meta?.parent || '';
+            commitAddr = commit.meta?.parentAddr || '';
             commits.push(commit);
         }
         setCommits(commits);
     }
 
     useEffect(() => {
-        const initState = async () => {
-            const branches = await goshRepository.getBranches();
-            const branch = branches.find((branch) => branch.name === branchName);
+        const initState = async (repo: IGoshRepository, currBranchName: string) => {
+            const [branches, branch] = await getGoshRepositoryBranches(repo, currBranchName);
             if (branch) {
-                await branch.snapshot.load();
-                await getCommits(goshRepository, branchName);
+                await getCommits(repo, branch);
                 setBranch(branch);
             }
             setBranches(branches);
         }
 
-        initState();
+        initState(goshRepository, branchName);
     }, [goshRepository, branchName]);
 
     return (
@@ -74,13 +71,19 @@ const CommitsPage = () => {
                 {Boolean(commits?.length) && commits?.map((commit, index) => (
                     <div
                         key={index}
-                        className="basis-1/4 text-gray-600 text-sm font-medium py-3 border-b border-gray-300 last:border-b-0"
+                        className="flex py-3 border-b border-gray-300 last:border-b-0 justify-between items-center"
                     >
                         <Link
-                            className="underline"
+                            className="text-gray-600 font-medium hover:underline"
                             to={`/repositories/${repoName}/commit/${branchName}:${commit.meta?.sha}`}
                         >
-                            {commit.meta?.sha}
+                            {commit.meta?.content.message}
+                        </Link>
+                        <Link
+                            className="text-gray-600 font-medium text-sm hover:underline "
+                            to={`/repositories/${repoName}/commit/${branchName}:${commit.meta?.sha}`}
+                        >
+                            {shortString(commit.meta?.sha || '', 7, 0, '')}
                         </Link>
                     </div>
                 ))}

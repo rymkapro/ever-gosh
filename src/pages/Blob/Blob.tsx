@@ -1,15 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import BranchSelect from "../../components/BranchSelect";
-import { IGoshBranch, TGoshSnapshotMetaContentItem } from "../../types/types";
+import { IGoshBlob, TGoshBranch } from "../../types/types";
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
 import Editor, { useMonaco } from "@monaco-editor/react";
-import { Form, Formik } from "formik";
+import { Field, Form, Formik } from "formik";
 import ReactMarkdown from 'react-markdown'
 import Spinner from "../../components/Spinner";
+import { GoshBlob } from "../../types/classes";
+import { generateDiff } from "../../helpers";
+import TextField from "../../components/FormikForms/TextField";
+import * as Yup from "yup";
 
 
 type TFormCommitValues = {
+    message: string;
     blobContent: string;
 }
 
@@ -18,33 +23,26 @@ const BlobPage = () => {
     const { repoName, branchName = 'master', blobName } = useParams();
     const navigate = useNavigate();
     const monaco = useMonaco();
-    const [branches, setBranches] = useState<IGoshBranch[]>([]);
-    const [branch, setBranch] = useState<IGoshBranch>();
+    const [branches, setBranches] = useState<TGoshBranch[]>([]);
+    const [branch, setBranch] = useState<TGoshBranch>();
+    const [blob, setBlob] = useState<IGoshBlob>();
     const [editing, setEditing] = useState<{
-        blob?: TGoshSnapshotMetaContentItem;
         isEditing: boolean;
         isDirty: boolean;
     }>({
-        blob: undefined,
         isEditing: false,
         isDirty: false
     });
 
     const onCommitChanges = async (values: TFormCommitValues) => {
-        if (!branchName || !editing.blob) return;
-
+        if (!branchName || !blob || !blobName) return;
         try {
+            const diff = await generateDiff(monaco, values.blobContent, blob.meta?.content);
             await goshRepository.createCommit(
                 branchName,
-                JSON.stringify([{
-                    name: editing.blob.name,
-                    original: editing.blob?.content,
-                    modified: values.blobContent
-                }]),
-                [{
-                    name: editing.blob.name,
-                    content: values.blobContent
-                }]
+                values.message,
+                [{ name: blobName, diff }],
+                [{ name: blobName, content: values.blobContent }]
             );
             navigate(`/repositories/${repoName}/tree/${branchName}`);
         } catch (e: any) {
@@ -58,11 +56,14 @@ const BlobPage = () => {
             const branch = branches.find((branch) => branch.name === branchName);
             if (branch) {
                 await branch.snapshot.load();
+
+                const blobItem = branch.snapshot.meta?.content.find((item) => item.name === blobName);
+                if (blobItem) {
+                    const blob = new GoshBlob(goshRepository.account.client, blobItem.address);
+                    await blob.load();
+                    setBlob(blob);
+                }
                 setBranch(branch);
-                setEditing((currVal) => ({
-                    ...currVal,
-                    blob: branch.snapshot.meta?.content.find((item) => item.sha === blobName)
-                }));
             }
             setBranches(branches);
         }
@@ -93,7 +94,7 @@ const BlobPage = () => {
                         }}
                     />
                     <span className="mx-3">/</span>
-                    <span>{editing.blob?.name}</span>
+                    <span>{blobName}</span>
                 </div>
 
                 {!editing.isEditing && (
@@ -110,20 +111,32 @@ const BlobPage = () => {
                 )}
             </div>
 
-            {!editing.blob && (<p>Blob not found</p>)}
-            {editing.blob && !editing.isEditing && (
+            {!blob && (<p>Blob not found</p>)}
+            {blob && !editing.isEditing && (
                 <div className="markdown-body py-3 px-4 border rounded overflow-hidden">
-                    <ReactMarkdown>{editing.blob.content}</ReactMarkdown>
+                    <ReactMarkdown>{blob.meta?.content || ''}</ReactMarkdown>
                 </div>
             )}
-            {editing.blob && editing.isEditing && (
+            {blob && editing.isEditing && (
                 <Formik
-                    initialValues={{ commitName: '', blobContent: editing.blob.content }}
+                    initialValues={{ message: '', blobContent: blob.meta?.content || '' }}
                     onSubmit={onCommitChanges}
+                    validationSchema={Yup.object().shape({
+                        message: Yup.string().required(' ')
+                    })}
                 >
                     {({ isSubmitting, values, setFieldValue }) => (
                         <Form>
-                            <div className="flex gap-x-3 justify-end">
+                            <div className="flex gap-x-3">
+                                <Field
+                                    name="message"
+                                    component={TextField}
+                                    inputClassName="grow"
+                                    inputProps={{
+                                        autoComplete: 'off',
+                                        placeholder: 'Commit message'
+                                    }}
+                                />
                                 <button
                                     className="px-3 py-1.5 text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600 disabled:opacity-75 rounded font-medium"
                                     type="submit"
@@ -156,7 +169,7 @@ const BlobPage = () => {
                                             setFieldValue('blobContent', editor.getValue());
                                             setEditing({
                                                 ...editing,
-                                                isDirty: editor.getValue() !== editing.blob?.content
+                                                isDirty: editor.getValue() !== blob.meta?.content
                                             });
                                         });
                                     }}

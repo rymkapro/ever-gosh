@@ -16,7 +16,9 @@ const TextField = (props: ITextFieldProps) => {
                 className={classNames(
                     'border rounded px-2 py-1',
                     inputClassName,
-                    form.touched[field.name] && form.errors[field.name] ? 'border-rose-600' : 'border-gray-200'
+                    form.touched[field.name] && form.errors[field.name]
+                        ? 'border-rose-600 placeholder:text-rose-600'
+                        : 'border-gray-200'
                 )}
                 {...inputProps}
                 {...field}

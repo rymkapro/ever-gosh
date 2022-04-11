@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Field, Form, Formik } from "formik";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import BranchSelect from "../../components/BranchSelect";
-import { IGoshBranch } from "../../types/types";
+import { TGoshBranch } from "../../types/types";
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
 import TextField from "../../components/FormikForms/TextField";
-import Editor from "@monaco-editor/react";
+import Editor, { useMonaco } from "@monaco-editor/react";
 import Spinner from "../../components/Spinner";
+import { generateDiff, getGoshRepositoryBranches } from "../../helpers";
+import * as Yup from "yup";
 
 
 type TFormValues = {
@@ -18,24 +20,27 @@ const BlobCreatePage = () => {
     const { goshRepository } = useOutletContext<TRepositoryLayoutOutletContext>();
     const { repoName, branchName = 'master' } = useParams();
     const navigate = useNavigate();
-    const [branches, setBranches] = useState<IGoshBranch[]>([]);
+    const [branches, setBranches] = useState<TGoshBranch[]>([]);
+    const monaco = useMonaco();
 
     const onFormSubmit = async (values: TFormValues) => {
         try {
+            const diff = await generateDiff(monaco, values.blobContent);
             await goshRepository.createCommit(
                 branchName,
-                JSON.stringify([{ name: values.blobName, original: '', modified: values.blobContent }]),
+                'Create blob',
+                [{ name: values.blobName, diff }],
                 [{ name: values.blobName, content: values.blobContent }]
             );
             navigate(`/repositories/${repoName}/tree/${branchName}`);
         } catch (e: any) {
-            alert(e);
+            alert(e.message);
         }
     }
 
     useEffect(() => {
         const initState = async () => {
-            const branches = await goshRepository.getBranches();
+            const [branches] = await getGoshRepositoryBranches(goshRepository);
             setBranches(branches);
         }
 
@@ -49,6 +54,9 @@ const BlobCreatePage = () => {
             <Formik
                 initialValues={{ blobName: '', blobContent: '' }}
                 onSubmit={onFormSubmit}
+                validationSchema={Yup.object().shape({
+                    blobName: Yup.string().required(' ')
+                })}
             >
                 {({ setFieldValue, isSubmitting }) => (
                     <Form>

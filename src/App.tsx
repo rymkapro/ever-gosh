@@ -49,7 +49,7 @@ const App = () => {
                             <Route index element={<RepositoryPage />} />
                             <Route path="tree/:branchName" element={<RepositoryPage />} />
                             <Route path="blobs/:branchName/create" element={<BlobCreatePage />} />
-                            <Route path="blobs/:branchName/:blobName" element={<BlobPage />} />
+                            <Route path="blob/:branchName/:blobName" element={<BlobPage />} />
                             <Route path="commits/:branchName" element={<CommitsPage />} />
                             <Route path="commit/:commitName" element={<CommitPage />} />
                         </Route>

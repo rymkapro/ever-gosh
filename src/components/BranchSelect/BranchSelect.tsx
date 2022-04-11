@@ -1,13 +1,13 @@
 import React from "react";
 import { Combobox } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/solid";
-import { IGoshBranch } from "../../types/types";
+import { TGoshBranch } from "../../types/types";
 
 
 type TBranchSelectProps = {
-    branch?: IGoshBranch;
-    branches: IGoshBranch[];
-    onChange(selected: IGoshBranch | undefined): void;
+    branch?: TGoshBranch;
+    branches: TGoshBranch[];
+    onChange(selected: TGoshBranch | undefined): void;
 }
 
 const BranchSelect = (props: TBranchSelectProps) => {
@@ -24,7 +24,7 @@ const BranchSelect = (props: TBranchSelectProps) => {
             <div className="relative inline-flex gap-x-3 items-center overflow-hidden border rounded px-2 py-1">
                 <Combobox.Input
                     onChange={(event) => { }}
-                    displayValue={(branch: IGoshBranch) => branch.name}
+                    displayValue={(branch: TGoshBranch) => branch.name}
                     className="text-gray-700 border-none focus:ring-0 outline-none w-auto"
                 />
                 <Combobox.Button className="">

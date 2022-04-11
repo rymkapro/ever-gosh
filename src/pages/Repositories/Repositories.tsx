@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useGoshRoot } from "../../hooks/gosh.hooks";
+import { GoshRepository } from "../../types/classes";
 import { IGoshRepository, IGoshRoot } from "../../types/types";
 
 
@@ -8,12 +9,20 @@ const RepositoriesPage = () => {
     const goshRoot = useGoshRoot();
     const [repositories, setRepositories] = useState<IGoshRepository[]>();
 
-    useEffect(() => {
-        const getRepositories = async (root: IGoshRoot) => {
-            const repos = await root.getRepositories();
-            setRepositories(repos);
-        }
+    const getRepositories = async (root: IGoshRoot) => {
+        if (!root.details?.address) return;
 
+        const storage: { [key: string]: any } = JSON.parse(localStorage.getItem('repositories') ?? '{}');
+        const repos = await Promise.all(
+            (storage[root.details.address] ?? []).map(async (name: string) => {
+                const address = await root.getRepositoryAddr(name);
+                return new GoshRepository(root.account.client, name, address);
+            })
+        );
+        setRepositories(repos);
+    }
+
+    useEffect(() => {
         if (goshRoot) getRepositories(goshRoot);
     }, [goshRoot]);
 

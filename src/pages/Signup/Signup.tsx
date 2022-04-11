@@ -7,8 +7,9 @@ import { useEverClient } from "../../hooks/ever.hooks";
 import { useSetRecoilState } from "recoil";
 import { userStateAtom } from "../../store/user.state";
 import { useNavigate } from "react-router-dom";
-import { GoshRoot } from "../../types/classes";
 import Spinner from "../../components/Spinner";
+import { TonClient } from "@eversdk/core";
+import { createGoshRootFromPhrase } from "../../helpers";
 
 
 type TFormValues = {
@@ -22,26 +23,21 @@ const SignupPage = () => {
     const setUserState = useSetRecoilState(userStateAtom);
     const [phrase, setPhrase] = useState<string>('');
 
+    const generatePhrase = async (client: TonClient) => {
+        const result = await client.crypto.mnemonic_from_random({});
+        setPhrase(result.phrase);
+    }
+
     const onFormSubmit = async (values: TFormValues) => {
         console.debug('[Signup form] - Submit values', values);
-        // Derive keys from phrase and create GoshRoot object
-        const keys = await everClient.crypto.mnemonic_derive_sign_keys({ phrase: values.phrase });
-        const root = new GoshRoot(everClient, { keys });
-        await root.load();
-
-        // Update user state and redirect
+        const root = await createGoshRootFromPhrase(everClient, values.phrase);
         setUserState({ address: root.details?.address, phrase: values.phrase });
         navigate('/account', { replace: true });
     }
 
     useEffect(() => {
-        const generatePhrase = async () => {
-            const result = await everClient.crypto.mnemonic_from_random({});
-            setPhrase(result.phrase);
-        }
-
         console.debug('[Signup] - Generate phrase');
-        generatePhrase();
+        generatePhrase(everClient);
     }, [everClient]);
 
     return (

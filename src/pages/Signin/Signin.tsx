@@ -6,8 +6,8 @@ import { useEverClient } from "../../hooks/ever.hooks";
 import { useSetRecoilState } from "recoil";
 import { userStateAtom } from "../../store/user.state";
 import { useNavigate } from "react-router-dom";
-import { GoshRoot } from "../../types/classes";
 import Spinner from "../../components/Spinner";
+import { createGoshRootFromPhrase } from "../../helpers";
 
 
 type TFormValues = {
@@ -21,12 +21,7 @@ const SigninPage = () => {
 
     const onFormSubmit = async (values: TFormValues) => {
         console.debug('[Signin form] - Submit values', values);
-        // Derive keys from phrase and create GoshRoot object
-        const keys = await everClient.crypto.mnemonic_derive_sign_keys({ phrase: values.phrase });
-        const root = new GoshRoot(everClient, { keys });
-        await root.load();
-
-        // Check if account is fully deployed and redirect
+        const root = await createGoshRootFromPhrase(everClient, values.phrase);
         setUserState({ address: root.details?.address, phrase: values.phrase });
         root.isDeployed
             ? navigate('/repositories', { replace: true })

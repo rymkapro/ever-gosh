@@ -1,21 +1,33 @@
-import { DiffEditor } from "@monaco-editor/react";
 import React, { useEffect, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
-import { GoshCommit } from "../../types/classes";
-import { IGoshCommit, IGoshRepository } from "../../types/types";
+import { GoshBlob, GoshCommit } from "../../types/classes";
+import { IGoshBlob, IGoshCommit, IGoshRepository } from "../../types/types";
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
+import { DiffEditor } from "@monaco-editor/react";
+import { restoreFromDiff } from "../../helpers";
 
 
 const CommitPage = () => {
     const { goshRepository } = useOutletContext<TRepositoryLayoutOutletContext>();
     const { commitName } = useParams();
     const [commit, setCommit] = useState<IGoshCommit>();
+    const [blobs, setBlobs] = useState<IGoshBlob[]>();
 
     const getCommit = async (repo: IGoshRepository, branchName: string, name: string) => {
-        const address = await repo.getCommitAddress(branchName, name);
+        const address = await repo.getCommitAddr(branchName, name);
         const commit = new GoshCommit(repo.account.client, address);
         await commit.load();
+
+        const blobAddrs = await commit.getBlobs();
+        const blobs = await Promise.all(
+            blobAddrs.map(async (addr) => {
+                const blob = new GoshBlob(commit.account.client, addr);
+                await blob.load();
+                return blob;
+            })
+        );
         setCommit(commit);
+        setBlobs(blobs);
     }
 
     useEffect(() => {
@@ -25,46 +37,58 @@ const CommitPage = () => {
 
     return (
         <div>
-            <h2 className="text-gray-700 text-xl font-semibold mb-5">Specific commit</h2>
-
             {!commit && (<p>Loading commit...</p>)}
             {commit && (
-                <div>
-                    <span className="text-xs mr-2 text-gray-500">SHA1</span>
-                    {commit.meta?.sha}
-
-                    {commit.meta?.content.map((blob, index) => (
-                        <div key={index} className="my-5 border rounded overflow-hidden">
-                            <div className="bg-gray-100 border-b px-3 py-1 text-sm font-semibold">{blob.name}</div>
-                            <DiffEditor
-                                language="markdown"
-                                original={blob.original}
-                                modified={blob.modified}
-                                options={{
-                                    enableSplitViewResizing: false,
-                                    renderSideBySide: false,
-                                    readOnly: true,
-                                    renderLineHighlight: 'none',
-                                    contextmenu: false,
-                                    automaticLayout: true,
-                                    renderOverviewRuler: false,
-                                    scrollBeyondLastLine: false,
-                                    scrollbar: {
-                                        vertical: 'hidden',
-                                        verticalScrollbarSize: 0,
-                                        handleMouseWheel: false
-                                    },
-                                }}
-                                onMount={(editor) => {
-                                    // Set diff editor dom element calculated real height
-                                    const originalHeight = editor.getOriginalEditor().getContentHeight();
-                                    const modifiedHeight = editor.getModifiedEditor().getContentHeight();
-                                    editor._domElement.style.height = `${originalHeight + modifiedHeight}px`;
-                                }}
-                            />
+                <>
+                    <div className="border rounded">
+                        <div className="text-gray-600 font-medium px-3 py-1.5">
+                            {commit.meta?.content.message}
                         </div>
-                    ))}
-                </div>
+                        <div className="flex border-t justify-end px-3 py-1">
+                            <div className="text-gray-600 text-xs">
+                                <span className="mr-2 text-gray-500">sha1</span>
+                                {commit.meta?.sha}
+                            </div>
+                        </div>
+                    </div>
+
+                    {commit.meta?.content.blobs.map((item, index) => {
+                        const blob = blobs?.find((blob) => blob.meta?.sha === item.sha);
+                        return (
+                            <div key={index} className="my-5 border rounded overflow-hidden">
+                                <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
+                                    {item.name}
+                                </div>
+                                <DiffEditor
+                                    language="markdown"
+                                    original={restoreFromDiff(blob?.meta?.content || '', item.diff)}
+                                    modified={blob?.meta?.content}
+                                    options={{
+                                        enableSplitViewResizing: false,
+                                        renderSideBySide: false,
+                                        readOnly: true,
+                                        renderLineHighlight: 'none',
+                                        contextmenu: false,
+                                        automaticLayout: true,
+                                        renderOverviewRuler: false,
+                                        scrollBeyondLastLine: false,
+                                        scrollbar: {
+                                            vertical: 'hidden',
+                                            verticalScrollbarSize: 0,
+                                            handleMouseWheel: false
+                                        },
+                                    }}
+                                    onMount={(editor) => {
+                                        // Set diff editor dom element calculated real height
+                                        const originalHeight = editor.getOriginalEditor().getContentHeight();
+                                        const modifiedHeight = editor.getModifiedEditor().getContentHeight();
+                                        editor._domElement.style.height = `${originalHeight + modifiedHeight}px`;
+                                    }}
+                                />
+                            </div>
+                        );
+                    })}
+                </>
             )}
         </div>
     );
