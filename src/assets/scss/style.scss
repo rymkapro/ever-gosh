@@ -12,9 +12,23 @@ body,
 #root {
     height: 100%;
     @apply bg-white;
+    @apply text-extblack;
 }
 
 .tab--active {
-    @apply bg-blue-600;
+    @apply bg-extblue;
     @apply text-white;
+}
+
+.btn--blue {
+    @apply bg-extblue;
+    @apply disabled:opacity-75;
+    @apply hover:opacity-90;
+    @apply rounded;
+    @apply text-white;
+}
+
+.input--text {
+    @apply border;
+    @apply rounded;
 }
