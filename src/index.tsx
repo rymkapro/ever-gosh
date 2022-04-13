@@ -6,13 +6,25 @@ import { TonClient, BinaryLibrary } from '@eversdk/core';
 import { libWeb } from '@eversdk/lib-web';
 import App from './App';
 import { RecoilRoot } from 'recoil';
+import { QueryClient, QueryClientProvider } from 'react-query';
+
+// Create React QueryClient
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            refetchOnWindowFocus: false
+        }
+    }
+});
 
 ReactDOM.render(
     <React.StrictMode>
         <RecoilRoot>
-            <BrowserRouter>
-                <App />
-            </BrowserRouter>
+            <QueryClientProvider client={queryClient}>
+                <BrowserRouter>
+                    <App />
+                </BrowserRouter>
+            </QueryClientProvider>
         </RecoilRoot>
     </React.StrictMode>,
     document.getElementById('root')

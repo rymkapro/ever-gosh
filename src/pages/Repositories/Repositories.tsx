@@ -1,39 +1,38 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import CopyClipboard from "../../components/CopyClipboard";
 import { useGoshRoot } from "../../hooks/gosh.hooks";
 import { GoshRepository } from "../../types/classes";
-import { IGoshRoot } from "../../types/types";
-import { shortString } from "../../utils";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCodeFork, faStar, faCode } from "@fortawesome/free-solid-svg-icons";
-import { useRecoilState, useRecoilValue } from "recoil";
-import { goshRepoListAtom, goshRepoListSelector } from "../../store/gosh.state";
+import { IGoshRepository } from "../../types/types";
+import { useQuery } from "react-query";
+import RepositoryListItem from "./RepositoryListItem";
 
 
 const RepositoriesPage = () => {
     const goshRoot = useGoshRoot();
     const [search, setSearch] = useState<string>();
-    const [reposState, setReposState] = useRecoilState(goshRepoListAtom);
-    const repos = useRecoilValue(goshRepoListSelector(search));
-
-    useEffect(() => {
-        const getRepositories = async (root: IGoshRoot) => {
-            if (!root.details?.address) return;
+    const repoListQuery = useQuery(
+        ['repositoryList'],
+        async (): Promise<IGoshRepository[]> => {
+            if (!goshRoot?.details?.address) return [];
 
             const storage: { [key: string]: any } = JSON.parse(localStorage.getItem('repositories') ?? '{}');
             const repos = await Promise.all(
-                (storage[root.details.address] ?? []).map(async (name: string) => {
-                    const address = await root.getRepositoryAddr(name);
-                    return new GoshRepository(root.account.client, name, address);
+                (storage[goshRoot.details.address] ?? []).map(async (name: string) => {
+                    const address = await goshRoot.getRepositoryAddr(name);
+                    return new GoshRepository(goshRoot.account.client, name, address);
                 })
             );
-            setReposState({ isLoading: false, list: repos });
+            return repos;
+        },
+        {
+            enabled: !!goshRoot,
+            select: (data) => {
+                if (!search) return data;
+                const pattern = new RegExp(search, 'i');
+                return data.filter((repo) => repo.name.search(pattern) >= 0);
+            }
         }
-
-        setReposState({ isLoading: true, list: [] });
-        if (goshRoot) getRepositories(goshRoot);
-    }, [goshRoot]);
+    );
 
     return (
         <section className="p-2">
@@ -60,65 +59,20 @@ const RepositoriesPage = () => {
                 </div>
 
                 <div className="mt-5 border rounded px-5">
-                    {reposState.isLoading && (
+                    {(repoListQuery.isIdle || repoListQuery.isLoading) && (
                         <p className="text-sm text-gray-500 text-center py-3">
                             Loading repositories...
                         </p>
                     )}
 
-                    {!reposState.isLoading && !repos.length && (
+                    {repoListQuery.isFetched && !repoListQuery.data?.length && (
                         <p className="text-sm text-gray-500 text-center py-3">
                             There are no repositories
                         </p>
                     )}
 
-                    {repos.map((repository, index) => (
-                        <div key={index} className="py-3 border-b last:border-b-0">
-                            <Link
-                                className="text-extblue text-xl font-semibold hover:underline"
-                                to={`/repositories/${repository.name}`}
-                            >
-                                {repository.name}
-                            </Link>
-
-                            <div className="text-sm text-gray-400">
-                                Repository description
-                            </div>
-
-                            <div className="flex gap-1 mt-2">
-                                {Array.from(new Array(4)).map((_, index) => (
-                                    <button
-                                        key={index}
-                                        type="button"
-                                        className="rounded-2xl bg-extblue/25 text-xs text-extblue px-2 py-1 hover:bg-extblue hover:text-white"
-                                    >
-                                        tag-name
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div className="flex gap-4 mt-3 text-xs text-gray-400">
-                                <div>
-                                    <FontAwesomeIcon icon={faCode} className="mr-1" />
-                                    Language
-                                </div>
-                                <div>
-                                    <FontAwesomeIcon icon={faCodeFork} className="mr-1" />
-                                    4
-                                </div>
-                                <div>
-                                    <FontAwesomeIcon icon={faStar} className="mr-1" />
-                                    22
-                                </div>
-                                <CopyClipboard
-                                    componentProps={{
-                                        text: repository.address
-                                    }}
-                                    className="grow justify-end hover:text-extblue"
-                                    label={shortString(repository.address, 4, 4)}
-                                />
-                            </div>
-                        </div>
+                    {repoListQuery.data?.map((repository, index) => (
+                        <RepositoryListItem key={index} repository={repository} />
                     ))}
                 </div>
             </div>

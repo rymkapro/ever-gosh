@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import BranchSelect from "../../components/BranchSelect";
+import CopyClipboard from "../../components/CopyClipboard";
 import { getGoshRepositoryBranches } from "../../helpers";
 import { GoshCommit } from "../../types/classes";
 import { TGoshBranch, IGoshCommit, IGoshRepository } from "../../types/types";
@@ -42,15 +43,13 @@ const CommitsPage = () => {
     }, [goshRepository, branchName]);
 
     return (
-        <div>
-            <h2 className="text-gray-700 text-xl font-semibold mb-5">Commits</h2>
-
+        <>
             <BranchSelect
                 branch={branch}
                 branches={branches}
                 onChange={(selected) => {
                     if (selected) {
-                        navigate(`repository/${repoName}/commits/${selected.name}`);
+                        navigate(`/repositories/${repoName}/commits/${selected.name}`);
                     }
                 }}
             />
@@ -74,21 +73,33 @@ const CommitsPage = () => {
                         className="flex py-3 border-b border-gray-300 last:border-b-0 justify-between items-center"
                     >
                         <Link
-                            className="text-gray-600 font-medium hover:underline"
+                            className="hover:underline"
                             to={`/repositories/${repoName}/commit/${branchName}:${commit.meta?.sha}`}
                         >
                             {commit.meta?.content.message}
                         </Link>
-                        <Link
-                            className="text-gray-600 font-medium text-sm hover:underline "
-                            to={`/repositories/${repoName}/commit/${branchName}:${commit.meta?.sha}`}
-                        >
-                            {shortString(commit.meta?.sha || '', 7, 0, '')}
-                        </Link>
+
+                        <div className="flex border rounded items-center">
+                            <Link
+                                className="px-2 py-1 font-medium font-mono text-xs hover:underline hover:text-extblue"
+                                to={`/repositories/${repoName}/commit/${branchName}:${commit.meta?.sha}`}
+                            >
+                                {shortString(commit.meta?.sha || '', 7, 0, '')}
+                            </Link>
+                            <CopyClipboard
+                                componentProps={{
+                                    text: commit.meta?.sha || ''
+                                }}
+                                iconContainerClassName="px-2 border-l hover:text-extblue"
+                                iconProps={{
+                                    size: 'sm'
+                                }}
+                            />
+                        </div>
                     </div>
                 ))}
             </div>
-        </div>
+        </>
     );
 }
 

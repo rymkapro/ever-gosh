@@ -58,7 +58,7 @@ export const createGoshRootFromPhrase = async (
 
 export const getGoshRepositoryBranches = async (
     repo: IGoshRepository,
-    selectedBranchName?: string
+    selectedBranchName: string = 'master'
 ): Promise<[TGoshBranch[], TGoshBranch | undefined]> => {
     const branches = await repo.getBranches();
     const branch = branches.find((branch) => branch.name === selectedBranchName);

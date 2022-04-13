@@ -26,11 +26,15 @@ body,
     @apply hover:opacity-90;
     @apply rounded;
     @apply text-white;
+    @apply border-extblue;
 }
 
 .input--text {
     @apply border;
     @apply rounded;
+    @apply px-2;
+    @apply outline-extblue;
+    @apply outline-1;
 }
 
 .input--textarea {

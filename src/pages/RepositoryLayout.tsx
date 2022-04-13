@@ -1,5 +1,8 @@
 import React from "react";
+import { faCode } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link, Outlet, useParams } from "react-router-dom";
+import Spinner from "../components/Spinner";
 import { useGoshRepository } from "../hooks/gosh.hooks";
 import { IGoshRepository } from "../types/types";
 
@@ -14,19 +17,21 @@ const RepositoryLayout = () => {
 
     return (
         <section className="px-10 py-6">
-            <h1 className="text-gray-700 font-semibold text-2xl mb-5">
+            <h1 className="font-semibold text-2xl mb-5">
                 {repoName}
-                <div className="text-xs text-gray-500 font-normal">{goshRepository?.address}</div>
             </h1>
 
             <div className="flex border-b">
-                <div className="px-5 py-2 border-b-2 border-blue-600 text-gray-800 font-medium">
-                    <Link to={`/repositories/${repoName}`}>Code</Link>
+                <div className="px-3 py-2 border-b-2 border-extblue font-medium text-sm">
+                    <Link to={`/repositories/${repoName}`}>
+                        <FontAwesomeIcon icon={faCode} size="sm" className="mr-1" />
+                        Code
+                    </Link>
                 </div>
             </div>
 
             <div className="max-w-6xl mx-auto mt-6">
-                {goshRepository ? <Outlet context={{ goshRepository }} /> : 'Loading outlet...'}
+                {goshRepository ? <Outlet context={{ goshRepository }} /> : <Spinner />}
             </div>
         </section>
     );

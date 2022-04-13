@@ -48,9 +48,8 @@ const AccountPage = () => {
                             <Tab
                                 className={({ selected }) => (
                                     classNames(
-                                        'w-full px-4 py-2 text-sm text-left rounded',
-                                        'hover:bg-blue-600 hover:text-white',
-                                        selected ? 'tab--active' : ''
+                                        'w-full px-4 py-2 text-sm text-left rounded hover:text-white',
+                                        selected ? 'tab--active hover:bg-extblue' : 'hover:bg-extblue/75'
                                     )
                                 )}
                             >
@@ -100,81 +99,6 @@ const AccountPage = () => {
                                             <div>
                                                 <h4 className="font-semibold text-gray-600">Version</h4>
                                                 {goshRootDetails.data.decoded?.version}
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-wrap mt-5 gap-x-4 gap-y-3 justify-between">
-                                            <div>
-                                                <h4 className="text-sm font-semibold text-gray-600">Code</h4>
-                                                <span className="font-mono">
-                                                    {shortString(goshRootDetails.code || '-', 14, 14)}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <h4 className="text-sm font-semibold text-gray-600">Data</h4>
-                                                <span className="font-mono">
-                                                    {shortString(goshRootDetails.data.raw || '-', 14, 14)}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-wrap mt-5 gap-x-4 gap-y-3 justify-between">
-                                            <div>
-                                                <h4 className="text-sm font-semibold text-gray-600">Repository code</h4>
-                                                <span className="font-mono">
-                                                    {shortString(goshRootDetails.data.decoded?.m_RepositoryCode || '-', 14, 14)}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <h4 className="text-sm font-semibold text-gray-600">Repository data</h4>
-                                                <span className="font-mono">
-                                                    {shortString(goshRootDetails.data.decoded?.m_RepositoryData || '-', 14, 14)}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-wrap mt-5 gap-x-4 gap-y-3 justify-between">
-                                            <div>
-                                                <h4 className="text-sm font-semibold text-gray-600">Commit code</h4>
-                                                <span className="font-mono">
-                                                    {shortString(goshRootDetails.data.decoded?.m_CommitCode || '-', 14, 14)}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <h4 className="text-sm font-semibold text-gray-600">Commit data</h4>
-                                                <span className="font-mono">
-                                                    {shortString(goshRootDetails.data.decoded?.m_CommitData || '-', 14, 14)}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-wrap mt-5 gap-x-4 gap-y-3 justify-between">
-                                            <div>
-                                                <h4 className="text-sm font-semibold text-gray-600">Blob code</h4>
-                                                <span className="font-mono">
-                                                    {shortString(goshRootDetails.data.decoded?.m_BlobCode || '-', 14, 14)}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <h4 className="text-sm font-semibold text-gray-600">Blob data</h4>
-                                                <span className="font-mono">
-                                                    {shortString(goshRootDetails.data.decoded?.m_BlobData || '-', 14, 14)}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-wrap mt-5 gap-x-4 gap-y-3 justify-between">
-                                            <div>
-                                                <h4 className="text-sm font-semibold text-gray-600">Snapshot code</h4>
-                                                <span className="font-mono">
-                                                    {shortString(goshRootDetails.data.decoded?.m_SnapshotCode || '-', 14, 14)}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <h4 className="text-sm font-semibold text-gray-600">Snapshot data</h4>
-                                                <span className="font-mono">
-                                                    {shortString(goshRootDetails.data.decoded?.m_SnapshotData || '-', 14, 14)}
-                                                </span>
                                             </div>
                                         </div>
                                     </>

@@ -1,36 +1,34 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Field, Form, Formik } from "formik";
-import { useNavigate, useOutletContext, useParams } from "react-router-dom";
-import BranchSelect from "../../components/BranchSelect";
-import { TGoshBranch } from "../../types/types";
+import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
 import TextField from "../../components/FormikForms/TextField";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import Spinner from "../../components/Spinner";
-import { generateDiff, getGoshRepositoryBranches } from "../../helpers";
+import { generateDiff } from "../../helpers";
 import * as Yup from "yup";
 
 
 type TFormValues = {
-    blobName: string;
-    blobContent: string;
+    branch: string;
+    name: string;
+    content: string;
 }
 
 const BlobCreatePage = () => {
     const { goshRepository } = useOutletContext<TRepositoryLayoutOutletContext>();
     const { repoName, branchName = 'master' } = useParams();
     const navigate = useNavigate();
-    const [branches, setBranches] = useState<TGoshBranch[]>([]);
     const monaco = useMonaco();
 
     const onFormSubmit = async (values: TFormValues) => {
         try {
-            const diff = await generateDiff(monaco, values.blobContent);
+            const diff = await generateDiff(monaco, values.content);
             await goshRepository.createCommit(
                 branchName,
-                'Create blob',
-                [{ name: values.blobName, diff }],
-                [{ name: values.blobName, content: values.blobContent }]
+                `Create file \`${values.name}\``,
+                [{ name: values.name, diff }],
+                [{ name: values.name, content: values.content }]
             );
             navigate(`/repositories/${repoName}/tree/${branchName}`);
         } catch (e: any) {
@@ -38,72 +36,61 @@ const BlobCreatePage = () => {
         }
     }
 
-    useEffect(() => {
-        const initState = async () => {
-            const [branches] = await getGoshRepositoryBranches(goshRepository);
-            setBranches(branches);
-        }
-
-        initState();
-    }, [goshRepository, branchName]);
-
     return (
-        <div>
-            <h2 className="text-gray-700 text-xl font-semibold mb-5">Create blob</h2>
-
-            <Formik
-                initialValues={{ blobName: '', blobContent: '' }}
-                onSubmit={onFormSubmit}
-                validationSchema={Yup.object().shape({
-                    blobName: Yup.string().required(' ')
-                })}
-            >
-                {({ setFieldValue, isSubmitting }) => (
-                    <Form>
-                        <div className="flex items-center justify-between gap-3">
+        <Formik
+            initialValues={{ branch: branchName, name: '', content: '' }}
+            onSubmit={onFormSubmit}
+            validationSchema={Yup.object().shape({
+                name: Yup.string().required('Field is required')
+            })}
+        >
+            {({ setFieldValue, isSubmitting }) => (
+                <Form>
+                    <div className="flex gap-3 items-baseline justify-between ">
+                        <div className="flex items-baseline">
+                            <Link
+                                to={`/repositories/${repoName}/tree/${branchName}`}
+                                className="font-medium text-extblue hover:underline"
+                            >
+                                {repoName}
+                            </Link>
+                            <span className="mx-2">/</span>
                             <div>
-                                <BranchSelect
-                                    branch={branches.find((branch) => branch.name === branchName)}
-                                    branches={branches}
-                                    onChange={(selected) => {
-                                        if (selected) {
-                                            navigate(`/repositories/${repoName}/blobs/${selected.name}/create`);
-                                        }
-                                    }}
-                                />
-                                <span className="mx-3">/</span>
                                 <Field
-                                    name="blobName"
+                                    name="name"
                                     component={TextField}
                                     inputProps={{
+                                        className: 'input--text text-sm py-1.5',
                                         autoComplete: 'off',
-                                        placeholder: 'Blob name'
+                                        placeholder: 'Name of new file'
                                     }}
                                 />
                             </div>
-
-                            <button
-                                className="px-3 py-1.5 text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600 disabled:opacity-75 rounded font-medium"
-                                type="submit"
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting && <Spinner className="mr-2" />}
-                                Create blob
-                            </button>
+                            <span className="mx-2">in</span>
+                            <span className="text-sm">{repoName}:{branchName}</span>
                         </div>
 
-                        <Editor
-                            className="min-h-[500px]"
-                            wrapperProps={{
-                                className: 'mt-5 py-3 border rounded overflow-hidden'
-                            }}
-                            language="markdown"
-                            onChange={(value) => setFieldValue('blobContent', value)}
-                        />
-                    </Form>
-                )}
-            </Formik>
-        </div>
+                        <button
+                            className="btn--blue text-sm font-medium px-3 py-1.5"
+                            type="submit"
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting && <Spinner className="mr-2" />}
+                            Commit changes
+                        </button>
+                    </div>
+
+                    <Editor
+                        className="min-h-[500px]"
+                        wrapperProps={{
+                            className: 'mt-5 py-3 border rounded overflow-hidden'
+                        }}
+                        language="markdown"
+                        onChange={(value) => setFieldValue('content', value)}
+                    />
+                </Form>
+            )}
+        </Formik>
     );
 }
 

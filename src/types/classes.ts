@@ -285,6 +285,7 @@ export class GoshRepository implements IGoshRepository {
     }
 
     async createBranch(name: string, fromName: string): Promise<void> {
+        // Deploy branch
         const { body } = await this.account.client.abi.encode_message_body({
             abi: this.account.abi,
             call_set: {
@@ -294,7 +295,16 @@ export class GoshRepository implements IGoshRepository {
             is_internal: true,
             signer: signerNone()
         });
-        await giver(this.account.client, this.address, fromEvers(0.25), body);
+        await giver(this.account.client, this.address, fromEvers(1.55), body);
+
+        // Copy `from` branch snapshot to new branch snapshot
+        console.debug('Repo addr', this.address);
+        const fromBranch = await this.getBranch(fromName);
+        await fromBranch.snapshot.load();
+        console.debug('From branch:', fromBranch);
+        const newBranch = await this.getBranch(name);
+        console.debug('New branch:', newBranch);
+        await newBranch.snapshot.setSnapshot(fromBranch.snapshot.meta?.content || []);
     }
 
     async deleteBranch(name: string): Promise<void> {
@@ -413,6 +423,19 @@ export class GoshRepository implements IGoshRepository {
             }
         );
         return result.decoded?.output.value0;
+    }
+
+    async createSnapshot(name: string): Promise<void> {
+        const { body } = await this.account.client.abi.encode_message_body({
+            abi: this.account.abi,
+            call_set: {
+                function_name: 'deployNewSnapshot',
+                input: { name }
+            },
+            is_internal: true,
+            signer: signerNone()
+        });
+        await giver(this.account.client, this.address, fromEvers(1.45), body);
     }
 }
 

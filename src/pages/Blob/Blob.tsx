@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import BranchSelect from "../../components/BranchSelect";
 import { IGoshBlob, TGoshBranch } from "../../types/types";
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
@@ -62,6 +62,8 @@ const BlobPage = () => {
                     const blob = new GoshBlob(goshRepository.account.client, blobItem.address);
                     await blob.load();
                     setBlob(blob);
+                } else {
+                    setBlob(undefined);
                 }
                 setBranch(branch);
             }
@@ -80,24 +82,29 @@ const BlobPage = () => {
 
     return (
         <div>
-            <h2 className="text-gray-700 text-xl font-semibold mb-5">Read/update blob</h2>
-
             <div className="flex items-center justify-between gap-3 mb-5">
                 <div>
                     <BranchSelect
                         branch={branch}
                         branches={branches}
+                        disabled={editing.isEditing}
                         onChange={(selected) => {
                             if (selected) {
                                 navigate(`/repositories/${repoName}/blob/${selected.name}/${blobName}`);
                             }
                         }}
                     />
-                    <span className="mx-3">/</span>
-                    <span>{blobName}</span>
+                    <Link
+                        to={`/repositories/${repoName}/tree/${branchName}`}
+                        className="ml-3 text-extblue font-medium hover:underline"
+                    >
+                        {repoName}
+                    </Link>
+                    <span className="mx-2">/</span>
+                    <span className="font-meduim">{blobName}</span>
                 </div>
 
-                {!editing.isEditing && (
+                {blob && !editing.isEditing && (
                     <button
                         className="px-3 py-1.5 text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600 disabled:opacity-75 rounded font-medium"
                         type="button"
@@ -111,7 +118,7 @@ const BlobPage = () => {
                 )}
             </div>
 
-            {!blob && (<p>Blob not found</p>)}
+            {!blob && (<p>File not found</p>)}
             {blob && !editing.isEditing && (
                 <div className="markdown-body py-3 px-4 border rounded overflow-hidden">
                     <ReactMarkdown>{blob.meta?.content || ''}</ReactMarkdown>

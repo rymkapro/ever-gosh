@@ -9,7 +9,6 @@ export interface IBaseFieldProps extends FieldProps {
     labelClassName: string | undefined;
     help: string | undefined;
     helpClassName: string | undefined;
-    inputClassName: string | undefined;
     errorClassName: string | undefined;
 }
 

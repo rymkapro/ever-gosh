@@ -4,6 +4,8 @@ import { IGoshRepository, TGoshBranch, TGoshSnapshotMetaContentItem } from "../.
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
 import BranchSelect from "../../components/BranchSelect";
 import { getGoshRepositoryBranches } from "../../helpers";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faClockRotateLeft, faCodeBranch } from "@fortawesome/free-solid-svg-icons";
 
 
 const RepositoryPage = () => {
@@ -29,29 +31,46 @@ const RepositoryPage = () => {
     }, [goshRepository, branchName]);
 
     return (
-        <div>
+        <>
             <div className="flex items-center justify-between gap-3">
-                <BranchSelect
-                    branch={branch}
-                    branches={branches}
-                    onChange={(selected) => {
-                        if (selected) {
-                            navigate(`repository/${repoName}/tree/${selected.name}`);
-                        }
-                    }} />
+                <div>
+                    <BranchSelect
+                        branch={branch}
+                        branches={branches}
+                        onChange={(selected) => {
+                            if (selected) {
+                                navigate(`/repositories/${repoName}/tree/${selected.name}`);
+                            }
+                        }}
+                    />
+
+                    <Link
+                        to={`/repositories/${repoName}/branches`}
+                        className="ml-4 text-sm text-gray-500 hover:text-extblue"
+                    >
+                        <span className="mr-1 font-semibold">
+                            <FontAwesomeIcon icon={faCodeBranch} className="mr-1" />
+                            {branches.length}
+                        </span>
+                        branches
+                    </Link>
+
+                    <Link
+                        to={`/repositories/${repoName}/commits/${branchName}`}
+                        className="ml-4 text-sm text-gray-500 hover:text-extblue"
+                    >
+                        <FontAwesomeIcon icon={faClockRotateLeft} className="mr-1" />
+                        History
+                    </Link>
+                </div>
+
 
                 <div className="flex gap-3">
                     <Link
-                        to={`/repositories/${repoName}/commits/${branchName}`}
-                        className="px-3 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600 disabled:opacity-75 rounded font-medium"
-                    >
-                        Commits
-                    </Link>
-                    <Link
                         to={`/repositories/${repoName}/blobs/${branchName}/create`}
-                        className="px-3 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600 disabled:opacity-75 rounded font-medium"
+                        className="px-4 py-1.5 text-sm font-medium rounded border hover:bg-gray-50"
                     >
-                        Create blob
+                        Add file
                     </Link>
                 </div>
             </div>
@@ -74,7 +93,7 @@ const RepositoryPage = () => {
                         key={index}
                         className="flex gap-x-4 py-3 border-b border-gray-300 last:border-b-0"
                     >
-                        <div className="basis-1/4 text-gray-600 text-sm font-medium">
+                        <div className="basis-1/4 text-sm font-medium">
                             <Link
                                 className="hover:underline"
                                 to={`/repositories/${repoName}/blob/${branchName}/${blob?.name}`}
@@ -93,7 +112,7 @@ const RepositoryPage = () => {
                     </div>
                 ))}
             </div>
-        </div>
+        </>
     );
 }
 

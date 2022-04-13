@@ -82,15 +82,16 @@ export interface IGoshRepository extends IContract {
 
     getBranches(): Promise<TGoshBranch[]>;
     getBranch(name: string): Promise<TGoshBranch>;
-    createBranch(name: string, fromName: string): Promise<void>;
-    deleteBranch(name: string): Promise<void>;
+    getCommitAddr(branchName: string, commitSha: string): Promise<string>;
     createCommit(
         branchName: string,
         message: string,
         data: { name: string; diff: TDiffData[] }[],
         blobs: { name: string; content: string; }[]
     ): Promise<void>;
-    getCommitAddr(branchName: string, commitSha: string): Promise<string>;
+    createBranch(name: string, fromName: string): Promise<void>;
+    deleteBranch(name: string): Promise<void>;
+    createSnapshot(name: string): Promise<void>;
 }
 
 export interface IGoshCommit extends IContract {

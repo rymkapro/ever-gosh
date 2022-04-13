@@ -4,23 +4,23 @@ import BaseField, { IBaseFieldProps } from "./BaseField";
 
 
 interface ITextFieldProps extends IBaseFieldProps {
-    inputProps: React.InputHTMLAttributes<HTMLInputElement> | undefined;
+    inputProps: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
 const TextField = (props: ITextFieldProps) => {
-    const { inputProps, inputClassName, field, form } = props;
+    const { inputProps, field, form } = props;
+    const { className, ...restInputProps } = inputProps;
 
     return (
         <BaseField {...props}>
             <input
                 className={classNames(
-                    'border rounded px-2 py-1',
-                    inputClassName,
+                    className,
                     form.touched[field.name] && form.errors[field.name]
                         ? 'border-rose-600 placeholder:text-rose-600'
                         : 'border-gray-200'
                 )}
-                {...inputProps}
+                {...restInputProps}
                 {...field}
             />
         </BaseField>
