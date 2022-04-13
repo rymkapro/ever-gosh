@@ -62,11 +62,11 @@ const SignupPage = () => {
                                     component={TextareaField}
                                     label="Seed phrase"
                                     inputProps={{
+                                        className: 'input--textarea px-3 py-2 w-full',
                                         autoComplete: 'off',
                                         placeholder: 'GOSH root seed phrase',
                                         readOnly: true
                                     }}
-                                    inputClassName="px-3 py-2 w-full"
                                 />
                             </div>
 

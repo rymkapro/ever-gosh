@@ -72,12 +72,17 @@ const CommitsPage = () => {
                         key={index}
                         className="flex py-3 border-b border-gray-300 last:border-b-0 justify-between items-center"
                     >
-                        <Link
-                            className="hover:underline"
-                            to={`/repositories/${repoName}/commit/${branchName}:${commit.meta?.sha}`}
-                        >
-                            {commit.meta?.content.message}
-                        </Link>
+                        <div>
+                            <Link
+                                className="hover:underline"
+                                to={`/repositories/${repoName}/commit/${branchName}:${commit.meta?.sha}`}
+                            >
+                                {commit.meta?.content.title}
+                            </Link>
+                            {commit.meta?.content.message && (
+                                <div className="text-sm text-gray-500">{commit.meta.content.message}</div>
+                            )}
+                        </div>
 
                         <div className="flex border rounded items-center">
                             <Link

@@ -47,10 +47,10 @@ const SigninPage = () => {
                                     name="phrase"
                                     component={TextareaField}
                                     inputProps={{
+                                        className: 'input--textarea w-full px-3 py-2',
                                         autoComplete: 'off',
                                         placeholder: 'GOSH root seed phrase'
                                     }}
-                                    inputClassName="px-3 py-2 w-full"
                                 />
                             </div>
 

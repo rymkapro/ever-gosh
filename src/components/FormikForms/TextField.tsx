@@ -20,8 +20,8 @@ const TextField = (props: ITextFieldProps) => {
                         ? 'border-rose-600 placeholder:text-rose-600'
                         : 'border-gray-200'
                 )}
-                {...restInputProps}
                 {...field}
+                {...restInputProps}
             />
         </BaseField>
     );

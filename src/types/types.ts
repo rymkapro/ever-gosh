@@ -31,7 +31,10 @@ export type TGoshSnapshotMetaContentItem = {
     address: string;
     firstCommitSha: string;
     lastCommitSha: string;
-    lastCommitMsg: string;
+    lastCommitMsg: {
+        title: string;
+        message: string;
+    };
 }
 
 export type TDiffData = {
@@ -85,8 +88,8 @@ export interface IGoshRepository extends IContract {
     getCommitAddr(branchName: string, commitSha: string): Promise<string>;
     createCommit(
         branchName: string,
-        message: string,
-        data: { name: string; diff: TDiffData[] }[],
+        commitData: { title: string; message: string; },
+        diffData: { name: string; diff: TDiffData[] }[],
         blobs: { name: string; content: string; }[]
     ): Promise<void>;
     createBranch(name: string, fromName: string): Promise<void>;
@@ -100,6 +103,7 @@ export interface IGoshCommit extends IContract {
         branchName: string;
         sha: string;
         content: {
+            title: string;
             message: string;
             blobs: {
                 name: string;

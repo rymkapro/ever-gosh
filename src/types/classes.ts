@@ -330,8 +330,8 @@ export class GoshRepository implements IGoshRepository {
      */
     async createCommit(
         branchName: string,
-        message: string,
-        data: { name: string; diff: TDiffData[] }[],
+        commitData: { title: string; message: string; },
+        diffData: { name: string; diff: TDiffData[] }[],
         blobs: { name: string; content: string }[] = []
     ): Promise<void> {
         // Generate blobs sha
@@ -341,9 +341,9 @@ export class GoshRepository implements IGoshRepository {
         }));
 
         // Create `fullCommit` data
-        const commitData = {
-            message,
-            blobs: data.map((item) => {
+        const commitFullData = {
+            ...commitData,
+            blobs: diffData.map((item) => {
                 const blob = blobsWithSha.find((blob) => blob.name === item.name);
                 if (!blob) throw Error(`Can not find blob '${item.name}' in blobs`);
                 return {
@@ -354,7 +354,7 @@ export class GoshRepository implements IGoshRepository {
         }
 
         // Deploy commit
-        const commitSha = sha1(JSON.stringify(commitData), 'commit');
+        const commitSha = sha1(JSON.stringify(commitFullData), 'commit');
         const { body } = await this.account.client.abi.encode_message_body({
             abi: this.account.abi,
             call_set: {
@@ -362,7 +362,7 @@ export class GoshRepository implements IGoshRepository {
                 input: {
                     nameBranch: branchName,
                     nameCommit: commitSha,
-                    fullCommit: JSON.stringify(commitData)
+                    fullCommit: JSON.stringify(commitFullData)
                 }
             },
             is_internal: true,
@@ -398,14 +398,14 @@ export class GoshRepository implements IGoshRepository {
                         address: blobAddr,
                         firstCommitSha: commitSha,
                         lastCommitSha: commitSha,
-                        lastCommitMsg: message
+                        lastCommitMsg: commitData
                     });
                 } else {
                     snapshot.meta.content[foundIndex] = {
                         ...snapshot.meta.content[foundIndex],
                         address: blobAddr,
                         lastCommitSha: commitSha,
-                        lastCommitMsg: message
+                        lastCommitMsg: commitData
                     };
                 }
             })
@@ -447,6 +447,7 @@ export class GoshCommit implements IGoshCommit {
         branchName: string;
         sha: string;
         content: {
+            title: string;
             message: string;
             blobs: {
                 name: string;

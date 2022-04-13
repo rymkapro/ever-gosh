@@ -31,7 +31,7 @@ const BaseField = (props: IBaseFieldProps) => {
             )}
             {children}
             {help && (
-                <div className={classNames('text-xs text-gray-500 mt-1', helpClassName)}>
+                <div className={classNames('text-xs text-gray-500', helpClassName)}>
                     {help}
                 </div>
             )}

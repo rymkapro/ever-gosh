@@ -41,9 +41,14 @@ const CommitPage = () => {
             {commit && (
                 <>
                     <div className="border rounded">
-                        <div className="text-gray-600 font-medium px-3 py-1.5">
-                            {commit.meta?.content.message}
+                        <div className="font-medium px-3 mt-2">
+                            {commit.meta?.content.title}
                         </div>
+
+                        {commit.meta?.content.message && (
+                            <div className="px-3 mb-2 text-gray-500 text-sm">{commit.meta.content.message}</div>
+                        )}
+
                         <div className="flex border-t justify-end px-3 py-1">
                             <div className="text-gray-600 text-xs">
                                 <span className="mr-2 text-gray-500">sha1</span>

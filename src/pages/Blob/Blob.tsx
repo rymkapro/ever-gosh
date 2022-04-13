@@ -40,7 +40,7 @@ const BlobPage = () => {
             const diff = await generateDiff(monaco, values.blobContent, blob.meta?.content);
             await goshRepository.createCommit(
                 branchName,
-                values.message,
+                { title: values.message, message: '' },
                 [{ name: blobName, diff }],
                 [{ name: blobName, content: values.blobContent }]
             );
