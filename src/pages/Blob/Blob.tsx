@@ -138,8 +138,8 @@ const BlobPage = () => {
                                 <Field
                                     name="message"
                                     component={TextField}
-                                    inputClassName="grow"
                                     inputProps={{
+                                        className: 'input--text grow text-sm py-1.5',
                                         autoComplete: 'off',
                                         placeholder: 'Commit message'
                                     }}

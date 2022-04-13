@@ -13,8 +13,8 @@ const CommitPage = () => {
     const [commit, setCommit] = useState<IGoshCommit>();
     const [blobs, setBlobs] = useState<IGoshBlob[]>();
 
-    const getCommit = async (repo: IGoshRepository, branchName: string, name: string) => {
-        const address = await repo.getCommitAddr(branchName, name);
+    const getCommit = async (repo: IGoshRepository, name: string) => {
+        const address = await repo.getCommitAddr(name);
         const commit = new GoshCommit(repo.account.client, address);
         await commit.load();
 
@@ -31,8 +31,7 @@ const CommitPage = () => {
     }
 
     useEffect(() => {
-        const [branch, commit] = (commitName || '').split(':');
-        if (branch && commit) getCommit(goshRepository, branch, commit);
+        if (commitName) getCommit(goshRepository, commitName);
     }, [goshRepository, commitName]);
 
     return (
@@ -41,7 +40,7 @@ const CommitPage = () => {
             {commit && (
                 <>
                     <div className="border rounded">
-                        <div className="font-medium px-3 mt-2">
+                        <div className="font-medium px-3 py-2">
                             {commit.meta?.content.title}
                         </div>
 

@@ -85,7 +85,7 @@ export interface IGoshRepository extends IContract {
 
     getBranches(): Promise<TGoshBranch[]>;
     getBranch(name: string): Promise<TGoshBranch>;
-    getCommitAddr(branchName: string, commitSha: string): Promise<string>;
+    getCommitAddr(commitSha: string): Promise<string>;
     createCommit(
         branchName: string,
         commitData: { title: string; message: string; },

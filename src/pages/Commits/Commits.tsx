@@ -75,7 +75,7 @@ const CommitsPage = () => {
                         <div>
                             <Link
                                 className="hover:underline"
-                                to={`/repositories/${repoName}/commit/${branchName}:${commit.meta?.sha}`}
+                                to={`/repositories/${repoName}/commit/${commit.meta?.sha}`}
                             >
                                 {commit.meta?.content.title}
                             </Link>
@@ -87,7 +87,7 @@ const CommitsPage = () => {
                         <div className="flex border rounded items-center">
                             <Link
                                 className="px-2 py-1 font-medium font-mono text-xs hover:underline hover:text-extblue"
-                                to={`/repositories/${repoName}/commit/${branchName}:${commit.meta?.sha}`}
+                                to={`/repositories/${repoName}/commit/${commit.meta?.sha}`}
                             >
                                 {shortString(commit.meta?.sha || '', 7, 0, '')}
                             </Link>

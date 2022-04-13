@@ -13,10 +13,17 @@ const HomePage = () => {
                 <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-gray-800">
                     Git Onchain Source Holder
                 </h1>
-                <p className="text-gray-500 mt-3 text-base sm:mt-5 sm:text-lg sm:max-w-2xl sm:mx-auto md:text-xl text-left">
-                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Quaerat dignissimos consectetur quos
-                    incidunt laudantium, consequatur adipisci ducimus culpa
-                </p>
+                <div className="text-base mt-6 sm:text-lg sm:max-w-2xl sm:mx-auto md:text-xl text-left">
+                    <p className="text-center">
+                        The easiest way to secure your code.
+                    </p>
+                    <p className="mt-6">
+                        GOSH — a scalable blockchain reducing the risks and resources spent on protecting code.
+                        Build composable, censorship-resistant repositories.
+                        Collaborate and realize great ideas.
+                    </p>
+                    <p className="mt-2">All in a decentralized way.</p>
+                </div>
                 <div className="mt-4 sm:mt-10 sm:flex justify-center gap-x-8">
                     {userState.address ? (
                         <div>

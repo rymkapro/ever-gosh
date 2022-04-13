@@ -371,7 +371,7 @@ export class GoshRepository implements IGoshRepository {
         await giver(this.account.client, this.address, fromEvers(5), body);
 
         // Get commit address, create commit object
-        const commitAddr = await this.getCommitAddr(branchName, commitSha);
+        const commitAddr = await this.getCommitAddr(commitSha);
         console.debug('[Commit addr]:', commitAddr);
         const commit = new GoshCommit(this.account.client, commitAddr);
 
@@ -414,13 +414,10 @@ export class GoshRepository implements IGoshRepository {
         await snapshot.setSnapshot(snapshot.meta?.content);
     }
 
-    async getCommitAddr(branchName: string, commitSha: string): Promise<string> {
+    async getCommitAddr(commitSha: string): Promise<string> {
         const result = await this.account.runLocal(
             'getCommitAddr',
-            {
-                nameBranch: branchName,
-                nameCommit: commitSha
-            }
+            { nameCommit: commitSha }
         );
         return result.decoded?.output.value0;
     }

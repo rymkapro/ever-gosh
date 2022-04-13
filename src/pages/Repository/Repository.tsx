@@ -104,7 +104,7 @@ const RepositoryPage = () => {
                         <div className="text-gray-500 text-sm">
                             <Link
                                 className="hover:underline"
-                                to={`/repositories/${repoName}/commit/${branchName}:${blob.lastCommitSha}`}
+                                to={`/repositories/${repoName}/commit/${blob.lastCommitSha}`}
                             >
                                 {blob.lastCommitMsg.title}
                             </Link>
