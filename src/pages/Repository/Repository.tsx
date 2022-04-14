@@ -18,7 +18,7 @@ const RepositoryPage = () => {
 
     useEffect(() => {
         const initState = async (repo: IGoshRepository, currBranchName: string) => {
-            const [branches, branch] = await getGoshRepositoryBranches(repo, currBranchName);
+            const { branches, branch } = await getGoshRepositoryBranches(repo, currBranchName);
             if (branch) {
                 await branch.snapshot.load();
                 setBranch(branch);
@@ -64,10 +64,9 @@ const RepositoryPage = () => {
                     </Link>
                 </div>
 
-
                 <div className="flex gap-3">
                     <Link
-                        to={`/repositories/${repoName}/blobs/${branchName}/create`}
+                        to={`/repositories/${repoName}/blobs/create/${branchName}`}
                         className="px-4 py-1.5 text-sm font-medium rounded border hover:bg-gray-50"
                     >
                         Add file

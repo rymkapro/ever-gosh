@@ -45,7 +45,7 @@ export const getGiverData = (): any => {
     }
 }
 
-export const createGoshRootFromPhrase = async (
+export const getGoshRootFromPhrase = async (
     client: TonClient,
     phrase: string,
     address?: string
@@ -59,10 +59,10 @@ export const createGoshRootFromPhrase = async (
 export const getGoshRepositoryBranches = async (
     repo: IGoshRepository,
     selectedBranchName: string = 'master'
-): Promise<[TGoshBranch[], TGoshBranch | undefined]> => {
+): Promise<{ branches: TGoshBranch[], branch: TGoshBranch | undefined }> => {
     const branches = await repo.getBranches();
     const branch = branches.find((branch) => branch.name === selectedBranchName);
-    return [branches, branch];
+    return { branches, branch };
 }
 
 /**
@@ -122,6 +122,15 @@ export const restoreFromDiff = (modified: string, diff: TDiffData[]): string => 
     }
     // console.log('Restored', restored);
     return restored.join('\n');
+}
+
+export const getCodeLanguageFromFilename = (monaco: any, filename: string): string => {
+    let splitted = filename.split('.');
+    const ext = `.${splitted[splitted.length - 1]}`;
+    const found = monaco.languages.getLanguages().find((item: any) => (
+        item.extensions.indexOf(ext) >= 0
+    ));
+    return found?.id || 'plaintext';
 }
 
 /**

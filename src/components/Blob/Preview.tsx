@@ -1,25 +1,27 @@
 import React from "react";
 import Editor from "@monaco-editor/react";
 import ReactMarkdown from "react-markdown";
+import { classNames } from "../../utils";
 
 
-type TPreviewPanelProps = {
+type TBlobPreviewProps = {
     language?: string;
     value?: string;
+    className?: string;
 }
 
-const PreviewPanel = (props: TPreviewPanelProps) => {
-    const { language, value } = props;
+const BlobPreview = (props: TBlobPreviewProps) => {
+    const { language, value, className } = props;
 
     if (language === 'markdown') return (
-        <div className="markdown-body px-4 py-4">
+        <div className={classNames('markdown-body px-4 py-4', className)}>
             <ReactMarkdown>{value || ''}</ReactMarkdown>
         </div>
     );
     return (
         <Editor
             wrapperProps={{
-                className: 'py-3'
+                className: classNames('py-3', className)
             }}
             language={language}
             value={value}
@@ -46,4 +48,4 @@ const PreviewPanel = (props: TPreviewPanelProps) => {
     );
 }
 
-export default PreviewPanel;
+export default BlobPreview;

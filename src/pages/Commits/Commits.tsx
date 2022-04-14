@@ -31,7 +31,7 @@ const CommitsPage = () => {
 
     useEffect(() => {
         const initState = async (repo: IGoshRepository, currBranchName: string) => {
-            const [branches, branch] = await getGoshRepositoryBranches(repo, currBranchName);
+            const { branches, branch } = await getGoshRepositoryBranches(repo, currBranchName);
             if (branch) {
                 await getCommits(repo, branch);
                 setBranch(branch);

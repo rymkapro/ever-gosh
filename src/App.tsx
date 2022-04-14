@@ -14,6 +14,7 @@ import RepositoryCreatePage from "./pages/RepositoryCreate";
 import RepositoryLayout from "./pages/RepositoryLayout";
 import RepositoryPage from "./pages/Repository";
 import BlobCreatePage from "./pages/BlobCreate";
+import BlobUpdatePage from "./pages/BlobUpdate";
 import BlobPage from "./pages/Blob";
 import CommitsPage from "./pages/Commits";
 import CommitPage from "./pages/Commit";
@@ -49,7 +50,8 @@ const App = () => {
                         <Route path=":repoName" element={<RepositoryLayout />}>
                             <Route index element={<RepositoryPage />} />
                             <Route path="tree/:branchName" element={<RepositoryPage />} />
-                            <Route path="blobs/:branchName/create" element={<BlobCreatePage />} />
+                            <Route path="blobs/create/:branchName" element={<BlobCreatePage />} />
+                            <Route path="blobs/update/:branchName/:blobName" element={<BlobUpdatePage />} />
                             <Route path="blob/:branchName/:blobName" element={<BlobPage />} />
                             <Route path="commits/:branchName" element={<CommitsPage />} />
                             <Route path="commit/:commitName" element={<CommitPage />} />

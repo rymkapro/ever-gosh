@@ -4,16 +4,15 @@ import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
 import TextField from "../../components/FormikForms/TextField";
 import { useMonaco } from "@monaco-editor/react";
-import Spinner from "../../components/Spinner";
-import { generateDiff } from "../../helpers";
+import { generateDiff, getCodeLanguageFromFilename } from "../../helpers";
 import * as Yup from "yup";
 import { Tab } from "@headlessui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCode, faEye } from "@fortawesome/free-solid-svg-icons";
-import EditorPanel from "./EditorPanel";
-import PreviewPanel from "./PreviewPanel";
 import { classNames } from "../../utils";
-import TextareaField from "../../components/FormikForms/TextareaField";
+import BlobEditor from "../../components/Blob/Editor";
+import BlobPreview from "../../components/Blob/Preview";
+import FormCommitBlock from "./FormCommitBlock";
 
 
 type TFormValues = {
@@ -29,10 +28,11 @@ const BlobCreatePage = () => {
     const { repoName, branchName = 'master' } = useParams();
     const navigate = useNavigate();
     const monaco = useMonaco();
-    const [editorLanguage, setEditorLanguage] = useState<string>('plaintext');
+    const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
     const [activeTab, setActiveTab] = useState<number>(0);
+    const urlBack = `/repositories/${repoName}/tree/${branchName}`;
 
-    const onFormSubmit = async (values: TFormValues) => {
+    const onCommitChanges = async (values: TFormValues) => {
         try {
             const diff = await generateDiff(monaco, values.content);
             await goshRepository.createCommit(
@@ -41,7 +41,7 @@ const BlobCreatePage = () => {
                 [{ name: values.name, diff }],
                 [{ name: values.name, content: values.content }]
             );
-            navigate(`/repositories/${repoName}/tree/${branchName}`);
+            navigate(urlBack);
         } catch (e: any) {
             alert(e.message);
         }
@@ -54,7 +54,7 @@ const BlobCreatePage = () => {
                 name: Yup.string().required('Field is required'),
                 title: Yup.string().required('Field is required')
             })}
-            onSubmit={onFormSubmit}
+            onSubmit={onCommitChanges}
         >
             {({ values, setFieldValue, isSubmitting, handleBlur }) => (
                 <Form>
@@ -81,12 +81,12 @@ const BlobCreatePage = () => {
                                             handleBlur(e);
 
                                             // Resolve file code language by it's extension
-                                            let splitted = e.target.value.split('.');
-                                            const ext = `.${splitted[splitted.length - 1]}`;
-                                            const found = monaco.languages.getLanguages().find((item: any) => (
-                                                item.extensions.indexOf(ext) >= 0
-                                            ));
-                                            setEditorLanguage(found?.id || 'plaintext');
+                                            // and update editor
+                                            const language = getCodeLanguageFromFilename(
+                                                monaco,
+                                                e.target.value
+                                            );
+                                            setBlobCodeLanguage(language);
 
                                             // Set commit title
                                             setFieldValue('title', `Create ${e.target.value}`);
@@ -99,7 +99,7 @@ const BlobCreatePage = () => {
                         </div>
 
                         <Link
-                            to={`/repositories/${repoName}/tree/${branchName}`}
+                            to={urlBack}
                             className="px-3 py-1.5 text-sm font-medium border rounded hover:bg-gray-50"
                         >
                             Discard changes
@@ -140,60 +140,24 @@ const BlobCreatePage = () => {
                                 className="-mt-[1px] border-t"
                             >
                                 <Tab.Panel>
-                                    <EditorPanel
-                                        language={editorLanguage}
+                                    <BlobEditor
+                                        language={blobCodeLanguage}
                                         value={values.content}
                                         onChange={(value) => setFieldValue('content', value)}
                                     />
                                 </Tab.Panel>
                                 <Tab.Panel>
-                                    <PreviewPanel language={editorLanguage} value={values.content} />
+                                    <BlobPreview language={blobCodeLanguage} value={values.content} />
                                 </Tab.Panel>
                             </Tab.Panels>
                         </Tab.Group>
                     </div>
 
-                    <div className="mt-5 border rounded px-4 py-3">
-                        <h3 className="text-lg font-semibold mb-2">Commit data</h3>
-                        <div>
-                            <Field
-                                name="title"
-                                component={TextField}
-                                inputProps={{
-                                    className: 'input--text text-sm py-1.5 w-full',
-                                    autoComplete: 'off',
-                                    placeholder: 'Commit title'
-                                }}
-                            />
-                        </div>
-                        <div className="mt-3">
-                            <Field
-                                name="message"
-                                component={TextareaField}
-                                help="Markdown syntax is supported"
-                                inputProps={{
-                                    className: 'input--textarea text-sm py-1.5 w-full',
-                                    placeholder: 'Commit optional description'
-                                }}
-                            />
-                        </div>
-                        <div className="flex mt-4 items-center gap-3">
-                            <button
-                                className="btn--blue text-sm font-medium px-3 py-1.5"
-                                type="submit"
-                                disabled={!monaco || isSubmitting}
-                            >
-                                {isSubmitting && <Spinner className="mr-2" />}
-                                Commit changes
-                            </button>
-                            <Link
-                                to={`/repositories/${repoName}/tree/${branchName}`}
-                                className="px-3 py-1.5 border rounded text-sm font-medium text-rose-500 border-rose-500 hover:bg-rose-50"
-                            >
-                                Cancel
-                            </Link>
-                        </div>
-                    </div>
+                    <FormCommitBlock
+                        urlBack={urlBack}
+                        isDisabled={!monaco || isSubmitting}
+                        isSubmitting={isSubmitting}
+                    />
                 </Form>
             )}
         </Formik>

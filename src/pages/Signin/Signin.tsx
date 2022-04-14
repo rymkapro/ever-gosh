@@ -7,7 +7,7 @@ import { useSetRecoilState } from "recoil";
 import { userStateAtom } from "../../store/user.state";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../../components/Spinner";
-import { createGoshRootFromPhrase } from "../../helpers";
+import { getGoshRootFromPhrase } from "../../helpers";
 
 
 type TFormValues = {
@@ -21,7 +21,7 @@ const SigninPage = () => {
 
     const onFormSubmit = async (values: TFormValues) => {
         console.debug('[Signin form] - Submit values', values);
-        const root = await createGoshRootFromPhrase(everClient, values.phrase);
+        const root = await getGoshRootFromPhrase(everClient, values.phrase);
         setUserState({ address: root.details?.address, phrase: values.phrase });
         root.isDeployed
             ? navigate('/repositories', { replace: true })

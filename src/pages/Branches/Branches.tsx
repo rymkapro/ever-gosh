@@ -27,7 +27,7 @@ export const BranchesPage = () => {
     const brachesListQuery = useQuery(
         ['branchesList'],
         async (): Promise<TGoshBranch[]> => {
-            const [branches, branch] = await getGoshRepositoryBranches(goshRepository);
+            const { branches, branch } = await getGoshRepositoryBranches(goshRepository);
             setBranch(branch);
             return branches;
         },

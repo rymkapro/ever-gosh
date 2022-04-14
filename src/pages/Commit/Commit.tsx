@@ -3,13 +3,15 @@ import { useOutletContext, useParams } from "react-router-dom";
 import { GoshBlob, GoshCommit } from "../../types/classes";
 import { IGoshBlob, IGoshCommit, IGoshRepository } from "../../types/types";
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
-import { DiffEditor } from "@monaco-editor/react";
-import { restoreFromDiff } from "../../helpers";
+import { useMonaco } from "@monaco-editor/react";
+import { getCodeLanguageFromFilename, restoreFromDiff } from "../../helpers";
+import BlobDiffPreview from "../../components/Blob/DiffPreview";
 
 
 const CommitPage = () => {
     const { goshRepository } = useOutletContext<TRepositoryLayoutOutletContext>();
     const { commitName } = useParams();
+    const monaco = useMonaco();
     const [commit, setCommit] = useState<IGoshCommit>();
     const [blobs, setBlobs] = useState<IGoshBlob[]>();
 
@@ -36,8 +38,8 @@ const CommitPage = () => {
 
     return (
         <div>
-            {!commit && (<p>Loading commit...</p>)}
-            {commit && (
+            {(!monaco || !commit) && (<p>Loading commit...</p>)}
+            {monaco && commit && (
                 <>
                     <div className="border rounded">
                         <div className="font-medium px-3 py-2">
@@ -58,36 +60,17 @@ const CommitPage = () => {
 
                     {commit.meta?.content.blobs.map((item, index) => {
                         const blob = blobs?.find((blob) => blob.meta?.sha === item.sha);
+                        const language = getCodeLanguageFromFilename(monaco, item.name);
+                        const original = restoreFromDiff(blob?.meta?.content || '', item.diff);
                         return (
                             <div key={index} className="my-5 border rounded overflow-hidden">
                                 <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
                                     {item.name}
                                 </div>
-                                <DiffEditor
-                                    language="markdown"
-                                    original={restoreFromDiff(blob?.meta?.content || '', item.diff)}
+                                <BlobDiffPreview
+                                    original={original}
                                     modified={blob?.meta?.content}
-                                    options={{
-                                        enableSplitViewResizing: false,
-                                        renderSideBySide: false,
-                                        readOnly: true,
-                                        renderLineHighlight: 'none',
-                                        contextmenu: false,
-                                        automaticLayout: true,
-                                        renderOverviewRuler: false,
-                                        scrollBeyondLastLine: false,
-                                        scrollbar: {
-                                            vertical: 'hidden',
-                                            verticalScrollbarSize: 0,
-                                            handleMouseWheel: false
-                                        },
-                                    }}
-                                    onMount={(editor) => {
-                                        // Set diff editor dom element calculated real height
-                                        const originalHeight = editor.getOriginalEditor().getContentHeight();
-                                        const modifiedHeight = editor.getModifiedEditor().getContentHeight();
-                                        editor._domElement.style.height = `${originalHeight + modifiedHeight}px`;
-                                    }}
+                                    modifiedLanguage={language}
                                 />
                             </div>
                         );

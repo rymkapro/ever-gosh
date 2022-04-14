@@ -9,7 +9,7 @@ import { userStateAtom } from "../../store/user.state";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../../components/Spinner";
 import { TonClient } from "@eversdk/core";
-import { createGoshRootFromPhrase } from "../../helpers";
+import { getGoshRootFromPhrase } from "../../helpers";
 
 
 type TFormValues = {
@@ -30,7 +30,7 @@ const SignupPage = () => {
 
     const onFormSubmit = async (values: TFormValues) => {
         console.debug('[Signup form] - Submit values', values);
-        const root = await createGoshRootFromPhrase(everClient, values.phrase);
+        const root = await getGoshRootFromPhrase(everClient, values.phrase);
         setUserState({ address: root.details?.address, phrase: values.phrase });
         navigate('/account', { replace: true });
     }

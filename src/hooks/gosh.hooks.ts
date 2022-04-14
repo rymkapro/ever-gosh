@@ -1,7 +1,7 @@
 import { TonClient } from "@eversdk/core";
 import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
-import { createGoshRootFromPhrase } from "../helpers";
+import { getGoshRootFromPhrase } from "../helpers";
 import { userStateAtom } from "../store/user.state";
 import { GoshRepository } from "../types/classes";
 import { IGoshRepository, IGoshRoot } from "../types/types";
@@ -15,7 +15,7 @@ export const useGoshRoot = () => {
     const [goshRoot, setGoshRoot] = useState<IGoshRoot>();
 
     const createGoshRoot = async (client: TonClient, phrase: string, address: string) => {
-        const root = await createGoshRootFromPhrase(client, phrase, address);
+        const root = await getGoshRootFromPhrase(client, phrase, address);
         setGoshRoot(root);
     }
 
