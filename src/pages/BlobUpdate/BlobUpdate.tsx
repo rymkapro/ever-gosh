@@ -36,7 +36,6 @@ const BlobUpdatePage = () => {
     const urlBack = `/repositories/${repoName}/blob/${branchName}/${blobName}`;
 
     const onCommitChanges = async (values: TFormValues) => {
-        console.log(values);
         try {
             const diff = await generateDiff(monaco, values.content, blob?.meta?.content);
             await goshRepository.createCommit(

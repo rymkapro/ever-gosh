@@ -41,8 +41,13 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
                 editor.onDidUpdateDiff(() => {
                     // Set diff editor dom element calculated real height
                     const changes = editor.getLineChanges();
-                    let height = editor.getOriginalEditor().getContentHeight();
-                    if (changes.length) height += editor.getModifiedEditor().getContentHeight();
+                    const originalHeight = editor.getOriginalEditor().getContentHeight();
+                    let height = editor.getModifiedEditor().getContentHeight();
+                    if (changes.length && height < originalHeight) {
+                        const hDiff = originalHeight - height;
+                        console.log(hDiff);
+                        height += hDiff;
+                    }
                     editor._domElement.style.height = `${height}px`;
                 });
             }}
