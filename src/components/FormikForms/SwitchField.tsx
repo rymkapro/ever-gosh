@@ -7,12 +7,20 @@ import { ErrorMessage } from "formik";
 
 
 const SwitchField = (props: IBaseFieldProps) => {
-    const { label, labelClassName, errorClassName, form, field } = props;
+    const {
+        className,
+        label,
+        labelClassName,
+        errorEnabled = true,
+        errorClassName,
+        form,
+        field
+    } = props;
 
     return (
         <>
             <Switch.Group>
-                <div className="flex items-center">
+                <div className={classNames('flex items-center', className)}>
                     <Switch
                         checked={form.values[field.name]}
                         onChange={(value) => {
@@ -20,28 +28,23 @@ const SwitchField = (props: IBaseFieldProps) => {
                             form.setFieldValue(field.name, value, true);
                         }}
                         className={classNames(
-                            form.values[field.name] ? 'bg-blue-600' : 'bg-gray-200',
-                            'relative inline-flex flex-shrink-0 items-center h-5 rounded-full w-9 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500'
+                            'input--switch',
+                            form.values[field.name] ? 'checked' : null
                         )}
                     >
-                        <span
-                            className={classNames(
-                                form.values[field.name] ? 'translate-x-5' : 'translate-x-1',
-                                'inline-block w-3 h-3 transform bg-white rounded-full transition-transform'
-                            )}
-                        />
+                        <span />
                     </Switch>
 
                     {label && (
-                        <Switch.Label className={classNames('ml-3 text-sm text-gray-700', labelClassName)}>
+                        <Switch.Label className={classNames('ml-3 cursor-pointer', labelClassName)}>
                             {label}
                         </Switch.Label>
                     )}
                 </div>
             </Switch.Group>
 
-            {form.touched[field.name] && form.errors[field.name] && (
-                <div className={classNames('mt-1 text-xs text-rose-600', errorClassName)}>
+            {errorEnabled && form.touched[field.name] && form.errors[field.name] && (
+                <div className={classNames('text-red-dd3a3a', errorClassName)}>
                     <ErrorMessage name={field.name} />
                 </div>
             )}

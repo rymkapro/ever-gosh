@@ -4,16 +4,28 @@ import { classNames } from "../../utils";
 
 
 export interface IBaseFieldProps extends FieldProps {
+    className?: string;
     children: React.ReactNode;
-    label: string | undefined;
-    labelClassName: string | undefined;
-    help: string | undefined;
-    helpClassName: string | undefined;
-    errorClassName: string | undefined;
+    label?: string;
+    labelClassName?: string;
+    help?: string;
+    helpClassName?: string;
+    errorEnabled?: boolean;
+    errorClassName?: string;
 }
 
 const BaseField = (props: IBaseFieldProps) => {
-    const { children, label, labelClassName, help, helpClassName, errorClassName, field, form } = props;
+    const {
+        children,
+        label,
+        labelClassName,
+        help,
+        helpClassName,
+        errorEnabled = true,
+        errorClassName,
+        field,
+        form
+    } = props;
 
     return (
         <>
@@ -35,8 +47,8 @@ const BaseField = (props: IBaseFieldProps) => {
                     {help}
                 </div>
             )}
-            {form.touched[field.name] && form.errors[field.name] && (
-                <div className={classNames('text-xs text-rose-600', errorClassName)}>
+            {errorEnabled && form.touched[field.name] && form.errors[field.name] && (
+                <div className={classNames('text-red-dd3a3a', errorClassName)}>
                     <ErrorMessage name={field.name} />
                 </div>
             )}

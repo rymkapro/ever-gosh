@@ -10,7 +10,7 @@ const HomePage = () => {
     return (
         <section className="max-w-7xl mx-auto pt-16 px-2">
             <div className="text-center">
-                <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-gray-800">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
                     Git Onchain Source Holder
                 </h1>
                 <div className="text-base mt-6 sm:text-lg sm:max-w-2xl sm:mx-auto md:text-xl text-left">
@@ -27,28 +27,19 @@ const HomePage = () => {
                 <div className="mt-4 sm:mt-10 sm:flex justify-center gap-x-8">
                     {userState.address ? (
                         <div>
-                            <Link
-                                to="/repositories"
-                                className="block btn--blue px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-medium text-white"
-                            >
+                            <Link to="/repositories" className="btn py-3 px-10 text-xl leading-normal">
                                 Repositories
                             </Link>
                         </div>
                     ) : (
                         <>
                             <div>
-                                <Link
-                                    to="/account/signin"
-                                    className="block btn--blue px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-medium text-white"
-                                >
+                                <Link to="/account/signin" className="btn py-3 px-10 text-xl leading-normal">
                                     Sign in
                                 </Link>
                             </div>
                             <div>
-                                <Link
-                                    to="/account/signup"
-                                    className="block btn--blue px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-medium text-white"
-                                >
+                                <Link to="/account/signup" className="btn py-3 px-10 text-xl leading-normal">
                                     Create account
                                 </Link>
                             </div>

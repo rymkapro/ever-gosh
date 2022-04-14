@@ -34,7 +34,7 @@ const App = () => {
 
     if (!isInitialized) return <p>Loading...</p>
     return (
-        <div className="wrapper min-h-full flex flex-col">
+        <div className="wrapper">
             <Header />
             <main className="main">
                 <Routes>
@@ -63,6 +63,7 @@ const App = () => {
             </main>
             <footer className="footer"></footer>
             <ToastContainer />
+
         </div>
     );
 }

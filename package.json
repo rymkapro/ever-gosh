@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "wasm": "cp ./node_modules/@tonclient/lib-web/tonclient.wasm ./public",
+    "wasm": "cp ./node_modules/@eversdk/lib-web/eversdk.wasm ./public",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
