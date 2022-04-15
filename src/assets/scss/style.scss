@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-@import "iconsfont.css";
+@import "./iconsfont.css";
 
 @import "react-toastify/scss/main";
 @import "github-markdown-css/github-markdown-light.css";
@@ -20,7 +20,7 @@ body,
 }
 
 .wrapper {
-    background-image: url('/assets/images/bg.png');
+    background-image: url('../images/bg.png');
     @apply bg-right-top;
     @apply bg-no-repeat;
     @apply bg-cover;
@@ -32,7 +32,7 @@ body,
 
 .container {
     @apply px-5;
-    @apply max-w-[1288px];
+    @apply max-w-container;
 }
 
 .btn {
@@ -139,8 +139,8 @@ body,
 
     &::before {
         @apply text-inherit;
-        @apply translate-x-[1px];
-        @apply translate-y-[1px];
+        @apply translate-x-px;
+        @apply translate-y-px;
     }
 }
 

@@ -7,6 +7,9 @@ module.exports = {
             screens: {
                 'under-sm': { 'raw': '(max-width: 639px)' },
             },
+            maxWidth: {
+                'container': '1288px'
+            },
             colors: {
                 'gray-050a15': '#050a15',
                 'gray-53596d': '#53596d',
