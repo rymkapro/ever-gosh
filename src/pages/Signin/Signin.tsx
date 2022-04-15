@@ -29,7 +29,7 @@ const SigninPage = () => {
     }
 
     return (
-        <div className="max-w-[43.5rem] mt-51px mb-10 mx-auto pt-72px pb-16 bg-white/65 rounded-21px overflow-hidden shadow-block">
+        <div className="max-w-[43.5rem] mt-51px mb-10 mx-auto pt-72px pb-16 bg-white/65 rounded-21px overflow-hidden shadow-block backdrop-blur-33px">
             <h1 className="px-2 text-center font-bold text-5xl leading-117%">
                 Sign in to Gosh
             </h1>

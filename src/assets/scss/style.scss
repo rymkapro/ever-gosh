@@ -52,7 +52,7 @@ body,
         @apply border-gray-0a1124/7;
         @apply text-black;
         @apply shadow-button;
-        @apply bg-transparent;
+        @apply bg-white;
     }
 }
 
@@ -70,6 +70,7 @@ body,
     @apply bg-gray-c4c4c4/1;
 
     &:hover {
+        @apply bg-gray-c4c4c4/1;
         @apply text-white;
         box-shadow: inset 1px 1px 1px rgba(196, 196, 196, 0.01);
         @apply border-gray-c4c4c4/1;

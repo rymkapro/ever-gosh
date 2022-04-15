@@ -49,6 +49,9 @@ module.exports = {
                 'button': 'inset 1px 1px 1px rgba(10, 17, 36, 0.48)',
                 'input': 'inset 1px 1px 1px rgba(232, 232, 245, 0.82)',
                 'block': 'inset 1px 1px 1px rgba(10, 17, 36, 0.07)'
+            },
+            backdropBlur: {
+                '33px': '33px'
             }
         },
     },
