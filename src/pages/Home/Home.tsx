@@ -24,7 +24,7 @@ const HomePage = () => {
                     </p>
                     <p className="mt-2">All in a decentralized way.</p>
                 </div>
-                <div className="mt-4 sm:mt-10 sm:flex justify-center gap-x-8">
+                <div className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-4">
                     {userState.address ? (
                         <div>
                             <Link to="/repositories" className="btn py-3 px-10 text-xl leading-normal">

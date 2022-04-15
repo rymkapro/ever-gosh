@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+@import "iconsfont.css";
+
 @import "react-toastify/scss/main";
 @import "github-markdown-css/github-markdown-light.css";
 // @import "github-markdown-css/github-markdown.css";  // Based on prefers-color-scheme media query
@@ -14,7 +16,7 @@ body,
     @apply h-full;
     @apply bg-white;
     @apply text-black;
-    @apply font-poppins;
+    @apply font-body;
 }
 
 .wrapper {
@@ -26,6 +28,11 @@ body,
     @apply min-h-full;
     @apply flex;
     @apply flex-col;
+}
+
+.container {
+    @apply px-5;
+    @apply max-w-[1288px];
 }
 
 .btn {
@@ -69,11 +76,71 @@ body,
     @apply shadow-button;
     @apply bg-gray-c4c4c4/1;
 
-    &:hover {
+    &:hover,
+    &:focus {
         @apply bg-gray-c4c4c4/1;
         @apply text-white;
-        box-shadow: inset 1px 1px 1px rgba(196, 196, 196, 0.01);
-        @apply border-gray-c4c4c4/1;
+        @apply shadow-button-header;
+        @apply border-gray-e5e5f9/29;
+    }
+}
+
+.btn--header-link {
+    @apply flex;
+    @apply flex-row-reverse;
+    @apply gap-x-2.5;
+    @apply items-center;
+    @apply font-normal;
+    @apply text-lg;
+    @apply leading-8;
+    @apply sm:leading-normal;
+    @apply text-gray-050a15;
+    @apply sm:text-gray-53596d;
+    @apply sm:px-18px;
+    @apply sm:py-2.5;
+    @apply border-transparent;
+    @apply sm:border-gray-0a1124/7;
+    @apply sm:backdrop-blur-sm;
+    @apply sm:shadow-button;
+    @apply bg-transparent;
+    @apply sm:bg-gray-c4c4c4/1;
+
+    &:hover,
+    &:focus {
+        @apply bg-inherit;
+        @apply text-white;
+        @apply shadow-none;
+        @apply sm:shadow-button-header;
+        @apply border-transparent;
+        @apply sm:border-gray-e5e5f9/29;
+    }
+
+    &.icon-arrow {
+        &::before {
+            @apply block;
+            @apply sm:hidden;
+            @apply text-xs;
+        }
+    }
+}
+
+.btn--burger {
+    @apply w-10;
+    @apply sm:w-12;
+    @apply h-10;
+    @apply sm:h-12;
+    @apply flex;
+    // @apply sm:hidden;
+    @apply items-center;
+    @apply justify-center;
+    @apply text-xs;
+    @apply text-gray-0a1124;
+    @apply sm:text-gray-53596d;
+
+    &::before {
+        @apply text-inherit;
+        @apply translate-x-[1px];
+        @apply translate-y-[1px];
     }
 }
 
@@ -162,5 +229,12 @@ body,
         @apply outline-none;
         @apply border-gray-0a1124/7;
         @apply shadow-button;
+    }
+
+    &.has-error {
+        @apply text-red-dd3a3a;
+        @apply placeholder:text-red-dd3a3a;
+        @apply border-red-eb7979/29;
+        @apply shadow-input-error;
     }
 }

@@ -36,7 +36,7 @@ const App = () => {
     return (
         <div className="wrapper">
             <Header />
-            <main className="main">
+            <main className="main grow">
                 <Routes>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/account/signin" element={<SigninPage />} />

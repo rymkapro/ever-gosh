@@ -41,11 +41,14 @@ const SignupPage = () => {
     }, [everClient]);
 
     return (
-        <div className="max-w-[43.5rem] mt-51px mb-10 mx-auto pt-72px pb-16 bg-white/65 rounded-21px overflow-hidden shadow-block backdrop-blur-33px">
-            <h1 className="px-2 text-center font-bold text-5xl leading-117%">
+        <div
+            className="pt-12 sm:pt-72px pb-16 bg-white/65 rounded-t-21px sm:rounded-21px overflow-hidden
+                shadow-block backdrop-blur-33px max-w-[43.5rem] mx-auto mt-158px sm:mt-51px sm:mb-10"
+        >
+            <h1 className="px-2 text-center font-bold text-32px sm:text-5xl leading-117%">
                 Create Gosh account
             </h1>
-            <div className="px-2 mt-2 mb-10 text-center text-gray-606060 text-xl leading-normal">
+            <div className="px-9 sm:px-2 mt-2 mb-10 text-center text-gray-606060 text-lg sm:text-xl leading-normal">
                 It's your seed phrase, please write it on paper
             </div>
 
@@ -59,7 +62,7 @@ const SignupPage = () => {
                 enableReinitialize={true}
             >
                 {({ isSubmitting, values }) => (
-                    <Form className="px-124px">
+                    <Form className="px-5 sm:px-124px">
                         <div>
                             <Field
                                 name="phrase"
