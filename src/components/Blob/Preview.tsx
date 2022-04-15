@@ -21,7 +21,7 @@ const BlobPreview = (props: TBlobPreviewProps) => {
     return (
         <Editor
             wrapperProps={{
-                className: classNames('py-3', className)
+                className
             }}
             language={language}
             value={value}

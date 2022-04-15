@@ -147,7 +147,10 @@ const BlobCreatePage = () => {
                                     />
                                 </Tab.Panel>
                                 <Tab.Panel>
-                                    <BlobPreview language={blobCodeLanguage} value={values.content} />
+                                    <BlobPreview
+                                        language={blobCodeLanguage}
+                                        value={values.content}
+                                    />
                                 </Tab.Panel>
                             </Tab.Panels>
                         </Tab.Group>
