@@ -63,7 +63,7 @@ const BranchSelect = (props: TBranchSelectProps) => {
                     <input
                         ref={searchRef}
                         type="text"
-                        className="input--text w-full px-2 py-1 text-sm"
+                        className="input px-2 py-1 text-sm"
                         autoComplete="off"
                         placeholder="Search branch"
                         value={search}

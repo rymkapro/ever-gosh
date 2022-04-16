@@ -13,15 +13,18 @@ const TextareaField = (props: ITextAreaFieldProps) => {
 
     return (
         <BaseField {...props}>
-            <textarea
+            <div
                 className={classNames(
-                    'input--textarea',
-                    form.touched[field.name] && form.errors[field.name] ? 'has-error' : null,
-                    className
+                    'input',
+                    form.touched[field.name] && form.errors[field.name] ? 'has-error' : null
                 )}
-                {...field}
-                {...restInputProps}
-            />
+            >
+                <textarea
+                    className={classNames('element', className)}
+                    {...field}
+                    {...restInputProps}
+                />
+            </div>
         </BaseField>
     );
 }

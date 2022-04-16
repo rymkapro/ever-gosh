@@ -109,7 +109,7 @@ const BlobUpdatePage = () => {
                                             name="name"
                                             component={TextField}
                                             inputProps={{
-                                                className: 'input--text text-sm py-1.5',
+                                                className: 'text-sm py-1.5',
                                                 autoComplete: 'off',
                                                 placeholder: 'Name of new file',
                                                 disabled: true

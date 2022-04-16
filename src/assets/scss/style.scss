@@ -13,134 +13,189 @@
 html,
 body,
 #root {
-    @apply h-full;
-    @apply bg-white;
-    @apply text-black;
-    @apply font-body;
+    @apply
+        h-full
+        bg-white
+        text-black
+        font-body
 }
 
 .wrapper {
     background-image: url('../images/bg.png');
-    @apply bg-right-top;
-    @apply bg-no-repeat;
-    @apply bg-cover;
-    @apply bg-fixed;
-    @apply min-h-full;
-    @apply flex;
-    @apply flex-col;
+    @apply
+        bg-right-top
+        bg-no-repeat
+        bg-cover
+        bg-fixed
+        min-h-full
+        flex
+        flex-col;
 }
 
 .container {
-    @apply px-5;
-    @apply max-w-container;
+    @apply
+        px-5
+        max-w-container;
+}
+
+/*
+This is a base ::after pseudo element class which is used only
+for those elements which require gradient border color
+    .element-with-gradient-border {
+        @extend .gradient-border-after;
+        background-image: linear-gradient(...);
+        border-radius: <the same as parent element has>
+*/
+.gradient-border-after {
+    content: "";
+    @apply
+        absolute
+        -z-1
+        inset-0
+        p-px
+        transition-colors;
+    -webkit-mask:
+        linear-gradient(#ffffff 0 0) content-box,
+        linear-gradient(#ffffff 0 0);
+    mask:
+        linear-gradient(#ffffff 0 0) content-box,
+        linear-gradient(#ffffff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
 }
 
 .btn {
-    @apply inline-block;
-    @apply rounded-5px;
-    @apply bg-gray-050a15;
-    @apply text-white;
-    @apply font-semibold;
-    @apply border-r;
-    @apply border-b;
-    @apply border-gray-050a15;
-    @apply transition-colors;
+    @apply
+        inline-block
+        relative
+        z-0
+        rounded-5px
+        outline-none
+        transition-colors;
 
-    &:disabled {
-        @apply bg-gray-050a15/60;
-        @apply border-transparent;
-        @apply text-white/80;
-        @apply pointer-events-none;
+    &::after {
+        @extend .gradient-border-after;
+        @apply rounded-5px;
     }
 
-    &:hover,
-    &:focus {
-        @apply outline-none;
-        @apply border-gray-0a1124/7;
-        @apply text-black;
-        @apply shadow-button;
-        @apply bg-white;
-    }
-}
+    /* Base app button */
+    &--body {
+        @apply
+            bg-gray-050a15
+            text-white
+            font-semibold;
 
-.btn--header {
-    @apply block;
-    @apply text-lg;
-    @apply font-normal;
-    @apply leading-normal;
-    @apply text-gray-53596d;
-    @apply px-18px;
-    @apply py-2.5;
-    @apply border-gray-0a1124/7;
-    @apply backdrop-blur-sm;
-    @apply shadow-button;
-    @apply bg-gray-c4c4c4/1;
+        &:hover,
+        &:focus {
+            @apply bg-white text-black;
 
-    &:hover,
-    &:focus {
-        @apply bg-gray-c4c4c4/1;
-        @apply text-white;
-        @apply shadow-button-header;
-        @apply border-gray-e5e5f9/29;
-    }
-}
+            &::after {
+                @apply bg-button-border;
+            }
+        }
 
-.btn--header-link {
-    @apply flex;
-    @apply flex-row-reverse;
-    @apply gap-x-2.5;
-    @apply items-center;
-    @apply font-normal;
-    @apply text-lg;
-    @apply leading-8;
-    @apply sm:leading-normal;
-    @apply text-gray-050a15;
-    @apply sm:text-gray-53596d;
-    @apply sm:px-18px;
-    @apply sm:py-2.5;
-    @apply border-transparent;
-    @apply sm:border-gray-0a1124/7;
-    @apply sm:backdrop-blur-sm;
-    @apply sm:shadow-button;
-    @apply bg-transparent;
-    @apply sm:bg-gray-c4c4c4/1;
-
-    &:hover,
-    &:focus {
-        @apply bg-inherit;
-        @apply text-white;
-        @apply shadow-none;
-        @apply sm:shadow-button-header;
-        @apply border-transparent;
-        @apply sm:border-gray-e5e5f9/29;
+        &:disabled {
+            @apply
+                bg-gray-050a15/75
+                text-white/75
+                pointer-events-none;
+        }
     }
 
-    &.icon-arrow {
+    /* Header button */
+    &--header {
+        @apply
+            bg-gray-c4c4c4/1
+            sm:backdrop-blur-sm
+            flex
+            flex-row-reverse
+            gap-x-2.5
+            items-center
+            sm:px-18px
+            sm:py-2.5
+            font-normal
+            text-gray-050a15 sm:text-gray-53596d
+            text-lg
+            leading-8 sm:leading-normal;
+
+        &::after {
+            @apply sm:bg-button-header-border;
+        }
+
+        &:hover,
+        &:focus {
+            @apply text-white;
+
+            &::after {
+                @apply sm:bg-button-header-focus-border;
+            }
+        }
+
+        &.icon-arrow {
+            &::before {
+                @apply block sm:hidden text-xs;
+            }
+        }
+    }
+
+    /* Header burger button */
+    &--burger {
+        @apply
+            w-10 sm:w-12
+            h-10 sm:h-12
+            flex
+            items-center
+            justify-center
+            text-xs
+            text-gray-0a1124 sm:text-gray-53596d;
+
         &::before {
-            @apply block;
-            @apply sm:hidden;
-            @apply text-xs;
+            @apply
+                text-inherit
+                translate-x-px
+                translate-y-px;
         }
     }
 }
 
-.btn--burger {
-    @apply w-10;
-    @apply sm:w-12;
-    @apply h-10;
-    @apply sm:h-12;
-    @apply flex;
-    // @apply sm:hidden;
-    @apply items-center;
-    @apply justify-center;
-    @apply text-xs;
-    @apply text-gray-0a1124;
-    @apply sm:text-gray-53596d;
+.dropdown-menu {
+    @apply
+        origin-top-right
+        absolute
+        right-0
+        mt-2
+        px-5
+        py-2
+        w-48
+        bg-white/12
+        outline-none
+        z-50
+        backdrop-blur-md
+        rounded-md;
 
-    &::before {
-        @apply text-inherit;
-        @apply translate-x-px;
-        @apply translate-y-px;
+    &::after {
+        @extend .gradient-border-after;
+        @apply bg-dropdown-menu-border rounded-md;
+    }
+}
+
+.block-auth {
+    @apply
+        max-w-696px
+        pt-12 sm:pt-72px
+        pb-16
+        bg-white/65
+        backdrop-blur-33px
+        rounded-t-21px sm:rounded-21px
+        mx-auto
+        mt-158px sm:mt-51px
+        sm:mb-10;
+
+    &::after {
+        @extend .gradient-border-after;
+        @apply
+            bg-block-border
+            rounded-t-21px sm:rounded-21px;
     }
 }
 
@@ -158,43 +213,79 @@ body,
     @apply border-extblue;
 }
 
-.input--text {
-    @apply border;
-    @apply rounded;
-    @apply px-2;
+.input {
+    @apply
+        relative
+        rounded-3px
+        bg-gray-050a15/3
+        transition
+        pointer-events-none;
 
-    &:focus {
-        @apply ring-2;
-        @apply ring-extblue/25;
-        @apply outline-none;
+    &::after {
+        @extend .gradient-border-after;
+        @apply bg-block-border rounded-3px;
+    }
+
+    &:focus-within {
+        &::after {
+            @apply bg-dropdown-menu-border;
+        }
+    }
+
+    .element {
+        @apply
+            w-full
+            outline-none
+            bg-transparent
+            text-base
+            text-gray-050a15
+            pointer-events-auto
+            px-4
+            py-3;
+    }
+
+    &.has-error {
+        .element {
+            @apply text-red-dd3a3a placeholder:text-red-dd3a3a;
+        }
+
+        &::after {
+            @apply bg-input-error-border;
+        }
     }
 }
 
-.input--switch {
-    @apply relative;
-    @apply inline-flex;
-    @apply flex-shrink-0;
-    @apply items-center;
-    @apply h-6;
-    @apply w-16;
-    @apply rounded-full;
-    @apply transition-colors;
-    @apply shadow-button;
+.input-switch {
+    @apply
+        relative
+        inline-flex
+        flex-shrink-0
+        items-center
+        h-6
+        w-16
+        rounded-full
+        transition-colors
+        outline-none;
+
+    &::after {
+        @extend .gradient-border-after;
+        @apply bg-switch-border rounded-full;
+    }
 
     span {
-        @apply inline-block;
-        @apply w-18px;
-        @apply h-18px;
-        @apply transform;
-        @apply rounded-full;
-        @apply transition-transform;
-        @apply bg-gray-050a15/25;
-        @apply translate-x-1;
+        @apply
+            inline-block
+            w-18px
+            h-18px
+            transform
+            rounded-full
+            transition-transform
+            bg-gray-050a15/25
+            translate-x-1;
     }
 
     &:hover,
     &:focus {
-        @apply outline-none;
         @apply bg-gray-050a15/15;
 
         span {
@@ -206,35 +297,7 @@ body,
         @apply bg-gray-c4c4c4/25;
 
         span {
-            @apply bg-gray-050a15;
-            @apply translate-x-10;
+            @apply bg-gray-050a15 translate-x-10;
         }
-    }
-}
-
-.input--textarea {
-    @apply rounded-3px;
-    @apply bg-gray-050a15/3;
-    @apply border-r;
-    @apply border-b;
-    @apply border-transparent;
-    @apply px-7;
-    @apply py-6;
-    @apply text-base;
-    @apply text-gray-050a15;
-    @apply shadow-input;
-    @apply transition;
-
-    &:focus {
-        @apply outline-none;
-        @apply border-gray-0a1124/7;
-        @apply shadow-button;
-    }
-
-    &.has-error {
-        @apply text-red-dd3a3a;
-        @apply placeholder:text-red-dd3a3a;
-        @apply border-red-eb7979/29;
-        @apply shadow-input-error;
     }
 }

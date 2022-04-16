@@ -4,17 +4,14 @@ module.exports = {
     ],
     theme: {
         extend: {
-            screens: {
-                'under-sm': { 'raw': '(max-width: 639px)' },
-            },
             maxWidth: {
-                'container': '1288px'
+                'container': '1288px',
+                '696px': '43.5rem'
             },
             colors: {
                 'gray-050a15': '#050a15',
                 'gray-53596d': '#53596d',
                 'gray-0a1124': '#0a1124',
-                'gray-050a15': '#050a15',
                 'gray-606060': '#606060',
                 'gray-505050': '#505050',
                 'gray-c4c4c4': '#c4c4c4',
@@ -25,6 +22,15 @@ module.exports = {
                 'red-eb7979': '#eb7979',
 
                 'extblue': '#61a3ff',
+            },
+            backgroundImage: {
+                'button-border': 'linear-gradient(to bottom right, rgba(10, 17, 36, .82) 0%, rgba(10, 17, 36, .26) 45%, rgba(10, 17, 36, .26) 100%)',
+                'button-header-border': 'linear-gradient(to bottom right, rgba(10, 17, 36, .48) 0%, rgba(10, 17, 36, .07) 45%, rgba(10, 17, 36, .07) 100%)',
+                'button-header-focus-border': 'linear-gradient(to bottom right, rgba(232, 232, 245, .44) 0%, rgba(229, 229, 249, .29) 45%, rgba(229, 229, 249, .29) 100%)',
+                'dropdown-menu-border': 'linear-gradient(to bottom right, rgba(10, 17, 36, .82) 0%, rgba(10, 17, 36, .19) 45%, rgba(10, 17, 36, .19) 100%)',
+                'block-border': 'linear-gradient(to bottom right, rgba(232, 232, 245, .82) 0%, rgba(229, 229, 249, 0) 45%, rgba(229, 229, 249, 0) 100%)',
+                'switch-border': 'linear-gradient(to bottom right, rgba(10, 17, 36, .82) 0%, rgba(10, 17, 36, .0) 45%, rgba(10, 17, 36, .0) 100%)',
+                'input-error-border': 'linear-gradient(to bottom right, rgba(241, 136, 136, .82) 0%, rgba(235, 121, 121, .29) 45%, rgba(235, 121, 121, .29) 100%)',
             },
             fontFamily: {
                 body: ['Poppins', 'sans-serif']
@@ -57,18 +63,18 @@ module.exports = {
                 '12': '0.12',
                 '15': '0.15',
                 '29': '0.29',
-                '65': '0.65',
-                '82': '0.82'
+                '65': '0.65'
             },
             boxShadow: {
-                'button-header': 'inset 1px 1px 1px rgba(232, 232, 245, 0.44)',
                 'button': 'inset 1px 1px 1px rgba(10, 17, 36, 0.48)',
                 'input': 'inset 1px 1px 1px rgba(232, 232, 245, 0.82)',
                 'input-error': 'inset 1px 1px 1px rgba(241, 136, 136, 0.82)',
-                'block': 'inset 1px 1px 1px rgba(10, 17, 36, 0.07)'
             },
             backdropBlur: {
                 '33px': '33px'
+            },
+            zIndex: {
+                '1': '1'
             }
         },
     },

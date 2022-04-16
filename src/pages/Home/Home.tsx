@@ -27,19 +27,28 @@ const HomePage = () => {
                 <div className="my-10 flex flex-wrap justify-center gap-x-8 gap-y-4">
                     {userState.address ? (
                         <div>
-                            <Link to="/repositories" className="btn py-3 px-10 text-xl leading-normal">
+                            <Link
+                                to="/repositories"
+                                className="btn btn--body py-3 px-10 text-xl leading-normal"
+                            >
                                 Repositories
                             </Link>
                         </div>
                     ) : (
                         <>
                             <div>
-                                <Link to="/account/signin" className="btn py-3 px-10 text-xl leading-normal">
+                                <Link
+                                    to="/account/signin"
+                                    className="btn btn--body py-3 px-10 text-xl leading-normal"
+                                >
                                     Sign in
                                 </Link>
                             </div>
                             <div>
-                                <Link to="/account/signup" className="btn py-3 px-10 text-xl leading-normal">
+                                <Link
+                                    to="/account/signup"
+                                    className="btn btn--body py-3 px-10 text-xl leading-normal"
+                                >
                                     Create account
                                 </Link>
                             </div>

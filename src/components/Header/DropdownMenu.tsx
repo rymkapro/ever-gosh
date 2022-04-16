@@ -26,10 +26,7 @@ const DropdownMenu = () => {
                 leaveFrom="transform opacity-100 scale-100"
                 leaveTo="transform opacity-0 scale-95"
             >
-                <Menu.Items
-                    className="origin-top-right absolute right-0 mt-2 px-5 py-2 w-48 bg-white/12 focus:outline-none z-50
-                        backdrop-blur-md rounded-md overflow-hidden border-r border-b border-gray-0a1124/7 shadow-button"
-                >
+                <Menu.Items className="dropdown-menu">
                     {items.map((item, index) => (
                         <Menu.Item key={index}>
                             {({ active }) => (

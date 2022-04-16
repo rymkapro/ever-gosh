@@ -25,7 +25,7 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                     name="title"
                     component={TextField}
                     inputProps={{
-                        className: 'input--text text-sm py-1.5 w-full',
+                        className: 'text-sm py-1.5 w-full',
                         autoComplete: 'off',
                         placeholder: 'Commit title'
                     }}
@@ -37,7 +37,7 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                     component={TextareaField}
                     help="Markdown syntax is supported"
                     inputProps={{
-                        className: 'input--textarea text-sm py-1.5 w-full',
+                        className: 'text-sm py-1.5 w-full',
                         placeholder: 'Commit optional description'
                     }}
                 />

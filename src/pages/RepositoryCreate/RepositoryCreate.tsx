@@ -47,7 +47,7 @@ const RepositoryCreatePage = () => {
                                     label="Repository name"
                                     help="Some help text"
                                     inputProps={{
-                                        className: 'input--text px-3 py-2 w-full',
+                                        className: 'px-3 py-2 w-full',
                                         autoComplete: 'off',
                                         placeholder: 'Repository name'
                                     }}

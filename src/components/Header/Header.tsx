@@ -31,7 +31,7 @@ const Header = () => {
                                     </div>
                                     <Link
                                         to={`/account/signup`}
-                                        className="btn btn--header-link icon-arrow"
+                                        className="btn btn--header icon-arrow"
                                     >
                                         Sign up
                                     </Link>
@@ -44,7 +44,7 @@ const Header = () => {
                                     </div>
                                     <Link
                                         to={`/account/signin`}
-                                        className="btn btn--header-link icon-arrow"
+                                        className="btn btn--header icon-arrow"
                                     >
                                         Sign in
                                     </Link>

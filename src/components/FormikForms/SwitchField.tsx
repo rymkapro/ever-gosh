@@ -28,7 +28,7 @@ const SwitchField = (props: IBaseFieldProps) => {
                             form.setFieldValue(field.name, value, true);
                         }}
                         className={classNames(
-                            'input--switch',
+                            'input-switch',
                             form.values[field.name] ? 'checked' : null
                         )}
                     >

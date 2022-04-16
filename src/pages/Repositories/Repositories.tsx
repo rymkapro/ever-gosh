@@ -46,7 +46,7 @@ const RepositoriesPage = () => {
                         type={'text'}
                         autoComplete={'off'}
                         placeholder={'Find repository...'}
-                        className="input--text grow px-3 py-1.5 text-sm"
+                        className="grow px-3 py-1.5 text-sm"
                         onChange={(event) => setSearch(event.target.value)}
                     />
 

@@ -41,10 +41,7 @@ const SignupPage = () => {
     }, [everClient]);
 
     return (
-        <div
-            className="pt-12 sm:pt-72px pb-16 bg-white/65 rounded-t-21px sm:rounded-21px overflow-hidden
-                shadow-block backdrop-blur-33px max-w-[43.5rem] mx-auto mt-158px sm:mt-51px sm:mb-10"
-        >
+        <div className="block-auth">
             <h1 className="px-2 text-center font-bold text-32px sm:text-5xl leading-117%">
                 Create Gosh account
             </h1>
@@ -61,7 +58,7 @@ const SignupPage = () => {
                 })}
                 enableReinitialize={true}
             >
-                {({ isSubmitting, values }) => (
+                {({ isSubmitting }) => (
                     <Form className="px-5 sm:px-124px">
                         <div>
                             <Field
@@ -69,7 +66,7 @@ const SignupPage = () => {
                                 component={TextareaField}
                                 errorEnabled={false}
                                 inputProps={{
-                                    className: 'w-full',
+                                    className: '!px-7 !py-6',
                                     autoComplete: 'off',
                                     placeholder: 'GOSH root seed phrase',
                                     readOnly: true
@@ -92,7 +89,7 @@ const SignupPage = () => {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="btn w-full py-3 text-xl leading-normal"
+                                className="btn btn--body w-full py-3 text-xl leading-normal"
                             >
                                 {isSubmitting && <Spinner className="mr-3" size={'lg'} />}
                                 Create account

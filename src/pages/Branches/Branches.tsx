@@ -115,7 +115,7 @@ export const BranchesPage = () => {
                                     inputProps={{
                                         placeholder: 'Branch name',
                                         autoComplete: 'off',
-                                        className: 'input--text text-sm py-1.5'
+                                        className: 'text-sm py-1.5'
                                     }}
                                 />
                             </div>
@@ -134,7 +134,7 @@ export const BranchesPage = () => {
                 <div>
                     <input
                         type="text"
-                        className="input--text text-sm py-1.5"
+                        className="text-sm py-1.5"
                         placeholder="Search branch"
                         onChange={(e) => setSearch(e.target.value)}
                     />

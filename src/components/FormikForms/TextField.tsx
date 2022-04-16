@@ -13,16 +13,18 @@ const TextField = (props: ITextFieldProps) => {
 
     return (
         <BaseField {...props}>
-            <input
+            <div
                 className={classNames(
-                    className,
-                    form.touched[field.name] && form.errors[field.name]
-                        ? 'border-rose-600 placeholder:text-rose-600'
-                        : 'border-gray-200'
+                    'input',
+                    form.touched[field.name] && form.errors[field.name] ? 'has-error' : null
                 )}
-                {...field}
-                {...restInputProps}
-            />
+            >
+                <input
+                    className={classNames('element', className)}
+                    {...field}
+                    {...restInputProps}
+                />
+            </div>
         </BaseField>
     );
 }
