@@ -13,7 +13,7 @@ import { useMonaco } from "@monaco-editor/react";
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
 import { IGoshBlob } from "../../types/types";
 import { generateDiff, getCodeLanguageFromFilename, getGoshRepositoryBranches } from "../../helpers";
-import { GoshBlob } from "../../types/classes";
+// import { GoshBlob } from "../../types/classes";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 
 
@@ -52,18 +52,18 @@ const BlobUpdatePage = () => {
 
     useEffect(() => {
         const initState = async () => {
-            const { branch } = await getGoshRepositoryBranches(goshRepository, branchName);
-            if (branch) {
-                await branch.snapshot.load();
-                const blobItem = branch.snapshot.meta?.content.find((item) => item.name === blobName);
-                if (blobItem) {
-                    const blob = new GoshBlob(goshRepository.account.client, blobItem.address);
-                    await blob.load();
-                    setBlob(blob);
-                } else {
-                    setBlob(undefined);
-                }
-            }
+            // const { branch } = await getGoshRepositoryBranches(goshRepository, branchName);
+            // if (branch) {
+            //     await branch.snapshot.load();
+            //     const blobItem = branch.snapshot.meta?.content.find((item) => item.name === blobName);
+            //     if (blobItem) {
+            //         const blob = new GoshBlob(goshRepository.account.client, blobItem.address);
+            //         await blob.load();
+            //         setBlob(blob);
+            //     } else {
+            //         setBlob(undefined);
+            //     }
+            // }
         }
 
         initState();

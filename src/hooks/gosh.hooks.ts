@@ -1,10 +1,10 @@
-import { TonClient } from "@eversdk/core";
-import { useEffect, useState } from "react";
+import { KeyPair } from "@eversdk/core";
+import { useEffect, useMemo, useState } from "react";
 import { useRecoilValue } from "recoil";
-import { getGoshRootFromPhrase } from "../helpers";
 import { userStateAtom } from "../store/user.state";
-import { GoshRepository } from "../types/classes";
-import { IGoshRepository, IGoshRoot } from "../types/types";
+import { GoshDao, GoshRoot, GoshWallet } from "../types/classes";
+// import { GoshRepository } from "../types/classes";
+import { IGoshDao, IGoshRepository, IGoshRoot, IGoshWallet } from "../types/types";
 import { useEverClient } from "./ever.hooks";
 
 
@@ -12,21 +12,57 @@ import { useEverClient } from "./ever.hooks";
 export const useGoshRoot = () => {
     const client = useEverClient();
     const userState = useRecoilValue(userStateAtom);
-    const [goshRoot, setGoshRoot] = useState<IGoshRoot>();
 
-    const createGoshRoot = async (client: TonClient, phrase: string, address: string) => {
-        const root = await getGoshRootFromPhrase(client, phrase, address);
-        setGoshRoot(root);
-    }
+    return useMemo<IGoshRoot | undefined>(() => {
+        const address = process.env.REACT_APP_GOSH_ADDR;
+        if (client && userState.keys?.public && address) {
+            return new GoshRoot(client, address);
+        }
+    }, [client, userState.keys]);
+}
+
+export const useGoshDao = (name?: string) => {
+    const goshRoot = useGoshRoot();
+    const [goshDao, setGoshDao] = useState<IGoshDao>();
 
     useEffect(() => {
-        const { phrase, address } = userState;
-        if (client && phrase && address) createGoshRoot(client, phrase, address);
+        const createDao = async (goshRoot: IGoshRoot, daoName: string) => {
+            const daoAddr = await goshRoot.getDaoAddr(daoName);
+            const dao = new GoshDao(goshRoot.account.client, daoAddr);
+            await dao.load();
+            setGoshDao(dao);
+        }
 
-        return () => { }
-    }, [client, userState]);
+        if (goshRoot && name) createDao(goshRoot, name);
+    }, [goshRoot, name]);
 
-    return goshRoot;
+    return goshDao;
+}
+
+export const useGoshWallet = (daoName?: string) => {
+    const userState = useRecoilValue(userStateAtom);
+    const goshDao = useGoshDao(daoName);
+    const [goshWallet, setGoshWallet] = useState<IGoshWallet>();
+
+    useEffect(() => {
+        const createWallet = async (goshDao: IGoshDao, keys: KeyPair) => {
+            const rootPubkey = await goshDao.getRootPubkey();
+            const goshWalletAddr = await goshDao.getWalletAddr(
+                rootPubkey,
+                `0x${keys.public}`
+            );
+            const goshWallet = new GoshWallet(
+                goshDao.account.client,
+                goshWalletAddr,
+                keys
+            );
+            setGoshWallet(goshWallet);
+        }
+
+        if (goshDao && userState.keys) createWallet(goshDao, userState.keys);
+    }, [goshDao]);
+
+    return goshWallet;
 }
 
 /** Create GoshRepository object */
@@ -34,15 +70,15 @@ export const useGoshRepository = (name?: string) => {
     const goshRoot = useGoshRoot();
     const [goshRepository, setGoshRepository] = useState<IGoshRepository>();
 
-    const createGoshRepository = async (root: IGoshRoot, name: string) => {
-        const address = await root.getRepositoryAddr(name);
-        const repository = new GoshRepository(root.account.client, name, address);
-        setGoshRepository(repository);
-    }
+    // const createGoshRepository = async (root: IGoshRoot, name: string) => {
+    //     const address = await root.getRepositoryAddr(name);
+    //     const repository = new GoshRepository(root.account.client, name, address);
+    //     setGoshRepository(repository);
+    // }
 
-    useEffect(() => {
-        if (goshRoot && name) createGoshRepository(goshRoot, name);
-    }, [goshRoot, name]);
+    // useEffect(() => {
+    //     if (goshRoot && name) createGoshRepository(goshRoot, name);
+    // }, [goshRoot, name]);
 
     return goshRepository;
 }

@@ -35,7 +35,8 @@ body,
 .container {
     @apply
         px-5
-        max-w-container;
+        max-w-container
+        mx-auto;
 }
 
 /*
@@ -85,8 +86,7 @@ for those elements which require gradient border color
             text-white
             font-semibold;
 
-        &:hover,
-        &:focus {
+        &:hover {
             @apply bg-white text-black;
 
             &::after {
@@ -122,8 +122,7 @@ for those elements which require gradient border color
             @apply sm:bg-button-header-border;
         }
 
-        &:hover,
-        &:focus {
+        &:hover {
             @apply text-white;
 
             &::after {
@@ -196,6 +195,20 @@ for those elements which require gradient border color
         @apply
             bg-block-border
             rounded-t-21px sm:rounded-21px;
+    }
+}
+
+.bordered-block {
+    @apply
+        bg-white/65
+        backdrop-blur-33px
+        rounded-21px;
+
+    &::after {
+        @extend .gradient-border-after;
+        @apply
+            bg-block-border
+            rounded-21px;
     }
 }
 

@@ -18,13 +18,13 @@ const RepositoryPage = () => {
 
     useEffect(() => {
         const initState = async (repo: IGoshRepository, currBranchName: string) => {
-            const { branches, branch } = await getGoshRepositoryBranches(repo, currBranchName);
-            if (branch) {
-                await branch.snapshot.load();
-                setBranch(branch);
-                setTree(branch.snapshot.meta?.content);
-            }
-            setBranches(branches);
+            // const { branches, branch } = await getGoshRepositoryBranches(repo, currBranchName);
+            // if (branch) {
+            //     await branch.snapshot.load();
+            //     setBranch(branch);
+            //     setTree(branch.snapshot.meta?.content);
+            // }
+            // setBranches(branches);
         }
 
         initState(goshRepository, branchName);

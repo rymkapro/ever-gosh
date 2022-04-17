@@ -7,7 +7,7 @@ import { userStateAtom } from "../store/user.state";
 const ProtectedLayout = () => {
     const userState = useRecoilValue(userStateAtom);
 
-    if (!userState.address) return <Navigate to={'/'} />
+    if (!userState.phrase) return <Navigate to={'/'} />
     return <Outlet />
 }
 

@@ -15,7 +15,7 @@ const Header = () => {
         <header>
             <Disclosure
                 as="nav"
-                className="container mx-auto relative flex items-center justify-between h-10 sm:h-12 mt-30px sm:mt-12"
+                className="container relative flex items-center justify-between h-10 sm:h-12 mt-30px sm:mt-12"
             >
                 {() => (
                     <>
@@ -55,7 +55,7 @@ const Header = () => {
                             {/* <Disclosure.Button className="btn btn--header btn--burger icon-burger" /> */}
 
                             {/* Menu dropdown (is used as for mobile, as for desktop for now) */}
-                            {userState.address && <DropdownMenu />}
+                            {userState.phrase && <DropdownMenu />}
                         </div>
 
                         <Disclosure.Panel className="sm:hidden">

@@ -5,20 +5,24 @@ import { ToastContainer } from "react-toastify";
 import { useEverClient } from "./hooks/ever.hooks";
 import Header from "./components/Header";
 import ProtectedLayout from "./pages/ProtectedLayout";
+import AccountLayout from "./pages/AccountLayout";
+import DaoLayout from "./pages/DaoLayout";
 import HomePage from "./pages/Home";
 import SignupPage from "./pages/Signup";
 import SigninPage from "./pages/Signin";
-import AccountPage from "./pages/Account";
-import RepositoriesPage from "./pages/Repositories";
-import RepositoryCreatePage from "./pages/RepositoryCreate";
-import RepositoryLayout from "./pages/RepositoryLayout";
-import RepositoryPage from "./pages/Repository";
-import BlobCreatePage from "./pages/BlobCreate";
-import BlobUpdatePage from "./pages/BlobUpdate";
-import BlobPage from "./pages/Blob";
-import CommitsPage from "./pages/Commits";
-import CommitPage from "./pages/Commit";
-import BranchesPage from "./pages/Branches";
+import DaosPage from "./pages/Daos";
+import DaoPage from "./pages/Dao";
+import DaoCreatePage from "./pages/DaoCreate";
+import ReposPage from "./pages/Repos";
+import RepoCreatePage from "./pages/RepoCreate";
+// import RepositoryLayout from "./pages/RepositoryLayout";
+// import RepositoryPage from "./pages/Repository";
+// import BlobCreatePage from "./pages/BlobCreate";
+// import BlobUpdatePage from "./pages/BlobUpdate";
+// import BlobPage from "./pages/Blob";
+// import CommitsPage from "./pages/Commits";
+// import CommitPage from "./pages/Commit";
+// import BranchesPage from "./pages/Branches";
 
 import "./assets/scss/style.scss";
 
@@ -42,10 +46,21 @@ const App = () => {
                     <Route path="/account/signin" element={<SigninPage />} />
                     <Route path="/account/signup" element={<SignupPage />} />
                     <Route path="/account" element={<ProtectedLayout />}>
-                        <Route index element={<AccountPage />} />
+                        <Route path="orgs/create" element={<DaoCreatePage />} />
+                        <Route element={<AccountLayout />}>
+                            <Route index element={null} />
+                            <Route path="orgs" element={<DaosPage />} />
+                        </Route>
+                    </Route>
+                    <Route path="/orgs/:daoName" element={<ProtectedLayout />}>
+                        <Route path="repos/create" element={<RepoCreatePage />} />
+                        <Route element={<DaoLayout />}>
+                            <Route index element={<DaoPage />} />
+                            <Route path="repos" element={<ReposPage />} />
+                        </Route>
                     </Route>
                     <Route path="/repositories" element={<ProtectedLayout />}>
-                        <Route index element={<RepositoriesPage />} />
+                        {/* <Route index element={<RepositoriesPage />} />
                         <Route path="create" element={<RepositoryCreatePage />} />
                         <Route path=":repoName" element={<RepositoryLayout />}>
                             <Route index element={<RepositoryPage />} />
@@ -56,7 +71,7 @@ const App = () => {
                             <Route path="commits/:branchName" element={<CommitsPage />} />
                             <Route path="commit/:commitName" element={<CommitPage />} />
                             <Route path="branches" element={<BranchesPage />} />
-                        </Route>
+                        </Route> */}
                     </Route>
                     <Route path="*" element={<p>No match (404)</p>} />
                 </Routes>

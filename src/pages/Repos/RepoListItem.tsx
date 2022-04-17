@@ -15,15 +15,15 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
     const { repository } = props;
 
     return (
-        <div className="py-3 border-b last:border-b-0">
+        <div className="py-3">
             <Link
-                className="text-extblue text-xl font-semibold hover:underline"
-                to={`/repositories/${repository.name}`}
+                className="text-xl font-semibold hover:underline"
+                to={`/repositories/${repository.meta?.name}`}
             >
-                {repository.name}
+                {repository.meta?.name}
             </Link>
 
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-gray-606060">
                 Repository description
             </div>
 
@@ -39,24 +39,26 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                 ))}
             </div>
 
-            <div className="flex gap-4 mt-3 text-xs text-gray-400">
-                <div>
-                    <FontAwesomeIcon icon={faCode} className="mr-1" />
-                    Language
-                </div>
-                <div>
-                    <FontAwesomeIcon icon={faCodeFork} className="mr-1" />
-                    4
-                </div>
-                <div>
-                    <FontAwesomeIcon icon={faStar} className="mr-1" />
-                    22
+            <div className="flex gap-4 mt-3 text-xs text-gray-606060 justify-between">
+                <div className="flex gap-4">
+                    <div>
+                        <FontAwesomeIcon icon={faCode} className="mr-1" />
+                        Language
+                    </div>
+                    <div>
+                        <FontAwesomeIcon icon={faCodeFork} className="mr-1" />
+                        4
+                    </div>
+                    <div>
+                        <FontAwesomeIcon icon={faStar} className="mr-1" />
+                        22
+                    </div>
                 </div>
                 <CopyClipboard
                     componentProps={{
                         text: repository.address
                     }}
-                    className="grow justify-end hover:text-extblue"
+                    className="hover:text-gray-050a15"
                     label={shortString(repository.address, 4, 4)}
                 />
             </div>

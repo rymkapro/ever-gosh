@@ -1,18 +1,11 @@
 import { Account, AccountType } from "@eversdk/appkit";
 import { KeyPair, signerKeys, signerNone, TonClient } from "@eversdk/core";
-import {
-    GoshABI,
-    GoshBlobABI,
-    GoshBlobTVC,
-    GoshCommitABI,
-    GoshCommitTVC,
-    GoshRepositoryABI,
-    GoshRepositoryTVC,
-    GoshSnapshotABI,
-    GoshSnapshotTVC,
-    GoshTVC
-} from "../contracts/gosh/gosh";
-import { fromEvers, getGiverData, giver, sha1 } from "../helpers";
+import GoshDaoCreatorABI from "../contracts/gosh/daocreater.abi.json";
+import GoshABI from "../contracts/gosh/gosh.abi.json";
+import GoshDaoABI from "../contracts/gosh/goshdao.abi.json";
+import GoshWalletABI from "../contracts/gosh/goshwallet.abi.json";
+import GoshRepositoryABI from "../contracts/gosh/repository.abi.json";
+import { fromEvers, getGiverData, getGoshDaoCreator, giver, sha1 } from "../helpers";
 import {
     IGoshBlob,
     TGoshBranch,
@@ -21,248 +14,172 @@ import {
     IGoshRoot,
     IGoshSnapshot,
     TDiffData,
-    TGoshSnapshotMetaContentItem
+    TGoshSnapshotMetaContentItem,
+    IGoshDao,
+    IGoshWallet,
+    IGoshDaoCreator
 } from "./types";
 
 
+export class GoshDaoCreator implements IGoshDaoCreator {
+    abi: any = GoshDaoCreatorABI;
+    account: Account;
+    address: string;
+
+    constructor(client: TonClient, address: string) {
+        this.address = address;
+        this.account = new Account({ abi: this.abi }, { client, address });
+    }
+
+    async createDao(name: string, rootPubkey: string): Promise<void> {
+        await this.account.run('deployDao', { name, root_pubkey: rootPubkey });
+    }
+
+    async sendMoney(rootPubkey: string, pubkey: string, daoAddr: string, value: number): Promise<void> {
+        await this.account.run(
+            'sendMoney',
+            {
+                pubkeyroot: rootPubkey,
+                pubkey,
+                goshdao: daoAddr,
+                value
+            }
+        );
+    }
+}
 export class GoshRoot implements IGoshRoot {
     abi: any = GoshABI;
-    tvc: string = GoshTVC;
     account: Account;
-    details?: {
-        address: string;
-        balance: number;
-        acc_type: number;
-        code?: string;
-        data: {
-            raw?: string;
-            decoded?: {
-                version: string;
-                m_RepositoryCode: string;
-                m_RepositoryData: string;
-                m_CommitCode: string;
-                m_CommitData: string;
-                m_BlobCode: string;
-                m_BlobData: string;
-                m_SnapshotCode: string;
-                m_SnapshotData: string;
-            };
-        }
-    };
-    isDeploying: boolean = false;
-    ownerPublic: string = `0x${getGiverData().keys.public}`;
+    address: string;
+    daoCreator: IGoshDaoCreator;
 
-    constructor(client: TonClient, options: { keys: KeyPair, address?: string }) {
-        this.account = new Account(
-            { abi: this.abi, tvc: this.tvc },
-            {
-                client,
-                address: options.address,
-                signer: signerKeys(options.keys)
-            }
-        );
+    constructor(client: TonClient, address: string) {
+        this.address = address;
+        this.daoCreator = getGoshDaoCreator(client);
+        this.account = new Account({ abi: this.abi }, { client, address });
     }
 
-    /**
-     * Gosh root is fully deployed when root contract
-     * is deployed and relative data is set
-     */
-    get isDeployed(): boolean {
-        return this.details?.acc_type === AccountType.active && this.isRelativeDataDeployed;
+    async createDao(name: string, rootPubkey: string): Promise<string> {
+        await this.daoCreator.createDao(name, rootPubkey);
+        return await this.getDaoAddr(name);
     }
 
-    /** Check if Gosh root relative data is set */
-    get isRelativeDataDeployed(): boolean {
-        if (!this.details?.data.decoded) return false;
-        return !Object
-            .values(this.details.data.decoded)
-            .some((value: any) => value === 'te6ccgEBAQEAAgAAAA==');
+    async getDaoAddr(name: string): Promise<string> {
+        const result = await this.account.runLocal('getAddrDao', { name });
+        return result.decoded?.output.value0;
     }
 
-    /** Load account details */
-    async load(): Promise<void> {
-        const address = await this.account.getAddress();
-        const details = await this.account.getAccount();
-        await this.setDetails({ ...details, id: address });
+    async getDaoWalletCode(pubkey: string): Promise<string> {
+        const result = await this.account.runLocal('getDaoWalletCode', { pubkey });
+        return result.decoded?.output.value0;
     }
 
-    /** Subscribe for account changes */
-    async subscribeAccount(callback: (details: IGoshRoot['details']) => void): Promise<void> {
-        await this.account.subscribeAccount(
-            'id acc_type balance code data',
-            async (account) => {
-                await this.setDetails(account);
-                callback(this.details);
-            }
-        );
-    }
-
-    /** Deploy contract and relative data */
-    async deploy(): Promise<void> {
-        if (!this.details || this.isDeployed || this.isDeploying) return;
-        this.isDeploying = true;
-
-        // Topup gosh address with giver
-        if (this.details.acc_type === AccountType.nonExist) {
-            console.debug('[GoshRoot] - Topup with giver');
-            await giver(this.account.client, this.details.address, fromEvers(20));
-        }
-
-        // Deploy gosh contract
-        if (this.details.acc_type === AccountType.uninit) {
-            console.debug('[GoshRoot] - Deploy contract');
-            if (this.details.balance >= fromEvers(20)) {
-                await this.account.deploy();
-            }
-
-        }
-
-        // Deploy gosh contract relative data (repository, commit, etc. code and data)
-        if (this.details.acc_type === AccountType.active && !this.isRelativeDataDeployed) {
-            const empty = 'te6ccgEBAQEAAgAAAA==';
-            const {
-                m_RepositoryCode,
-                m_CommitCode,
-                m_BlobCode,
-                m_SnapshotCode
-            } = this.details.data.decoded || {};
-
-            if (m_RepositoryCode === empty) {
-                console.debug('[GoshRoot] - Set repository');
-                const repository = await this.account.client.boc.decode_tvc({
-                    tvc: GoshRepositoryTVC
-                });
-                await this.account.run(
-                    'setRepository',
-                    { code: repository?.code, data: repository?.data }
-                );
-            }
-
-            if (m_CommitCode === empty) {
-                console.debug('[GoshRoot] - Set commit');
-                const commit = await this.account.client.boc.decode_tvc({
-                    tvc: GoshCommitTVC
-                });
-                await this.account.run(
-                    'setCommit',
-                    { code: commit?.code, data: commit?.data }
-                );
-            }
-
-            if (m_BlobCode === empty) {
-                console.debug('[GoshRoot] - Set blob');
-                const blob = await this.account.client.boc.decode_tvc({
-                    tvc: GoshBlobTVC
-                });
-                await this.account.run(
-                    'setBlob',
-                    { code: blob?.code, data: blob?.data }
-                );
-            }
-
-            if (m_SnapshotCode === empty) {
-                console.debug('[GoshRoot] - Set snapshot');
-                const snapshot = await this.account.client.boc.decode_tvc({
-                    tvc: GoshSnapshotTVC
-                });
-                await this.account.run(
-                    'setSnapshot',
-                    { code: snapshot?.code, data: snapshot?.data }
-                );
-            }
-        }
-
-        this.isDeploying = false;
-    }
-
-    /** Deploy repository */
-    async createRepository(name: string): Promise<string> {
-        if (!this.details?.address) throw Error('GoshRoot address is not set');
-
-        // Encode deploy repository message body and
-        // send it to GoshRoot via giver
-        const encoded = await this.account.client.abi.encode_message_body({
-            abi: this.account.abi,
-            call_set: {
-                function_name: 'deployRepository',
-                input: {
-                    pubkey: this.ownerPublic,
-                    name
-                }
-            },
-            signer: signerNone(),
-            is_internal: true
-        });
-        await giver(this.account.client, this.details.address, fromEvers(2.65), encoded.body);
-
-        // Get deployed repository address and topup it.
-        const repoAddr = await this.getRepositoryAddr(name);
-        if (!repoAddr) throw Error('Error getting repository address after deploy');
-        await giver(this.account.client, repoAddr, fromEvers(30));
-
-        // TODO: Remove in future
-        // Store created repository address in local storage
-        const storage: { [key: string]: any } = JSON.parse(localStorage.getItem('repositories') ?? '{}');
-        if (!storage[this.details.address]) storage[this.details.address] = [];
-        storage[this.details.address].push(name);
-        localStorage.setItem('repositories', JSON.stringify(storage));
-
-        return repoAddr;
-    }
-
-    /** Get repository address by it's name */
-    async getRepositoryAddr(name: string): Promise<string> {
-        if (!this.details?.address) throw Error('GoshRoot address is not set');
+    async getRepoAddr(name: string): Promise<string> {
         const result = await this.account.runLocal('getAddrRepository', { name });
         return result.decoded?.output.value0;
     }
 
-    /** Update account details from request of subscription */
-    async setDetails(account: any): Promise<void> {
-        this.details = {
-            address: account.id,
-            balance: +(account.balance ?? 0),
-            acc_type: account.acc_type,
-            code: account.code,
-            data: {
-                raw: account.data,
-                decoded: await this.decodeAccountData(account.data)
-            }
+    async getDaoRepoCode(daoAddress: string): Promise<string> {
+        const result = await this.account.runLocal('getRepoDaoCode', { dao: daoAddress });
+        return result.decoded?.output.value0;
+    }
+}
+
+export class GoshDao implements IGoshDao {
+    abi: any = GoshDaoABI;
+    account: Account;
+    address: string;
+    daoCreator: IGoshDaoCreator;
+    meta?: {
+        name: string;
+    };
+
+    constructor(client: TonClient, address: string) {
+        this.address = address;
+        this.daoCreator = getGoshDaoCreator(client);
+        this.account = new Account({ abi: this.abi }, { client, address });
+    }
+
+    async load(): Promise<void> {
+        this.meta = {
+            name: await this.getName()
         }
     }
 
-    /** Decode account data */
-    async decodeAccountData(rawData?: string): Promise<any> {
-        if (!rawData) return undefined;
-        const { data } = await this.account.client.abi.decode_account_data({
-            abi: this.account.abi,
-            data: rawData
-        });
-        return {
-            version: data.version,
-            m_RepositoryCode: data.m_RepositoryCode,
-            m_RepositoryData: data.m_RepositoryData,
-            m_CommitCode: data.m_CommitCode,
-            m_CommitData: data.m_CommitData,
-            m_BlobCode: data.m_BlobCode,
-            m_BlobData: data.m_BlobData,
-            m_SnapshotCode: data.m_codeSnapshot,
-            m_SnapshotData: data.m_dataSnapshot
-        };
+    async createWallet(rootPubkey: string, pubkey: string): Promise<string> {
+        await this.account.run('deployWallet', { pubkeyroot: rootPubkey, pubkey });
+        await this.daoCreator.sendMoney(rootPubkey, pubkey, this.address, fromEvers(10));
+        return await this.getWalletAddr(rootPubkey, pubkey);
     }
 
+    async getWalletAddr(rootPubkey: string, pubkey: string): Promise<string> {
+        const result = await this.account.runLocal(
+            'getAddrWallet',
+            { pubkeyroot: rootPubkey, pubkey }
+        );
+        return result.decoded?.output.value0;
+    }
+
+    async getName(): Promise<string> {
+        const result = await this.account.runLocal('getNameDao', {});
+        return result.decoded?.output.value0;
+    }
+
+    async getRootPubkey(): Promise<string> {
+        const result = await this.account.runLocal('getRootPubkey', {});
+        return result.decoded?.output.value0;
+    }
+}
+
+export class GoshWallet implements IGoshWallet {
+    abi: any = GoshWalletABI;
+    account: Account;
+    address: string;
+
+    constructor(client: TonClient, address: string, keys?: KeyPair) {
+        this.address = address;
+        this.account = new Account(
+            { abi: this.abi },
+            {
+                client,
+                address,
+                signer: keys ? signerKeys(keys) : signerNone()
+            }
+        );
+    }
+
+    async getDaoAddr(): Promise<string> {
+        const result = await this.account.runLocal('getAddrDao', {});
+        return result.decoded?.output.value0;
+    }
+
+    async createRepo(name: string): Promise<void> {
+        await this.account.run('deployRepository', { nameRepo: name });
+    }
 }
 
 export class GoshRepository implements IGoshRepository {
     abi: any = GoshRepositoryABI;
     account: Account;
-    name: string;
     address: string;
+    meta?: {
+        name: string;
+    }
 
-    constructor(client: TonClient, name: string, address: string) {
-        this.name = name;
+    constructor(client: TonClient, address: string) {
         this.address = address;
         this.account = new Account({ abi: this.abi }, { client, address });
+    }
+
+    async load(): Promise<void> {
+        this.meta = {
+            name: await this.getName()
+        }
+    }
+
+    async getName(): Promise<string> {
+        const result = await this.account.runLocal('getName', {});
+        return result.decoded?.output.value0;
     }
 
     async getBranches(): Promise<TGoshBranch[]> {
@@ -270,7 +187,8 @@ export class GoshRepository implements IGoshRepository {
         return result.decoded?.output.value0.map((item: any) => ({
             name: item.key,
             commitAddr: item.value,
-            snapshot: new GoshSnapshot(this.account.client, item.snapshot)
+            // snapshot: new GoshSnapshot(this.account.client, item.snapshot)
+            snapshot: undefined
         }));
     }
 
@@ -280,31 +198,32 @@ export class GoshRepository implements IGoshRepository {
         return {
             name: decoded.key,
             commitAddr: decoded.value,
-            snapshot: new GoshSnapshot(this.account.client, decoded.snapshot)
+            // snapshot: new GoshSnapshot(this.account.client, decoded.snapshot)
+            snapshot: undefined
         }
     }
 
     async createBranch(name: string, fromName: string): Promise<void> {
-        // Deploy branch
-        const { body } = await this.account.client.abi.encode_message_body({
-            abi: this.account.abi,
-            call_set: {
-                function_name: 'deployBranch',
-                input: { newname: name, fromname: fromName }
-            },
-            is_internal: true,
-            signer: signerNone()
-        });
-        await giver(this.account.client, this.address, fromEvers(1.55), body);
+        // // Deploy branch
+        // const { body } = await this.account.client.abi.encode_message_body({
+        //     abi: this.account.abi,
+        //     call_set: {
+        //         function_name: 'deployBranch',
+        //         input: { newname: name, fromname: fromName }
+        //     },
+        //     is_internal: true,
+        //     signer: signerNone()
+        // });
+        // await giver(this.account.client, this.address, fromEvers(1.55), body);
 
-        // Copy `from` branch snapshot to new branch snapshot
-        console.debug('Repo addr', this.address);
-        const fromBranch = await this.getBranch(fromName);
-        await fromBranch.snapshot.load();
-        console.debug('From branch:', fromBranch);
-        const newBranch = await this.getBranch(name);
-        console.debug('New branch:', newBranch);
-        await newBranch.snapshot.setSnapshot(fromBranch.snapshot.meta?.content || []);
+        // // Copy `from` branch snapshot to new branch snapshot
+        // console.debug('Repo addr', this.address);
+        // const fromBranch = await this.getBranch(fromName);
+        // await fromBranch.snapshot.load();
+        // console.debug('From branch:', fromBranch);
+        // const newBranch = await this.getBranch(name);
+        // console.debug('New branch:', newBranch);
+        // await newBranch.snapshot.setSnapshot(fromBranch.snapshot.meta?.content || []);
     }
 
     async deleteBranch(name: string): Promise<void> {
@@ -334,84 +253,84 @@ export class GoshRepository implements IGoshRepository {
         diffData: { name: string; diff: TDiffData[] }[],
         blobs: { name: string; content: string }[] = []
     ): Promise<void> {
-        // Generate blobs sha
-        const blobsWithSha = blobs.map((blob) => ({
-            ...blob,
-            sha: sha1(blob.content, 'blob')
-        }));
+        // // Generate blobs sha
+        // const blobsWithSha = blobs.map((blob) => ({
+        //     ...blob,
+        //     sha: sha1(blob.content, 'blob')
+        // }));
 
-        // Create `fullCommit` data
-        const commitFullData = {
-            ...commitData,
-            blobs: diffData.map((item) => {
-                const blob = blobsWithSha.find((blob) => blob.name === item.name);
-                if (!blob) throw Error(`Can not find blob '${item.name}' in blobs`);
-                return {
-                    ...item,
-                    sha: blob.sha
-                };
-            })
-        }
+        // // Create `fullCommit` data
+        // const commitFullData = {
+        //     ...commitData,
+        //     blobs: diffData.map((item) => {
+        //         const blob = blobsWithSha.find((blob) => blob.name === item.name);
+        //         if (!blob) throw Error(`Can not find blob '${item.name}' in blobs`);
+        //         return {
+        //             ...item,
+        //             sha: blob.sha
+        //         };
+        //     })
+        // }
 
-        // Deploy commit
-        const commitSha = sha1(JSON.stringify(commitFullData), 'commit');
-        const { body } = await this.account.client.abi.encode_message_body({
-            abi: this.account.abi,
-            call_set: {
-                function_name: 'deployCommit',
-                input: {
-                    nameBranch: branchName,
-                    nameCommit: commitSha,
-                    fullCommit: JSON.stringify(commitFullData)
-                }
-            },
-            is_internal: true,
-            signer: signerNone()
-        });
-        await giver(this.account.client, this.address, fromEvers(5), body);
+        // // Deploy commit
+        // const commitSha = sha1(JSON.stringify(commitFullData), 'commit');
+        // const { body } = await this.account.client.abi.encode_message_body({
+        //     abi: this.account.abi,
+        //     call_set: {
+        //         function_name: 'deployCommit',
+        //         input: {
+        //             nameBranch: branchName,
+        //             nameCommit: commitSha,
+        //             fullCommit: JSON.stringify(commitFullData)
+        //         }
+        //     },
+        //     is_internal: true,
+        //     signer: signerNone()
+        // });
+        // await giver(this.account.client, this.address, fromEvers(5), body);
 
-        // Get commit address, create commit object
-        const commitAddr = await this.getCommitAddr(commitSha);
-        console.debug('[Commit addr]:', commitAddr);
-        const commit = new GoshCommit(this.account.client, commitAddr);
+        // // Get commit address, create commit object
+        // const commitAddr = await this.getCommitAddr(commitSha);
+        // console.debug('[Commit addr]:', commitAddr);
+        // const commit = new GoshCommit(this.account.client, commitAddr);
 
-        // Get snapshot and load meta
-        const snapshot = (await this.getBranch(branchName)).snapshot;
-        await snapshot.load();
-        if (!snapshot.meta) throw Error('Snapshot meta is not loaded');
+        // // Get snapshot and load meta
+        // const snapshot = (await this.getBranch(branchName)).snapshot;
+        // await snapshot.load();
+        // if (!snapshot.meta) throw Error('Snapshot meta is not loaded');
 
-        // Map all blobs and deploy them;
-        // Update branch snapshot
-        await Promise.all(
-            blobsWithSha.map(async (blob) => {
-                if (!snapshot.meta) return;
+        // // Map all blobs and deploy them;
+        // // Update branch snapshot
+        // await Promise.all(
+        //     blobsWithSha.map(async (blob) => {
+        //         if (!snapshot.meta) return;
 
-                const blobSha = await commit.createBlob(blob.content, blob.sha);
-                const blobAddr = await commit.getBlobAddr(blobSha);
-                console.debug('[Blob addr]:', blobAddr);
-                const foundIndex = snapshot.meta?.content.findIndex((metaItem) => (
-                    metaItem && metaItem.name === blob.name
-                )) ?? -1;
-                if (foundIndex < 0) {
-                    snapshot.meta.content.push({
-                        name: blob.name,
-                        address: blobAddr,
-                        firstCommitSha: commitSha,
-                        lastCommitSha: commitSha,
-                        lastCommitMsg: commitData
-                    });
-                } else {
-                    snapshot.meta.content[foundIndex] = {
-                        ...snapshot.meta.content[foundIndex],
-                        address: blobAddr,
-                        lastCommitSha: commitSha,
-                        lastCommitMsg: commitData
-                    };
-                }
-            })
-        );
-        console.debug('[Snapshot addr]:', snapshot.address);
-        await snapshot.setSnapshot(snapshot.meta?.content);
+        //         const blobSha = await commit.createBlob(blob.content, blob.sha);
+        //         const blobAddr = await commit.getBlobAddr(blobSha);
+        //         console.debug('[Blob addr]:', blobAddr);
+        //         const foundIndex = snapshot.meta?.content.findIndex((metaItem) => (
+        //             metaItem && metaItem.name === blob.name
+        //         )) ?? -1;
+        //         if (foundIndex < 0) {
+        //             snapshot.meta.content.push({
+        //                 name: blob.name,
+        //                 address: blobAddr,
+        //                 firstCommitSha: commitSha,
+        //                 lastCommitSha: commitSha,
+        //                 lastCommitMsg: commitData
+        //             });
+        //         } else {
+        //             snapshot.meta.content[foundIndex] = {
+        //                 ...snapshot.meta.content[foundIndex],
+        //                 address: blobAddr,
+        //                 lastCommitSha: commitSha,
+        //                 lastCommitMsg: commitData
+        //             };
+        //         }
+        //     })
+        // );
+        // console.debug('[Snapshot addr]:', snapshot.address);
+        // await snapshot.setSnapshot(snapshot.meta?.content);
     }
 
     async getCommitAddr(commitSha: string): Promise<string> {
@@ -436,144 +355,144 @@ export class GoshRepository implements IGoshRepository {
     }
 }
 
-export class GoshCommit implements IGoshCommit {
-    abi: any = GoshCommitABI;
-    account: Account;
-    address: string;
-    meta?: {
-        branchName: string;
-        sha: string;
-        content: {
-            title: string;
-            message: string;
-            blobs: {
-                name: string;
-                sha: string;
-                diff: TDiffData[];
-            }[];
-        }
-        parentAddr: string;
-    }
+// export class GoshCommit implements IGoshCommit {
+//     abi: any = GoshCommitABI;
+//     account: Account;
+//     address: string;
+//     meta?: {
+//         branchName: string;
+//         sha: string;
+//         content: {
+//             title: string;
+//             message: string;
+//             blobs: {
+//                 name: string;
+//                 sha: string;
+//                 diff: TDiffData[];
+//             }[];
+//         }
+//         parentAddr: string;
+//     }
 
-    constructor(client: TonClient, address: string) {
-        this.address = address;
-        this.account = new Account({ abi: this.abi }, { client, address });
-    }
+//     constructor(client: TonClient, address: string) {
+//         this.address = address;
+//         this.account = new Account({ abi: this.abi }, { client, address });
+//     }
 
-    async load(): Promise<void> {
-        const meta = await this.getCommit();
-        this.meta = {
-            branchName: meta.branch,
-            sha: meta.sha,
-            content: JSON.parse(meta.content),
-            parentAddr: meta.parent,
-        }
-    }
+//     async load(): Promise<void> {
+//         const meta = await this.getCommit();
+//         this.meta = {
+//             branchName: meta.branch,
+//             sha: meta.sha,
+//             content: JSON.parse(meta.content),
+//             parentAddr: meta.parent,
+//         }
+//     }
 
-    async getCommit(): Promise<any> {
-        const result = await this.account.runLocal('getCommit', {});
-        return result.decoded?.output;
-    }
+//     async getCommit(): Promise<any> {
+//         const result = await this.account.runLocal('getCommit', {});
+//         return result.decoded?.output;
+//     }
 
-    async getName(): Promise<string> {
-        const result = await this.account.runLocal('getNameCommit', {});
-        return result.decoded?.output.value0;
-    }
+//     async getName(): Promise<string> {
+//         const result = await this.account.runLocal('getNameCommit', {});
+//         return result.decoded?.output.value0;
+//     }
 
-    async getParent(): Promise<string> {
-        const result = await this.account.runLocal('getParent', {});
-        return result.decoded?.output.value0;
-    }
+//     async getParent(): Promise<string> {
+//         const result = await this.account.runLocal('getParent', {});
+//         return result.decoded?.output.value0;
+//     }
 
-    async getBlobs(): Promise<string[]> {
-        const result = await this.account.runLocal('getBlobs', {});
-        return result.decoded?.output.value0;
-    }
+//     async getBlobs(): Promise<string[]> {
+//         const result = await this.account.runLocal('getBlobs', {});
+//         return result.decoded?.output.value0;
+//     }
 
-    async getBlobAddr(blobSha: string): Promise<string> {
-        const result = await this.account.runLocal(
-            'getBlobAddr',
-            { nameBlob: blobSha }
-        );
-        return result.decoded?.output.value0;
-    }
+//     async getBlobAddr(blobSha: string): Promise<string> {
+//         const result = await this.account.runLocal(
+//             'getBlobAddr',
+//             { nameBlob: blobSha }
+//         );
+//         return result.decoded?.output.value0;
+//     }
 
-    async createBlob(content: string, sha?: string): Promise<string> {
-        const blobSha = sha || sha1(content, 'blob');
-        await this.account.run(
-            'deployBlob',
-            {
-                nameBlob: blobSha,
-                fullBlob: content
-            }
-        );
-        return blobSha;
-    }
-}
+//     async createBlob(content: string, sha?: string): Promise<string> {
+//         const blobSha = sha || sha1(content, 'blob');
+//         await this.account.run(
+//             'deployBlob',
+//             {
+//                 nameBlob: blobSha,
+//                 fullBlob: content
+//             }
+//         );
+//         return blobSha;
+//     }
+// }
 
-export class GoshBlob implements IGoshBlob {
-    abi: any = GoshBlobABI;
-    account: Account;
-    address: string;
-    meta?: { sha: string; content: string; commitAddr: string; };
+// export class GoshBlob implements IGoshBlob {
+//     abi: any = GoshBlobABI;
+//     account: Account;
+//     address: string;
+//     meta?: { sha: string; content: string; commitAddr: string; };
 
-    constructor(client: TonClient, address: string) {
-        this.address = address;
-        this.account = new Account({ abi: this.abi }, { client, address });
-    }
+//     constructor(client: TonClient, address: string) {
+//         this.address = address;
+//         this.account = new Account({ abi: this.abi }, { client, address });
+//     }
 
-    async load(): Promise<void> {
-        const meta = await this.getBlob();
-        this.meta = {
-            sha: meta.sha,
-            content: meta.content,
-            commitAddr: meta.commit,
-        }
-    }
+//     async load(): Promise<void> {
+//         const meta = await this.getBlob();
+//         this.meta = {
+//             sha: meta.sha,
+//             content: meta.content,
+//             commitAddr: meta.commit,
+//         }
+//     }
 
-    async getBlob(): Promise<any> {
-        const result = await this.account.runLocal('getBlob', {});
-        return result.decoded?.output;
-    }
-}
+//     async getBlob(): Promise<any> {
+//         const result = await this.account.runLocal('getBlob', {});
+//         return result.decoded?.output;
+//     }
+// }
 
-class GoshSnapshot implements IGoshSnapshot {
-    abi: any = GoshSnapshotABI;
-    account: Account;
-    address: string;
-    meta?: {
-        content: TGoshSnapshotMetaContentItem[];
-    };
+// class GoshSnapshot implements IGoshSnapshot {
+//     abi: any = GoshSnapshotABI;
+//     account: Account;
+//     address: string;
+//     meta?: {
+//         content: TGoshSnapshotMetaContentItem[];
+//     };
 
-    constructor(client: TonClient, address: string) {
-        this.address = address;
-        this.account = new Account({ abi: this.abi }, { client, address });
-    }
+//     constructor(client: TonClient, address: string) {
+//         this.address = address;
+//         this.account = new Account({ abi: this.abi }, { client, address });
+//     }
 
-    async load(): Promise<void> {
-        const snapshot = await this.getSnapshot();
-        this.meta = {
-            content: JSON.parse(snapshot || '[]')
-        }
-    }
+//     async load(): Promise<void> {
+//         const snapshot = await this.getSnapshot();
+//         this.meta = {
+//             content: JSON.parse(snapshot || '[]')
+//         }
+//     }
 
-    async getSnapshot(): Promise<any> {
-        const result = await this.account.runLocal('getSnapshot', {});
-        return result.decoded?.output.value0;
-    }
+//     async getSnapshot(): Promise<any> {
+//         const result = await this.account.runLocal('getSnapshot', {});
+//         return result.decoded?.output.value0;
+//     }
 
-    /**
-     * Set snapshot
-     * `msg.pubkey() == pubkey` (giver) or `msg.sender == _rootRepo` required
-     * @param content
-     */
-    async setSnapshot(content: TGoshSnapshotMetaContentItem[]): Promise<void> {
-        const wallet = getGiverData();
-        const signer = signerKeys(wallet.keys);
-        await this.account.run(
-            'setSnapshot',
-            { snaphot: JSON.stringify(content) },
-            { signer }
-        );
-    }
-}
+//     /**
+//      * Set snapshot
+//      * `msg.pubkey() == pubkey` (giver) or `msg.sender == _rootRepo` required
+//      * @param content
+//      */
+//     async setSnapshot(content: TGoshSnapshotMetaContentItem[]): Promise<void> {
+//         const wallet = getGiverData();
+//         const signer = signerKeys(wallet.keys);
+//         await this.account.run(
+//             'setSnapshot',
+//             { snaphot: JSON.stringify(content) },
+//             { signer }
+//         );
+//     }
+// }

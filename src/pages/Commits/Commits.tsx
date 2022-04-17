@@ -3,7 +3,7 @@ import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom
 import BranchSelect from "../../components/BranchSelect";
 import CopyClipboard from "../../components/CopyClipboard";
 import { getGoshRepositoryBranches } from "../../helpers";
-import { GoshCommit } from "../../types/classes";
+// import { GoshCommit } from "../../types/classes";
 import { TGoshBranch, IGoshCommit, IGoshRepository } from "../../types/types";
 import { shortString } from "../../utils";
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
@@ -18,15 +18,15 @@ const CommitsPage = () => {
     const [commits, setCommits] = useState<IGoshCommit[]>();
 
     const getCommits = async (repo: IGoshRepository, branch: TGoshBranch) => {
-        const commits: IGoshCommit[] = [];
-        let commitAddr = branch.commitAddr;
-        while (commitAddr) {
-            const commit = new GoshCommit(repo.account.client, commitAddr);
-            await commit.load();
-            commitAddr = commit.meta?.parentAddr || '';
-            commits.push(commit);
-        }
-        setCommits(commits);
+        // const commits: IGoshCommit[] = [];
+        // let commitAddr = branch.commitAddr;
+        // while (commitAddr) {
+        //     const commit = new GoshCommit(repo.account.client, commitAddr);
+        //     await commit.load();
+        //     commitAddr = commit.meta?.parentAddr || '';
+        //     commits.push(commit);
+        // }
+        // setCommits(commits);
     }
 
     useEffect(() => {

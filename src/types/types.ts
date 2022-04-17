@@ -1,5 +1,5 @@
 import { Account } from "@eversdk/appkit";
-import { ClientConfig } from "@eversdk/core";
+import { ClientConfig, KeyPair } from "@eversdk/core";
 
 
 export type TEverState = {
@@ -7,8 +7,8 @@ export type TEverState = {
 }
 
 export type TUserState = {
-    address?: string;
     phrase?: string;
+    keys?: KeyPair;
 }
 
 export type TAccountData = {
@@ -23,7 +23,7 @@ export type TAccountData = {
 export type TGoshBranch = {
     name: string;
     commitAddr: string;
-    snapshot: IGoshSnapshot;
+    snapshot?: IGoshSnapshot;
 }
 
 export type TGoshSnapshotMetaContentItem = {
@@ -48,41 +48,53 @@ interface IContract {
     tvc?: string;
     account: Account;
 }
-export interface IGoshRoot extends IContract {
-    details?: {
-        address: string;
-        balance: number;
-        acc_type: number;
-        code?: string;
-        data: {
-            raw?: string;
-            decoded?: {
-                version: string;
-                m_RepositoryCode: string;
-                m_RepositoryData: string;
-                m_CommitCode: string;
-                m_CommitData: string;
-                m_BlobCode: string;
-                m_BlobData: string;
-                m_SnapshotCode: string;
-                m_SnapshotData: string;
-            };
-        }
-    };
-    isDeploying: boolean;
 
-    get isDeployed(): boolean;
+export interface IGoshDaoCreator extends IContract {
+    address: string;
+
+    createDao(name: string, rootPubkey: string): Promise<void>;
+    sendMoney(rootPubkey: string, pubkey: string, daoAddr: string, value: number): Promise<void>;
+}
+export interface IGoshRoot extends IContract {
+    address: string;
+    daoCreator: IGoshDaoCreator;
+
+    createDao(name: string, rootPubkey: string): Promise<string>;
+    getDaoAddr(name: string): Promise<string>;
+    getDaoWalletCode(pubkey: string): Promise<string>;
+    getRepoAddr(name: string): Promise<string>;
+    getDaoRepoCode(daoAddress: string): Promise<string>;
+}
+
+export interface IGoshDao extends IContract {
+    address: string;
+    daoCreator: IGoshDaoCreator;
+    meta?: {
+        name: string;
+    };
+
     load(): Promise<void>;
-    subscribeAccount(callback: (details: IGoshRoot['details']) => void): Promise<void>;
-    deploy(): Promise<void>;
-    createRepository(name: string): Promise<string>;
-    getRepositoryAddr(name: string): Promise<string>;
+    createWallet(rootPubkey: string, pubkey: string): Promise<string>;
+    getWalletAddr(rootPubkey: string, pubkey: string): Promise<string>;
+    getName(): Promise<string>;
+    getRootPubkey(): Promise<string>;
+}
+
+export interface IGoshWallet extends IContract {
+    address: string;
+
+    getDaoAddr(): Promise<string>;
+    createRepo(name: string): Promise<void>;
 }
 
 export interface IGoshRepository extends IContract {
-    name: string;
     address: string;
+    meta?: {
+        name: string;
+    }
 
+    load(): Promise<void>;
+    getName(): Promise<string>;
     getBranches(): Promise<TGoshBranch[]>;
     getBranch(name: string): Promise<TGoshBranch>;
     getCommitAddr(commitSha: string): Promise<string>;

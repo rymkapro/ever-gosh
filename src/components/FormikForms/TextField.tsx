@@ -8,7 +8,7 @@ interface ITextFieldProps extends IBaseFieldProps {
 }
 
 const TextField = (props: ITextFieldProps) => {
-    const { inputProps, field, form } = props;
+    const { inputProps = {}, field, form } = props;
     const { className, ...restInputProps } = inputProps;
 
     return (

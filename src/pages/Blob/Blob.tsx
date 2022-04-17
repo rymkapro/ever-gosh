@@ -4,7 +4,7 @@ import BranchSelect from "../../components/BranchSelect";
 import { IGoshBlob, TGoshBranch } from "../../types/types";
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
 import { useMonaco } from "@monaco-editor/react";
-import { GoshBlob } from "../../types/classes";
+// import { GoshBlob } from "../../types/classes";
 import { getCodeLanguageFromFilename, getGoshRepositoryBranches } from "../../helpers";
 import BlobPreview from "../../components/Blob/Preview";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -23,21 +23,21 @@ const BlobPage = () => {
 
     useEffect(() => {
         const initState = async () => {
-            const { branches, branch } = await getGoshRepositoryBranches(goshRepository, branchName);
-            if (branch) {
-                await branch.snapshot.load();
+            // const { branches, branch } = await getGoshRepositoryBranches(goshRepository, branchName);
+            // if (branch) {
+            //     await branch.snapshot.load();
 
-                const blobItem = branch.snapshot.meta?.content.find((item) => item.name === blobName);
-                if (blobItem) {
-                    const blob = new GoshBlob(goshRepository.account.client, blobItem.address);
-                    await blob.load();
-                    setBlob(blob);
-                } else {
-                    setBlob(undefined);
-                }
-                setBranch(branch);
-            }
-            setBranches(branches);
+            //     const blobItem = branch.snapshot.meta?.content.find((item) => item.name === blobName);
+            //     if (blobItem) {
+            //         const blob = new GoshBlob(goshRepository.account.client, blobItem.address);
+            //         await blob.load();
+            //         setBlob(blob);
+            //     } else {
+            //         setBlob(undefined);
+            //     }
+            //     setBranch(branch);
+            // }
+            // setBranches(branches);
         }
 
         initState();

@@ -9,8 +9,7 @@ import { userStateAtom } from "../../store/user.state";
 const DropdownMenu = () => {
     const userStateReset = useResetRecoilState(userStateAtom);
     const items = [
-        { to: '/account', title: 'Account', className: 'text-gray-050a15' },
-        { to: '/repositories', title: 'Repositories', className: 'text-gray-050a15' },
+        { to: '/account/orgs', title: 'Organizations', className: 'text-gray-050a15' },
         { to: '', title: 'Sign out', className: 'text-red-dd3a3a', onClick: () => userStateReset() }
     ];
 

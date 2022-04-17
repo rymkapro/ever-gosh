@@ -1,5 +1,5 @@
 import React from "react";
-import { Form, Formik, Field, ErrorMessage } from "formik";
+import { Form, Formik, Field, ErrorMessage, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import TextareaField from "../../components/FormikForms/TextareaField";
 import { useEverClient } from "../../hooks/ever.hooks";
@@ -7,7 +7,6 @@ import { useSetRecoilState } from "recoil";
 import { userStateAtom } from "../../store/user.state";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../../components/Spinner";
-import { getGoshRootFromPhrase } from "../../helpers";
 
 
 type TFormValues = {
@@ -19,13 +18,18 @@ const SigninPage = () => {
     const everClient = useEverClient();
     const setUserState = useSetRecoilState(userStateAtom);
 
-    const onFormSubmit = async (values: TFormValues) => {
-        console.debug('[Signin form] - Submit values', values);
-        const root = await getGoshRootFromPhrase(everClient, values.phrase);
-        setUserState({ address: root.details?.address, phrase: values.phrase });
-        root.isDeployed
-            ? navigate('/repositories', { replace: true })
-            : navigate('/account', { replace: true });
+    const onFormSubmit = async (values: TFormValues, helpers: FormikHelpers<TFormValues>) => {
+        const result = await everClient.crypto.mnemonic_verify({ phrase: values.phrase });
+        if (!result.valid) {
+            helpers.setFieldError('phrase', 'Phrase is invalid');
+            return;
+        }
+
+        const keys = await everClient.crypto.mnemonic_derive_sign_keys({
+            phrase: values.phrase
+        });
+        setUserState({ phrase: values.phrase, keys });
+        navigate('/account/orgs', { replace: true });
     }
 
     return (

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
-import { GoshBlob, GoshCommit } from "../../types/classes";
+// import { GoshBlob, GoshCommit } from "../../types/classes";
 import { IGoshBlob, IGoshCommit, IGoshRepository } from "../../types/types";
 import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
 import { useMonaco } from "@monaco-editor/react";
@@ -16,20 +16,20 @@ const CommitPage = () => {
     const [blobs, setBlobs] = useState<IGoshBlob[]>();
 
     const getCommit = async (repo: IGoshRepository, name: string) => {
-        const address = await repo.getCommitAddr(name);
-        const commit = new GoshCommit(repo.account.client, address);
-        await commit.load();
+        // const address = await repo.getCommitAddr(name);
+        // const commit = new GoshCommit(repo.account.client, address);
+        // await commit.load();
 
-        const blobAddrs = await commit.getBlobs();
-        const blobs = await Promise.all(
-            blobAddrs.map(async (addr) => {
-                const blob = new GoshBlob(commit.account.client, addr);
-                await blob.load();
-                return blob;
-            })
-        );
-        setCommit(commit);
-        setBlobs(blobs);
+        // const blobAddrs = await commit.getBlobs();
+        // const blobs = await Promise.all(
+        //     blobAddrs.map(async (addr) => {
+        //         const blob = new GoshBlob(commit.account.client, addr);
+        //         await blob.load();
+        //         return blob;
+        //     })
+        // );
+        // setCommit(commit);
+        // setBlobs(blobs);
     }
 
     useEffect(() => {

@@ -25,7 +25,7 @@ const HomePage = () => {
                     <p className="mt-2">All in a decentralized way.</p>
                 </div>
                 <div className="my-10 flex flex-wrap justify-center gap-x-8 gap-y-4">
-                    {userState.address ? (
+                    {userState.phrase ? (
                         <div>
                             <Link
                                 to="/repositories"

@@ -8,7 +8,6 @@ const { persistAtom } = recoilPersist({ key: 'recoil' });
 export const userStateAtom = atom<TUserState>({
     key: 'UserStateAtom',
     default: {
-        address: undefined,
         phrase: undefined
     },
     effects_UNSTABLE: [persistAtom]

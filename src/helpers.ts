@@ -4,8 +4,8 @@ import { Account } from "@eversdk/appkit";
 import { toast } from "react-toastify";
 import { SHA1 } from "crypto-js";
 import { Buffer } from "buffer";
-import { GoshRoot } from "./types/classes";
-import { IGoshRepository, IGoshRoot, TDiffData, TGoshBranch } from "./types/types";
+import { GoshDaoCreator, GoshRoot } from "./types/classes";
+import { IGoshDaoCreator, IGoshRepository, IGoshRoot, TDiffData, TGoshBranch } from "./types/types";
 
 
 export const getEndpoints = (): string[] => {
@@ -45,15 +45,21 @@ export const getGiverData = (): any => {
     }
 }
 
+export const getGoshDaoCreator = (client: TonClient): IGoshDaoCreator => {
+    const address = process.env.REACT_APP_CREATOR_ADDR;
+    if (!address) throw Error('No GoshDaoCreator address specified');
+    return new GoshDaoCreator(client, address);
+}
+
 export const getGoshRootFromPhrase = async (
     client: TonClient,
     phrase: string,
     address?: string
-): Promise<IGoshRoot> => {
-    const keys = await client.crypto.mnemonic_derive_sign_keys({ phrase });
-    const root = new GoshRoot(client, { keys, address });
-    await root.load();
-    return root;
+): Promise<any> => {
+    // const keys = await client.crypto.mnemonic_derive_sign_keys({ phrase });
+    // const root = new GoshRoot(client, { keys, address });
+    // await root.load();
+    // return root;
 }
 
 export const getGoshRepositoryBranches = async (
