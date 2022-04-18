@@ -9,8 +9,8 @@ export const goshBranchesAtom = atom<TGoshBranch[]>({
 
 export const goshCurrBranchSelector = selectorFamily({
     key: 'GoshCurrBranchSelector',
-    get: (currBranchName: string) => ({ get }) => {
+    get: (branchName: string) => ({ get }) => {
         const branches = get(goshBranchesAtom);
-        return branches.find((branch) => branch.name === currBranchName);
+        return branches.find((branch) => branch.name === branchName);
     }
 });
