@@ -28,10 +28,10 @@ const HomePage = () => {
                     {userState.phrase ? (
                         <div>
                             <Link
-                                to="/repositories"
+                                to="/account/orgs"
                                 className="btn btn--body py-3 px-10 text-xl leading-normal"
                             >
-                                Repositories
+                                Organizations
                             </Link>
                         </div>
                     ) : (
