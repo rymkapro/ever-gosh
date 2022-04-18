@@ -8,7 +8,7 @@ import Spinner from "../../components/Spinner";
 
 
 type TFormCommitBlockProps = {
-    urlBack: string;
+    urlBack?: string;
     className?: string;
     isDisabled?: boolean;
     isSubmitting?: boolean;
@@ -18,7 +18,7 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
     const { urlBack, className, isDisabled, isSubmitting } = props;
 
     return (
-        <div className={classNames('mt-5 border rounded px-4 py-3', className)}>
+        <div className={classNames('mt-5 border rounded px-4 py-3 bg-white', className)}>
             <h3 className="text-lg font-semibold mb-2">Commit data</h3>
             <div>
                 <Field
@@ -51,12 +51,14 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                     {isSubmitting && <Spinner className="mr-2" />}
                     Commit changes
                 </button>
-                <Link
-                    to={urlBack}
-                    className="px-3 py-1.5 border rounded text-sm font-medium text-rose-500 border-rose-500 hover:bg-rose-50"
-                >
-                    Cancel
-                </Link>
+                {urlBack && (
+                    <Link
+                        to={urlBack}
+                        className="px-3 py-1.5 border rounded text-sm font-medium text-rose-500 border-rose-500 hover:bg-rose-50"
+                    >
+                        Cancel
+                    </Link>
+                )}
             </div>
         </div>
     );

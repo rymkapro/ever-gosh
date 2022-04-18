@@ -1,6 +1,4 @@
-import { signerKeys, TonClient } from "@eversdk/core";
-import WalletABI from "./contracts/wallets/SafeMultisigWallet.abi.json";
-import { Account } from "@eversdk/appkit";
+import { TonClient } from "@eversdk/core";
 import { toast } from "react-toastify";
 import { SHA1 } from "crypto-js";
 import { Buffer } from "buffer";
@@ -17,31 +15,6 @@ export const getEndpoints = (): string[] => {
         case 'se':
         default:
             return ['http://localhost'];
-    }
-}
-
-export const getGiverData = (): any => {
-    switch (process.env.REACT_APP_EVER_NETWORK) {
-        case 'devnet':
-            return {
-                address: '0:3282fb4cce2cde32cca0bc11edf3df8fb32c3847ec8b75f4e678718cde2f6bb0',
-                keys: {
-                    public: '41a71ceaa7ac96eda2b261cfeeec2a52120fe93f744eb6909b2a33eb183f7ba2',
-                    secret: '4565f3d76cbf69bbf335de22cf7c99beb2c57fc30de62d540812663fb5839c25'
-                }
-            };
-        case 'mainnet':
-            return {};
-        case 'se':
-        default:
-            return {
-                address: '0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391',
-                keys: {
-                    public: 'b8093a117f55aaa95dcccb191552de9d4535294aab8b2e83373b7c58f1de971c',
-                    secret: '2e800b65403b5e072e47ace28a926a96a4599bbc4c96a42f6e9661a19d1ba635'
-                },
-                phrase: 'country dinosaur canvas sentence castle soda quantum stamp reason walnut palm flock'
-            };
     }
 }
 
@@ -126,24 +99,6 @@ export const getCodeLanguageFromFilename = (monaco: any, filename: string): stri
         item.extensions.indexOf(ext) >= 0
     ));
     return found?.id || 'plaintext';
-}
-
-/**
- * SafeMultisigWallet as a giver
- * @param client
- * @param address
- * @param value
- */
-export const giver = async (
-    client: TonClient,
-    address: string,
-    value: number | bigint,
-    payload: string = ''
-) => {
-    const wallet = getGiverData();
-    const signer = signerKeys(wallet.keys);
-    const account = new Account({ abi: WalletABI }, { client, address: wallet.address, signer });
-    await account.run('sendTransaction', { dest: address, value, bounce: false, flags: 1, payload });
 }
 
 /**

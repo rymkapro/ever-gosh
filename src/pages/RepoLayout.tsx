@@ -29,6 +29,8 @@ const RepoLayout = () => {
             const { branchList } = await getGoshRepoBranches(repo);
             setBranches(branchList);
             setIsFetched(true);
+            console.debug('Repo addr:', goshRepo?.address);
+            console.debug('Wallet addr:', goshWallet?.address);
         }
 
         if (goshRepo && goshWallet) init(goshRepo);
@@ -66,6 +68,16 @@ const RepoLayout = () => {
                         >
                             <FontAwesomeIcon icon={faCode} size="sm" className="mr-2" />
                             Code
+                        </NavLink>
+                        <NavLink
+                            to={`/orgs/${daoName}/repos/${repoName}/pulls`}
+                            className={({ isActive }) => classNames(
+                                'text-base text-gray-050a15/50 hover:text-gray-050a15 py-1.5 px-2',
+                                isActive ? '!text-gray-050a15 border-b border-b-gray-050a15' : null
+                            )}
+                        >
+                            <FontAwesomeIcon icon={faCode} size="sm" className="mr-2" />
+                            Pull requests
                         </NavLink>
                     </div>
 

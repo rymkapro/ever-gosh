@@ -23,6 +23,8 @@ import BlobUpdatePage from "./pages/BlobUpdate";
 import BlobPage from "./pages/Blob";
 import CommitsPage from "./pages/Commits";
 import CommitPage from "./pages/Commit";
+import PullsPage from "./pages/Pulls";
+import PullCreatePage from "./pages/PullCreate";
 
 import "./assets/scss/style.scss";
 
@@ -63,6 +65,8 @@ const App = () => {
                             <Route path="blob/:branchName/:blobName" element={<BlobPage />} />
                             <Route path="commits/:branchName" element={<CommitsPage />} />
                             <Route path="commit/:branchName/:commitName" element={<CommitPage />} />
+                            <Route path="pulls/create" element={<PullCreatePage />} />
+                            <Route path="pulls" element={<PullsPage />} />
                         </Route>
                         <Route element={<DaoLayout />}>
                             <Route index element={<DaoPage />} />
