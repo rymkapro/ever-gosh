@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Field, Form, Formik, FormikHelpers } from "formik";
-import { useMutation, useQuery } from "react-query";
+import { useMutation } from "react-query";
 import { Link, useOutletContext, useParams } from "react-router-dom";
 import BranchSelect from "../../components/BranchSelect";
 import TextField from "../../components/FormikForms/TextField";
@@ -11,6 +11,8 @@ import { getGoshRepoBranches } from "../../helpers";
 import { TGoshBranch } from "../../types/types";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import * as Yup from "yup";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
 
 
 type TCreateBranchFormValues = {
@@ -21,25 +23,11 @@ type TCreateBranchFormValues = {
 export const BranchesPage = () => {
     const { daoName, repoName } = useParams();
     const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
-    const [branch, setBranch] = useState<TGoshBranch>();
+    const [branches, setBranches] = useRecoilState(goshBranchesAtom);
+    const [branchName, setBranchName] = useState<string>('master');
+    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const [search, setSearch] = useState<string>();
     const [branchesOnMutation, setBranchesOnMutation] = useState<string[]>([]);
-    const brachesListQuery = useQuery(
-        ['branchesList'],
-        async (): Promise<TGoshBranch[]> => {
-            const { branchList, branchCurr } = await getGoshRepoBranches(goshRepo);
-            setBranch(branchCurr);
-            return branchList;
-        },
-        {
-            enabled: !!goshWallet,
-            select: (data) => {
-                if (!search) return data;
-                const pattern = new RegExp(search, 'i');
-                return data.filter((branch) => branch.name.search(pattern) >= 0);
-            }
-        }
-    );
     const branchDeleteMutation = useMutation(
         (name: string) => {
             return new Promise(() => { })
@@ -50,7 +38,7 @@ export const BranchesPage = () => {
                 setBranchesOnMutation((value) => [...value, variables]);
             },
             onSuccess: () => {
-                brachesListQuery.refetch()
+                // brachesListQuery.refetch()
             },
             onError: (error: any) => {
                 console.error(error);
@@ -76,7 +64,8 @@ export const BranchesPage = () => {
                 values.from.name,
                 values.from.snapshot.length
             );
-            await brachesListQuery.refetch();
+            const { branchList } = await getGoshRepoBranches(goshRepo);
+            setBranches(branchList);
             helpers.resetForm();
         } catch (e: any) {
             console.error(e);
@@ -90,86 +79,80 @@ export const BranchesPage = () => {
         }
     }
 
-    if (brachesListQuery.isIdle || brachesListQuery.isLoading) return <Spinner />
     return (
         <div className="bordered-block px-7 py-8">
-            {(brachesListQuery.isIdle || brachesListQuery.isLoading) && (
-                <>
-                    <Spinner className="mr-3" />
-                    Loading branches
-                </>
-            )}
-            {!brachesListQuery.isLoading && (
-                <>
-                    <div className="flex justify-between gap-4">
-                        <Formik
-                            initialValues={{ newName: '', from: branch }}
-                            onSubmit={onBranchCreate}
-                            validationSchema={Yup.object().shape({
-                                newName: Yup.string()
-                                    .notOneOf((brachesListQuery.data || []).map((b) => b.name), 'Branch exists')
-                                    .required('Branch name is required')
-                            })}
-                        >
-                            {({ isSubmitting, setFieldValue }) => (
-                                <Form className="flex items-center">
-                                    <BranchSelect
-                                        branch={branch}
-                                        branches={brachesListQuery.data || []}
-                                        onChange={(selected) => {
-                                            setBranch(selected);
-                                            setFieldValue('from', selected);
-                                        }}
-                                    />
-                                    <span className="mx-3">
-                                        <FontAwesomeIcon icon={faChevronRight} size="sm" />
-                                    </span>
-                                    <div>
-                                        <Field
-                                            name="newName"
-                                            component={TextField}
-                                            errorEnabled={false}
-                                            inputProps={{
-                                                placeholder: 'Branch name',
-                                                autoComplete: 'off',
-                                                className: '!text-sm !py-1.5'
-                                            }}
-                                        />
-                                    </div>
-                                    <button
-                                        type="submit"
-                                        className="btn btn--body px-3 py-1.5 ml-3 !text-sm"
-                                        disabled={isSubmitting}
-                                    >
-                                        {isSubmitting && <Spinner className="mr-2" />}
-                                        Create branch
-                                    </button>
-                                </Form>
-                            )}
-                        </Formik>
-
-                        <div className="input basis-1/4">
-                            <input
-                                type="text"
-                                className="element !text-sm !py-1.5"
-                                placeholder="Search branch"
-                                onChange={(e) => setSearch(e.target.value)}
+            <div className="flex justify-between gap-4">
+                <Formik
+                    initialValues={{ newName: '', from: branch }}
+                    onSubmit={onBranchCreate}
+                    validationSchema={Yup.object().shape({
+                        newName: Yup.string()
+                            .notOneOf((branches).map((b) => b.name), 'Branch exists')
+                            .required('Branch name is required')
+                    })}
+                >
+                    {({ isSubmitting, setFieldValue }) => (
+                        <Form className="flex items-center">
+                            <BranchSelect
+                                branch={branch}
+                                branches={branches}
+                                onChange={(selected) => {
+                                    if (selected) {
+                                        setBranchName(selected?.name);
+                                        setFieldValue('from', selected);
+                                    }
+                                }}
                             />
-                        </div>
-                    </div>
+                            <span className="mx-3">
+                                <FontAwesomeIcon icon={faChevronRight} size="sm" />
+                            </span>
+                            <div>
+                                <Field
+                                    name="newName"
+                                    component={TextField}
+                                    errorEnabled={false}
+                                    inputProps={{
+                                        placeholder: 'Branch name',
+                                        autoComplete: 'off',
+                                        className: '!text-sm !py-1.5'
+                                    }}
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                className="btn btn--body px-3 py-1.5 ml-3 !text-sm"
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting && <Spinner className="mr-2" />}
+                                Create branch
+                            </button>
+                        </Form>
+                    )}
+                </Formik>
 
-                    <div className="mt-5 divide-y divide-gray-c4c4c4">
-                        {brachesListQuery.data?.map((branch, index) => (
-                            <div key={index} className="flex gap-4 items-center px-3 py-2 text-sm">
-                                <div className="grow">
-                                    <Link
-                                        to={`/orgs/${daoName}/repos/${repoName}/tree/${branch.name}`}
-                                        className="hover:underline"
-                                    >
-                                        {branch.name}
-                                    </Link>
-                                </div>
-                                {/* <div>
+                <div className="input basis-1/4">
+                    <input
+                        type="text"
+                        className="element !text-sm !py-1.5"
+                        placeholder="Search branch (disabled)"
+                        disabled={true}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </div>
+            </div>
+
+            <div className="mt-5 divide-y divide-gray-c4c4c4">
+                {branches.map((branch, index) => (
+                    <div key={index} className="flex gap-4 items-center px-3 py-2 text-sm">
+                        <div className="grow">
+                            <Link
+                                to={`/orgs/${daoName}/repos/${repoName}/tree/${branch.name}`}
+                                className="hover:underline"
+                            >
+                                {branch.name}
+                            </Link>
+                        </div>
+                        {/* <div>
                                     {branch.name !== 'master' && (
                                         <button
                                             type="button"
@@ -185,11 +168,9 @@ export const BranchesPage = () => {
                                         </button>
                                     )}
                                 </div> */}
-                            </div>
-                        ))}
                     </div>
-                </>
-            )}
+                ))}
+            </div>
         </div>
     );
 }

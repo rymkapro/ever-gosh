@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { useRecoilValue } from "recoil";
 import BranchSelect from "../../components/BranchSelect";
 import CopyClipboard from "../../components/CopyClipboard";
+import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
 import { GoshCommit } from "../../types/classes";
 import { TGoshBranch, IGoshCommit, IGoshRepository } from "../../types/types";
 import { shortString } from "../../utils";
@@ -9,8 +11,10 @@ import { TRepoLayoutOutletContext } from "../RepoLayout";
 
 
 const CommitsPage = () => {
-    const { goshRepo, branches } = useOutletContext<TRepoLayoutOutletContext>();
+    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
     const { daoName, repoName, branchName = 'master' } = useParams();
+    const branches = useRecoilValue(goshBranchesAtom);
+    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const navigate = useNavigate();
     const [commits, setCommits] = useState<IGoshCommit[]>();
 
@@ -27,14 +31,14 @@ const CommitsPage = () => {
             setCommits(commits);
         }
 
-        if (goshRepo && branches.branchCurr) getCommits(goshRepo, branches.branchCurr);
-    }, [goshRepo, branches.branchCurr]);
+        if (goshRepo && branch) getCommits(goshRepo, branch);
+    }, [goshRepo, branch]);
 
     return (
         <div className="bordered-block px-7 py-8">
             <BranchSelect
-                branch={branches.branchCurr}
-                branches={branches.branchList}
+                branch={branch}
+                branches={branches}
                 onChange={(selected) => {
                     if (selected) {
                         navigate(`/orgs/${daoName}/repos/${repoName}/commits/${selected.name}`);

@@ -6,20 +6,21 @@ import BranchSelect from "../../components/BranchSelect";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClockRotateLeft, faCodeBranch } from "@fortawesome/free-solid-svg-icons";
 import { GoshSnapshot } from "../../types/classes";
+import { useRecoilValue } from "recoil";
+import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
 
 
 const RepoPage = () => {
-    const { goshRepo, branches } = useOutletContext<TRepoLayoutOutletContext>();
+    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
     const { daoName, repoName, branchName = 'master' } = useParams();
     const navigate = useNavigate();
+    const branches = useRecoilValue(goshBranchesAtom);
+    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const [tree, setTree] = useState<IGoshSnapshot[]>();
 
     useEffect(() => {
         const getTree = async (repo: IGoshRepository, currBranch: TGoshBranch) => {
-            console.debug('Curr branch:', branches.branchCurr);
-            if (!currBranch.snapshot) setTree([]);
-            console.debug('Snapshot addr:', branches.branchCurr?.snapshot);
-
+            console.debug('Snapshot addr:', currBranch.snapshot);
             const snapshots = await Promise.all(
                 currBranch.snapshot.map(async (address) => {
                     const snapshot = new GoshSnapshot(repo.account.client, address);
@@ -31,16 +32,16 @@ const RepoPage = () => {
             setTree(snapshots);
         }
 
-        if (goshRepo && branches.branchCurr) getTree(goshRepo, branches.branchCurr);
-    }, [goshRepo, branches.branchCurr]);
+        if (goshRepo && branch) getTree(goshRepo, branch);
+    }, [goshRepo, branch]);
 
     return (
         <div className="bordered-block px-7 py-8">
             <div className="flex items-center justify-between gap-3">
                 <div>
                     <BranchSelect
-                        branch={branches.branchCurr}
-                        branches={branches.branchList}
+                        branch={branch}
+                        branches={branches}
                         onChange={(selected) => {
                             if (selected) {
                                 navigate(`/orgs/${daoName}/repos/${repoName}/tree/${selected.name}`);
@@ -54,7 +55,7 @@ const RepoPage = () => {
                     >
                         <span className="mr-1 font-semibold">
                             <FontAwesomeIcon icon={faCodeBranch} className="mr-1" />
-                            {branches.branchList.length}
+                            {branches.length}
                         </span>
                         branches
                     </Link>

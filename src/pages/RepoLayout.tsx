@@ -4,36 +4,35 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
 import Spinner from "../components/Spinner";
 import { useGoshRepo, useGoshWallet } from "../hooks/gosh.hooks";
-import { IGoshRepository, IGoshWallet, TGoshBranch } from "../types/types";
+import { IGoshRepository, IGoshWallet } from "../types/types";
 import { classNames } from "../utils";
 import { getGoshRepoBranches } from "../helpers";
+import { useSetRecoilState } from "recoil";
+import { goshBranchesAtom } from "../store/gosh.state";
 
 
 export type TRepoLayoutOutletContext = {
     goshRepo: IGoshRepository;
     goshWallet: IGoshWallet;
-    branches: { branchList: TGoshBranch[]; branchCurr?: TGoshBranch };
 }
 
 const RepoLayout = () => {
-    const { daoName, repoName, branchName } = useParams();
+    const { daoName, repoName } = useParams();
     const goshRepo = useGoshRepo(daoName, repoName);
     const goshWallet = useGoshWallet(daoName);
+    const setBranches = useSetRecoilState(goshBranchesAtom);
     const [isFetched, setIsFetched] = useState<boolean>(false);
-    const [branches, setBranches] = useState<{ branchList: TGoshBranch[]; branchCurr?: TGoshBranch }>();
 
     useEffect(() => {
-        const getBranches = async (goshRepo: IGoshRepository) => {
-            const branches = await getGoshRepoBranches(goshRepo, branchName);
-            console.debug('Branches', branches.branchList);
-            console.debug('GoshRepo address', goshRepo.address);
-            console.debug('GoshWallet address', goshWallet?.address);
-            setBranches(branches);
+        console.debug('REPO LAYOUT')
+        const init = async (repo: IGoshRepository) => {
+            const { branchList } = await getGoshRepoBranches(repo);
+            setBranches(branchList);
             setIsFetched(true);
         }
 
-        if (goshRepo && goshWallet) getBranches(goshRepo);
-    }, [goshRepo, goshWallet, branchName]);
+        if (goshRepo && goshWallet) init(goshRepo);
+    }, [goshRepo, goshWallet, setBranches]);
 
     return (
         <div className="container my-10">
@@ -70,7 +69,7 @@ const RepoLayout = () => {
                         </NavLink>
                     </div>
 
-                    <Outlet context={{ goshRepo, goshWallet, branches }} />
+                    <Outlet context={{ goshRepo, goshWallet }} />
                 </>
             )}
         </div>

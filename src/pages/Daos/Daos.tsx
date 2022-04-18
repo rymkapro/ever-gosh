@@ -73,7 +73,7 @@ const DaosPage = () => {
                         <div key={index} className="py-2">
                             <Link
                                 to={`/orgs/${item.meta?.name}`}
-                                className="hover:underline"
+                                className="text-xl font-semibold hover:underline"
                             >
                                 {item.meta?.name}
                             </Link>

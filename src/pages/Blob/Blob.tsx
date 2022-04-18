@@ -11,11 +11,15 @@ import { faPencil } from "@fortawesome/free-solid-svg-icons";
 import CopyClipboard from "../../components/CopyClipboard";
 import { GoshSnapshot } from "../../types/classes";
 import Spinner from "../../components/Spinner";
+import { useRecoilValue } from "recoil";
+import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
 
 
 const BlobPage = () => {
-    const { goshRepo, branches } = useOutletContext<TRepoLayoutOutletContext>();
-    const { daoName, repoName, branchName, blobName } = useParams();
+    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
+    const { daoName, repoName, branchName = 'master', blobName } = useParams();
+    const branches = useRecoilValue(goshBranchesAtom);
+    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const navigate = useNavigate();
     const monaco = useMonaco();
     const [snapshot, setSnapshot] = useState<IGoshSnapshot>();
@@ -36,8 +40,8 @@ const BlobPage = () => {
             <div className="flex items-center justify-between gap-3 mb-5">
                 <div>
                     <BranchSelect
-                        branch={branches.branchCurr}
-                        branches={branches.branchList}
+                        branch={branch}
+                        branches={branches}
                         onChange={(selected) => {
                             if (selected) {
                                 navigate(`/orgs/${daoName}/repos/${repoName}/blob/${selected.name}/${blobName}`);

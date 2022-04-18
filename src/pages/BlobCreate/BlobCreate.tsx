@@ -13,7 +13,8 @@ import { classNames } from "../../utils";
 import BlobEditor from "../../components/Blob/Editor";
 import BlobPreview from "../../components/Blob/Preview";
 import FormCommitBlock from "./FormCommitBlock";
-import { useGoshWallet } from "../../hooks/gosh.hooks";
+import { useRecoilValue } from "recoil";
+import { goshCurrBranchSelector } from "../../store/gosh.state";
 
 
 type TFormValues = {
@@ -25,8 +26,8 @@ type TFormValues = {
 
 const BlobCreatePage = () => {
     const { daoName, repoName, branchName = 'master' } = useParams();
-    const goshWallet = useGoshWallet(daoName);
-    const { branches } = useOutletContext<TRepoLayoutOutletContext>();
+    const { goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
+    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const navigate = useNavigate();
     const monaco = useMonaco();
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
@@ -37,7 +38,7 @@ const BlobCreatePage = () => {
         try {
             if (!goshWallet) throw Error('Can not get GoshWallet');
             if (!repoName) throw Error('Repository is undefined');
-            if (!branches.branchCurr) throw Error('Branch is undefined');
+            if (!branch) throw Error('Branch is undefined');
 
             // Prepare commit data
             const blobSha = sha1(values.content, 'blob');
@@ -61,7 +62,7 @@ const BlobCreatePage = () => {
                 branchName,
                 commitSha,
                 commitDataStr,
-                branches.branchCurr.commitAddr,
+                branch.commitAddr,
                 '0:0000000000000000000000000000000000000000000000000000000000000000'
             )
             await goshWallet.createBlob(repoName, commitSha, blobSha, values.content);
