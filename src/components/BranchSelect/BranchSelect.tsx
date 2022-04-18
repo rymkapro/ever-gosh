@@ -60,19 +60,21 @@ const BranchSelect = (props: TBranchSelectProps) => {
                 onFocusCapture={() => searchRef.current?.focus()}
             >
                 <div className="px-2 py-2 border-b">
-                    <input
-                        ref={searchRef}
-                        type="text"
-                        className="input px-2 py-1 text-sm"
-                        autoComplete="off"
-                        placeholder="Search branch"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
+                    <div className="input">
+                        <input
+                            ref={searchRef}
+                            type="text"
+                            className="element !py-1 !text-sm"
+                            autoComplete="off"
+                            placeholder="Search branch"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
                 </div>
                 <div className="max-h-56 overflow-auto">
                     {!filtered.length && (
-                        <div className="py-2 text-center text-gray-400 text-xs">
+                        <div className="py-2 text-center text-gray-606060 text-xs">
                             No branch found
                         </div>
                     )}

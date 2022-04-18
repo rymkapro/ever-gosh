@@ -23,7 +23,7 @@ export type TAccountData = {
 export type TGoshBranch = {
     name: string;
     commitAddr: string;
-    snapshot?: IGoshSnapshot;
+    snapshot: string[];
 }
 
 export type TGoshSnapshotMetaContentItem = {
@@ -62,7 +62,7 @@ export interface IGoshRoot extends IContract {
     createDao(name: string, rootPubkey: string): Promise<string>;
     getDaoAddr(name: string): Promise<string>;
     getDaoWalletCode(pubkey: string): Promise<string>;
-    getRepoAddr(name: string): Promise<string>;
+    getRepoAddr(name: string, daoAddr: string): Promise<string>;
     getDaoRepoCode(daoAddress: string): Promise<string>;
 }
 
@@ -85,6 +85,27 @@ export interface IGoshWallet extends IContract {
 
     getDaoAddr(): Promise<string>;
     createRepo(name: string): Promise<void>;
+    createBranch(repoName: string, newName: string, fromName: string): Promise<void>;
+    createCommit(
+        repoName: string,
+        branchName: string,
+        commitSha: string,
+        commitData: string,
+        parent1: string,
+        parent2: string
+    ): Promise<void>;
+    createBlob(
+        repoName: string,
+        commit: string,
+        blobSha: string,
+        blobContent: string
+    ): Promise<void>;
+    createDiff(
+        repoName: string,
+        branchName: string,
+        filePath: string,
+        diff: string
+    ): Promise<void>;
 }
 
 export interface IGoshRepository extends IContract {
@@ -97,16 +118,16 @@ export interface IGoshRepository extends IContract {
     getName(): Promise<string>;
     getBranches(): Promise<TGoshBranch[]>;
     getBranch(name: string): Promise<TGoshBranch>;
-    getCommitAddr(commitSha: string): Promise<string>;
-    createCommit(
-        branchName: string,
-        commitData: { title: string; message: string; },
-        diffData: { name: string; diff: TDiffData[] }[],
-        blobs: { name: string; content: string; }[]
-    ): Promise<void>;
-    createBranch(name: string, fromName: string): Promise<void>;
-    deleteBranch(name: string): Promise<void>;
-    createSnapshot(name: string): Promise<void>;
+    // getCommitAddr(commitSha: string): Promise<string>;
+    // createCommit(
+    //     branchName: string,
+    //     commitData: { title: string; message: string; },
+    //     diffData: { name: string; diff: TDiffData[] }[],
+    //     blobs: { name: string; content: string; }[]
+    // ): Promise<void>;
+    // createBranch(name: string, fromName: string): Promise<void>;
+    // deleteBranch(name: string): Promise<void>;
+    // createSnapshot(name: string): Promise<void>;
 }
 
 export interface IGoshCommit extends IContract {

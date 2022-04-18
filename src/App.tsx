@@ -7,6 +7,7 @@ import Header from "./components/Header";
 import ProtectedLayout from "./pages/ProtectedLayout";
 import AccountLayout from "./pages/AccountLayout";
 import DaoLayout from "./pages/DaoLayout";
+import RepoLayout from "./pages/RepoLayout";
 import HomePage from "./pages/Home";
 import SignupPage from "./pages/Signup";
 import SigninPage from "./pages/Signin";
@@ -15,14 +16,13 @@ import DaoPage from "./pages/Dao";
 import DaoCreatePage from "./pages/DaoCreate";
 import ReposPage from "./pages/Repos";
 import RepoCreatePage from "./pages/RepoCreate";
-// import RepositoryLayout from "./pages/RepositoryLayout";
-// import RepositoryPage from "./pages/Repository";
-// import BlobCreatePage from "./pages/BlobCreate";
+import RepoPage from "./pages/Repo";
+import BlobCreatePage from "./pages/BlobCreate";
 // import BlobUpdatePage from "./pages/BlobUpdate";
 // import BlobPage from "./pages/Blob";
 // import CommitsPage from "./pages/Commits";
 // import CommitPage from "./pages/Commit";
-// import BranchesPage from "./pages/Branches";
+import BranchesPage from "./pages/Branches";
 
 import "./assets/scss/style.scss";
 
@@ -54,6 +54,12 @@ const App = () => {
                     </Route>
                     <Route path="/orgs/:daoName" element={<ProtectedLayout />}>
                         <Route path="repos/create" element={<RepoCreatePage />} />
+                        <Route path="repos/:repoName" element={<RepoLayout />}>
+                            <Route index element={<RepoPage />} />
+                            <Route path="tree/:branchName" element={<RepoPage />} />
+                            <Route path="blobs/create/:branchName" element={<BlobCreatePage />} />
+                            <Route path="branches" element={<BranchesPage />} />
+                        </Route>
                         <Route element={<DaoLayout />}>
                             <Route index element={<DaoPage />} />
                             <Route path="repos" element={<ReposPage />} />
@@ -61,16 +67,12 @@ const App = () => {
                     </Route>
                     <Route path="/repositories" element={<ProtectedLayout />}>
                         {/* <Route index element={<RepositoriesPage />} />
-                        <Route path="create" element={<RepositoryCreatePage />} />
                         <Route path=":repoName" element={<RepositoryLayout />}>
-                            <Route index element={<RepositoryPage />} />
-                            <Route path="tree/:branchName" element={<RepositoryPage />} />
-                            <Route path="blobs/create/:branchName" element={<BlobCreatePage />} />
                             <Route path="blobs/update/:branchName/:blobName" element={<BlobUpdatePage />} />
                             <Route path="blob/:branchName/:blobName" element={<BlobPage />} />
                             <Route path="commits/:branchName" element={<CommitsPage />} />
                             <Route path="commit/:commitName" element={<CommitPage />} />
-                            <Route path="branches" element={<BranchesPage />} />
+
                         </Route> */}
                     </Route>
                     <Route path="*" element={<p>No match (404)</p>} />

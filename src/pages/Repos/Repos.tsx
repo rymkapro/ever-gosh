@@ -12,6 +12,7 @@ const RepositoriesPage = () => {
     const [search, setSearch] = useState<string>();
     const goshRoot = useGoshRoot();
     const { goshDao } = useOutletContext<TDaoLayoutOutletContext>();
+    const { daoName } = useParams();
     const repoListQuery = useQuery(
         ['repositoryList'],
         async (): Promise<IGoshRepository[]> => {
@@ -86,7 +87,7 @@ const RepositoriesPage = () => {
                 )}
 
                 {repoListQuery.data?.map((repository, index) => (
-                    <RepoListItem key={index} repository={repository} />
+                    daoName && <RepoListItem key={index} daoName={daoName} repository={repository} />
                 ))}
             </div>
         </div>

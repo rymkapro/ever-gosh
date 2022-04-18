@@ -22,7 +22,8 @@ const DaoLayout = () => {
         <div className="container my-10">
             {!goshDao && (
                 <>
-                    <Spinner className="mr-3" />Loading organization
+                    <Spinner className="mr-3" />
+                    Loading organization
                 </>
             )}
 

@@ -2,10 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import BranchSelect from "../../components/BranchSelect";
 import { IGoshBlob, TGoshBranch } from "../../types/types";
-import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
+import { TRepoLayoutOutletContext } from "../RepoLayout";
 import { useMonaco } from "@monaco-editor/react";
 // import { GoshBlob } from "../../types/classes";
-import { getCodeLanguageFromFilename, getGoshRepositoryBranches } from "../../helpers";
+import { getCodeLanguageFromFilename, getGoshRepoBranches } from "../../helpers";
 import BlobPreview from "../../components/Blob/Preview";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPencil } from "@fortawesome/free-solid-svg-icons";
@@ -13,7 +13,7 @@ import CopyClipboard from "../../components/CopyClipboard";
 
 
 const BlobPage = () => {
-    const { goshRepository } = useOutletContext<TRepositoryLayoutOutletContext>();
+    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
     const { repoName, branchName = 'master', blobName } = useParams();
     const navigate = useNavigate();
     const monaco = useMonaco();
@@ -41,7 +41,7 @@ const BlobPage = () => {
         }
 
         initState();
-    }, [goshRepository, branchName, blobName]);
+    }, [goshRepo, branchName, blobName]);
 
     return (
         <>

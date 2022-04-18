@@ -2,8 +2,7 @@ import { KeyPair } from "@eversdk/core";
 import { useEffect, useMemo, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { userStateAtom } from "../store/user.state";
-import { GoshDao, GoshRoot, GoshWallet } from "../types/classes";
-// import { GoshRepository } from "../types/classes";
+import { GoshDao, GoshRoot, GoshWallet, GoshRepository } from "../types/classes";
 import { IGoshDao, IGoshRepository, IGoshRoot, IGoshWallet } from "../types/types";
 import { useEverClient } from "./ever.hooks";
 
@@ -60,25 +59,26 @@ export const useGoshWallet = (daoName?: string) => {
         }
 
         if (goshDao && userState.keys) createWallet(goshDao, userState.keys);
-    }, [goshDao]);
+    }, [goshDao, userState.keys]);
 
     return goshWallet;
 }
 
 /** Create GoshRepository object */
-export const useGoshRepository = (name?: string) => {
+export const useGoshRepo = (daoName?: string, name?: string) => {
     const goshRoot = useGoshRoot();
-    const [goshRepository, setGoshRepository] = useState<IGoshRepository>();
+    const [goshRepo, setGoshRepo] = useState<IGoshRepository>();
 
-    // const createGoshRepository = async (root: IGoshRoot, name: string) => {
-    //     const address = await root.getRepositoryAddr(name);
-    //     const repository = new GoshRepository(root.account.client, name, address);
-    //     setGoshRepository(repository);
-    // }
+    useEffect(() => {
+        const createRepo = async (root: IGoshRoot, daoName: string, name: string) => {
+            const daoAddr = await root.getDaoAddr(daoName);
+            const repoAddr = await root.getRepoAddr(name, daoAddr);
+            const repository = new GoshRepository(root.account.client, repoAddr);
+            setGoshRepo(repository);
+        }
 
-    // useEffect(() => {
-    //     if (goshRoot && name) createGoshRepository(goshRoot, name);
-    // }, [goshRoot, name]);
+        if (goshRoot && daoName && name) createRepo(goshRoot, daoName, name);
+    }, [goshRoot, daoName, name]);
 
-    return goshRepository;
+    return goshRepo;
 }

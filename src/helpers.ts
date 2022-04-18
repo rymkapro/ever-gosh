@@ -4,8 +4,8 @@ import { Account } from "@eversdk/appkit";
 import { toast } from "react-toastify";
 import { SHA1 } from "crypto-js";
 import { Buffer } from "buffer";
-import { GoshDaoCreator, GoshRoot } from "./types/classes";
-import { IGoshDaoCreator, IGoshRepository, IGoshRoot, TDiffData, TGoshBranch } from "./types/types";
+import { GoshDaoCreator } from "./types/classes";
+import { IGoshDaoCreator, IGoshRepository, TDiffData, TGoshBranch } from "./types/types";
 
 
 export const getEndpoints = (): string[] => {
@@ -51,24 +51,13 @@ export const getGoshDaoCreator = (client: TonClient): IGoshDaoCreator => {
     return new GoshDaoCreator(client, address);
 }
 
-export const getGoshRootFromPhrase = async (
-    client: TonClient,
-    phrase: string,
-    address?: string
-): Promise<any> => {
-    // const keys = await client.crypto.mnemonic_derive_sign_keys({ phrase });
-    // const root = new GoshRoot(client, { keys, address });
-    // await root.load();
-    // return root;
-}
-
-export const getGoshRepositoryBranches = async (
+export const getGoshRepoBranches = async (
     repo: IGoshRepository,
     selectedBranchName: string = 'master'
-): Promise<{ branches: TGoshBranch[], branch: TGoshBranch | undefined }> => {
+): Promise<{ branchList: TGoshBranch[], branchCurr?: TGoshBranch }> => {
     const branches = await repo.getBranches();
     const branch = branches.find((branch) => branch.name === selectedBranchName);
-    return { branches, branch };
+    return { branchList: branches, branchCurr: branch };
 }
 
 /**

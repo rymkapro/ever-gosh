@@ -10,9 +10,9 @@ import { faCode, faEye } from "@fortawesome/free-solid-svg-icons";
 import BlobEditor from "../../components/Blob/Editor";
 import FormCommitBlock from "../BlobCreate/FormCommitBlock";
 import { useMonaco } from "@monaco-editor/react";
-import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
+import { TRepoLayoutOutletContext } from "../RepoLayout";
 import { IGoshBlob } from "../../types/types";
-import { generateDiff, getCodeLanguageFromFilename, getGoshRepositoryBranches } from "../../helpers";
+import { generateDiff, getCodeLanguageFromFilename, getGoshRepoBranches } from "../../helpers";
 // import { GoshBlob } from "../../types/classes";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 
@@ -26,7 +26,7 @@ type TFormValues = {
 }
 
 const BlobUpdatePage = () => {
-    const { goshRepository } = useOutletContext<TRepositoryLayoutOutletContext>();
+    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
     const { repoName, branchName = 'master', blobName } = useParams();
     const navigate = useNavigate();
     const monaco = useMonaco();
@@ -38,12 +38,12 @@ const BlobUpdatePage = () => {
     const onCommitChanges = async (values: TFormValues) => {
         try {
             const diff = await generateDiff(monaco, values.content, blob?.meta?.content);
-            await goshRepository.createCommit(
-                branchName,
-                { title: values.title, message: values.message },
-                [{ name: values.name, diff }],
-                [{ name: values.name, content: values.content }]
-            );
+            // await goshRepo.createCommit(
+            //     branchName,
+            //     { title: values.title, message: values.message },
+            //     [{ name: values.name, diff }],
+            //     [{ name: values.name, content: values.content }]
+            // );
             navigate(urlBack);
         } catch (e: any) {
             alert(e.message);
@@ -67,7 +67,7 @@ const BlobUpdatePage = () => {
         }
 
         initState();
-    }, [goshRepository, branchName, blobName]);
+    }, [goshRepo, branchName, blobName]);
 
     useEffect(() => {
         if (monaco && blobName) {

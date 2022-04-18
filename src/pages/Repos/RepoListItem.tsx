@@ -8,17 +8,18 @@ import { shortString } from "../../utils";
 
 
 type TRepositoryListItemProps = {
+    daoName: string;
     repository: IGoshRepository
 }
 
 const RepositoryListItem = (props: TRepositoryListItemProps) => {
-    const { repository } = props;
+    const { daoName, repository } = props;
 
     return (
         <div className="py-3">
             <Link
                 className="text-xl font-semibold hover:underline"
-                to={`/repositories/${repository.meta?.name}`}
+                to={`/orgs/${daoName}/repos/${repository.meta?.name}`}
             >
                 {repository.meta?.name}
             </Link>

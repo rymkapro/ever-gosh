@@ -1,19 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
-import { IGoshRepository, TGoshBranch, TGoshSnapshotMetaContentItem } from "../../types/types";
-import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
+import { IGoshRepository, TGoshSnapshotMetaContentItem } from "../../types/types";
+import { TRepoLayoutOutletContext } from "../RepoLayout";
 import BranchSelect from "../../components/BranchSelect";
-import { getGoshRepositoryBranches } from "../../helpers";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClockRotateLeft, faCodeBranch } from "@fortawesome/free-solid-svg-icons";
 
 
-const RepositoryPage = () => {
-    const { goshRepository } = useOutletContext<TRepositoryLayoutOutletContext>();
-    const { repoName, branchName = 'master' } = useParams();
+const RepoPage = () => {
+    const { goshRepo, branches } = useOutletContext<TRepoLayoutOutletContext>();
+    const { daoName, repoName, branchName = 'master' } = useParams();
     const navigate = useNavigate();
-    const [branches, setBranches] = useState<TGoshBranch[]>([]);
-    const [branch, setBranch] = useState<TGoshBranch>();
     const [tree, setTree] = useState<TGoshSnapshotMetaContentItem[]>();
 
     useEffect(() => {
@@ -27,37 +24,37 @@ const RepositoryPage = () => {
             // setBranches(branches);
         }
 
-        initState(goshRepository, branchName);
-    }, [goshRepository, branchName]);
+        initState(goshRepo, branchName);
+    }, [goshRepo, branchName]);
 
     return (
-        <>
+        <div className="bordered-block px-7 py-8">
             <div className="flex items-center justify-between gap-3">
                 <div>
                     <BranchSelect
-                        branch={branch}
-                        branches={branches}
+                        branch={branches.branchCurr}
+                        branches={branches.branchList}
                         onChange={(selected) => {
                             if (selected) {
-                                navigate(`/repositories/${repoName}/tree/${selected.name}`);
+                                navigate(`/orgs/${daoName}/repos/${repoName}/tree/${selected.name}`);
                             }
                         }}
                     />
 
                     <Link
-                        to={`/repositories/${repoName}/branches`}
-                        className="ml-4 text-sm text-gray-500 hover:text-extblue"
+                        to={`/orgs/${daoName}/repos/${repoName}/branches`}
+                        className="ml-4 text-sm text-gray-050a15/65 hover:text-gray-050a15"
                     >
                         <span className="mr-1 font-semibold">
                             <FontAwesomeIcon icon={faCodeBranch} className="mr-1" />
-                            {branches.length}
+                            {branches.branchList.length}
                         </span>
                         branches
                     </Link>
 
                     <Link
-                        to={`/repositories/${repoName}/commits/${branchName}`}
-                        className="ml-4 text-sm text-gray-500 hover:text-extblue"
+                        to={`/orgs/${daoName}/repos/${repoName}/commits/${branchName}`}
+                        className="ml-4 text-sm text-gray-050a15/65 hover:text-gray-050a15"
                     >
                         <FontAwesomeIcon icon={faClockRotateLeft} className="mr-1" />
                         History
@@ -66,15 +63,15 @@ const RepositoryPage = () => {
 
                 <div className="flex gap-3">
                     <Link
-                        to={`/repositories/${repoName}/blobs/create/${branchName}`}
-                        className="px-4 py-1.5 text-sm font-medium rounded border hover:bg-gray-50"
+                        to={`/orgs/${daoName}/repos/${repoName}/blobs/create/${branchName}`}
+                        className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                     >
                         Add file
                     </Link>
                 </div>
             </div>
 
-            <div className="mt-5 border rounded px-5">
+            <div className="mt-5 px-5">
                 {tree === undefined && (
                     <p className="text-sm text-gray-500 text-center py-3">
                         Loading tree...
@@ -111,8 +108,8 @@ const RepositoryPage = () => {
                     </div>
                 ))}
             </div>
-        </>
+        </div>
     );
 }
 
-export default RepositoryPage;
+export default RepoPage;

@@ -2,14 +2,14 @@ import React, { useEffect, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 // import { GoshBlob, GoshCommit } from "../../types/classes";
 import { IGoshBlob, IGoshCommit, IGoshRepository } from "../../types/types";
-import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
+import { TRepoLayoutOutletContext } from "../RepoLayout";
 import { useMonaco } from "@monaco-editor/react";
 import { getCodeLanguageFromFilename, restoreFromDiff } from "../../helpers";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 
 
 const CommitPage = () => {
-    const { goshRepository } = useOutletContext<TRepositoryLayoutOutletContext>();
+    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
     const { commitName } = useParams();
     const monaco = useMonaco();
     const [commit, setCommit] = useState<IGoshCommit>();
@@ -33,8 +33,8 @@ const CommitPage = () => {
     }
 
     useEffect(() => {
-        if (commitName) getCommit(goshRepository, commitName);
-    }, [goshRepository, commitName]);
+        if (commitName) getCommit(goshRepo, commitName);
+    }, [goshRepo, commitName]);
 
     return (
         <div>

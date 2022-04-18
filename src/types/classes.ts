@@ -74,8 +74,11 @@ export class GoshRoot implements IGoshRoot {
         return result.decoded?.output.value0;
     }
 
-    async getRepoAddr(name: string): Promise<string> {
-        const result = await this.account.runLocal('getAddrRepository', { name });
+    async getRepoAddr(name: string, daoAddr: string): Promise<string> {
+        const result = await this.account.runLocal(
+            'getAddrRepository',
+            { name, dao: daoAddr }
+        );
         return result.decoded?.output.value0;
     }
 
@@ -108,7 +111,7 @@ export class GoshDao implements IGoshDao {
 
     async createWallet(rootPubkey: string, pubkey: string): Promise<string> {
         await this.account.run('deployWallet', { pubkeyroot: rootPubkey, pubkey });
-        await this.daoCreator.sendMoney(rootPubkey, pubkey, this.address, fromEvers(10));
+        await this.daoCreator.sendMoney(rootPubkey, pubkey, this.address, fromEvers(20));
         return await this.getWalletAddr(rootPubkey, pubkey);
     }
 
@@ -156,6 +159,65 @@ export class GoshWallet implements IGoshWallet {
     async createRepo(name: string): Promise<void> {
         await this.account.run('deployRepository', { nameRepo: name });
     }
+
+    async createBranch(repoName: string, newName: string, fromName: string): Promise<void> {
+        await this.account.run('deployBranch', { repoName, newName, fromName });
+    }
+
+    async createCommit(
+        repoName: string,
+        branchName: string,
+        commitSha: string,
+        commitData: string,
+        parent1: string,
+        parent2: string
+    ): Promise<void> {
+        await this.account.run(
+            'deployCommit',
+            {
+                repoName,
+                branchName,
+                commitName: commitSha,
+                fullCommit: commitData,
+                parent1,
+                parent2
+            }
+        )
+    }
+
+    async createBlob(
+        repoName: string,
+        commit: string,
+        blobSha: string,
+        blobContent: string
+    ): Promise<void> {
+        await this.account.run(
+            'deployBlob',
+            {
+                repoName,
+                commit,
+                blobName: blobSha,
+                fullBlob: blobContent
+            }
+        )
+    }
+
+    async createDiff(
+        repoName: string,
+        branchName: string,
+        filePath: string,
+        diff: string
+    ): Promise<void> {
+        await this.account.run(
+            'deployDiff',
+            {
+                repoName,
+                branch: branchName,
+                name: filePath,
+                diff
+            }
+        )
+    }
 }
 
 export class GoshRepository implements IGoshRepository {
@@ -187,8 +249,7 @@ export class GoshRepository implements IGoshRepository {
         return result.decoded?.output.value0.map((item: any) => ({
             name: item.key,
             commitAddr: item.value,
-            // snapshot: new GoshSnapshot(this.account.client, item.snapshot)
-            snapshot: undefined
+            snapshot: item.snapshot
         }));
     }
 
@@ -198,161 +259,160 @@ export class GoshRepository implements IGoshRepository {
         return {
             name: decoded.key,
             commitAddr: decoded.value,
-            // snapshot: new GoshSnapshot(this.account.client, decoded.snapshot)
-            snapshot: undefined
+            snapshot: decoded.snapshot
         }
     }
 
-    async createBranch(name: string, fromName: string): Promise<void> {
-        // // Deploy branch
-        // const { body } = await this.account.client.abi.encode_message_body({
-        //     abi: this.account.abi,
-        //     call_set: {
-        //         function_name: 'deployBranch',
-        //         input: { newname: name, fromname: fromName }
-        //     },
-        //     is_internal: true,
-        //     signer: signerNone()
-        // });
-        // await giver(this.account.client, this.address, fromEvers(1.55), body);
+    // async createBranch(name: string, fromName: string): Promise<void> {
+    //     // // Deploy branch
+    //     // const { body } = await this.account.client.abi.encode_message_body({
+    //     //     abi: this.account.abi,
+    //     //     call_set: {
+    //     //         function_name: 'deployBranch',
+    //     //         input: { newname: name, fromname: fromName }
+    //     //     },
+    //     //     is_internal: true,
+    //     //     signer: signerNone()
+    //     // });
+    //     // await giver(this.account.client, this.address, fromEvers(1.55), body);
 
-        // // Copy `from` branch snapshot to new branch snapshot
-        // console.debug('Repo addr', this.address);
-        // const fromBranch = await this.getBranch(fromName);
-        // await fromBranch.snapshot.load();
-        // console.debug('From branch:', fromBranch);
-        // const newBranch = await this.getBranch(name);
-        // console.debug('New branch:', newBranch);
-        // await newBranch.snapshot.setSnapshot(fromBranch.snapshot.meta?.content || []);
-    }
+    //     // // Copy `from` branch snapshot to new branch snapshot
+    //     // console.debug('Repo addr', this.address);
+    //     // const fromBranch = await this.getBranch(fromName);
+    //     // await fromBranch.snapshot.load();
+    //     // console.debug('From branch:', fromBranch);
+    //     // const newBranch = await this.getBranch(name);
+    //     // console.debug('New branch:', newBranch);
+    //     // await newBranch.snapshot.setSnapshot(fromBranch.snapshot.meta?.content || []);
+    // }
 
-    async deleteBranch(name: string): Promise<void> {
-        const { body } = await this.account.client.abi.encode_message_body({
-            abi: this.account.abi,
-            call_set: {
-                function_name: 'deleteBranch',
-                input: { name }
-            },
-            is_internal: true,
-            signer: signerNone()
-        });
-        await giver(this.account.client, this.address, fromEvers(0.15), body);
-    }
+    // async deleteBranch(name: string): Promise<void> {
+    //     const { body } = await this.account.client.abi.encode_message_body({
+    //         abi: this.account.abi,
+    //         call_set: {
+    //             function_name: 'deleteBranch',
+    //             input: { name }
+    //         },
+    //         is_internal: true,
+    //         signer: signerNone()
+    //     });
+    //     await giver(this.account.client, this.address, fromEvers(0.15), body);
+    // }
 
-    /**
-     * Create commit
-     * We can use simple `account.run` method to pay from repository contract,
-     * but it pays too much, so we create branch via payload from wallet
-     * @param branchName
-     * @param data
-     * @param blobs
-     */
-    async createCommit(
-        branchName: string,
-        commitData: { title: string; message: string; },
-        diffData: { name: string; diff: TDiffData[] }[],
-        blobs: { name: string; content: string }[] = []
-    ): Promise<void> {
-        // // Generate blobs sha
-        // const blobsWithSha = blobs.map((blob) => ({
-        //     ...blob,
-        //     sha: sha1(blob.content, 'blob')
-        // }));
+    // /**
+    //  * Create commit
+    //  * We can use simple `account.run` method to pay from repository contract,
+    //  * but it pays too much, so we create branch via payload from wallet
+    //  * @param branchName
+    //  * @param data
+    //  * @param blobs
+    //  */
+    // async createCommit(
+    //     branchName: string,
+    //     commitData: { title: string; message: string; },
+    //     diffData: { name: string; diff: TDiffData[] }[],
+    //     blobs: { name: string; content: string }[] = []
+    // ): Promise<void> {
+    //     // // Generate blobs sha
+    //     // const blobsWithSha = blobs.map((blob) => ({
+    //     //     ...blob,
+    //     //     sha: sha1(blob.content, 'blob')
+    //     // }));
 
-        // // Create `fullCommit` data
-        // const commitFullData = {
-        //     ...commitData,
-        //     blobs: diffData.map((item) => {
-        //         const blob = blobsWithSha.find((blob) => blob.name === item.name);
-        //         if (!blob) throw Error(`Can not find blob '${item.name}' in blobs`);
-        //         return {
-        //             ...item,
-        //             sha: blob.sha
-        //         };
-        //     })
-        // }
+    //     // // Create `fullCommit` data
+    //     // const commitFullData = {
+    //     //     ...commitData,
+    //     //     blobs: diffData.map((item) => {
+    //     //         const blob = blobsWithSha.find((blob) => blob.name === item.name);
+    //     //         if (!blob) throw Error(`Can not find blob '${item.name}' in blobs`);
+    //     //         return {
+    //     //             ...item,
+    //     //             sha: blob.sha
+    //     //         };
+    //     //     })
+    //     // }
 
-        // // Deploy commit
-        // const commitSha = sha1(JSON.stringify(commitFullData), 'commit');
-        // const { body } = await this.account.client.abi.encode_message_body({
-        //     abi: this.account.abi,
-        //     call_set: {
-        //         function_name: 'deployCommit',
-        //         input: {
-        //             nameBranch: branchName,
-        //             nameCommit: commitSha,
-        //             fullCommit: JSON.stringify(commitFullData)
-        //         }
-        //     },
-        //     is_internal: true,
-        //     signer: signerNone()
-        // });
-        // await giver(this.account.client, this.address, fromEvers(5), body);
+    //     // // Deploy commit
+    //     // const commitSha = sha1(JSON.stringify(commitFullData), 'commit');
+    //     // const { body } = await this.account.client.abi.encode_message_body({
+    //     //     abi: this.account.abi,
+    //     //     call_set: {
+    //     //         function_name: 'deployCommit',
+    //     //         input: {
+    //     //             nameBranch: branchName,
+    //     //             nameCommit: commitSha,
+    //     //             fullCommit: JSON.stringify(commitFullData)
+    //     //         }
+    //     //     },
+    //     //     is_internal: true,
+    //     //     signer: signerNone()
+    //     // });
+    //     // await giver(this.account.client, this.address, fromEvers(5), body);
 
-        // // Get commit address, create commit object
-        // const commitAddr = await this.getCommitAddr(commitSha);
-        // console.debug('[Commit addr]:', commitAddr);
-        // const commit = new GoshCommit(this.account.client, commitAddr);
+    //     // // Get commit address, create commit object
+    //     // const commitAddr = await this.getCommitAddr(commitSha);
+    //     // console.debug('[Commit addr]:', commitAddr);
+    //     // const commit = new GoshCommit(this.account.client, commitAddr);
 
-        // // Get snapshot and load meta
-        // const snapshot = (await this.getBranch(branchName)).snapshot;
-        // await snapshot.load();
-        // if (!snapshot.meta) throw Error('Snapshot meta is not loaded');
+    //     // // Get snapshot and load meta
+    //     // const snapshot = (await this.getBranch(branchName)).snapshot;
+    //     // await snapshot.load();
+    //     // if (!snapshot.meta) throw Error('Snapshot meta is not loaded');
 
-        // // Map all blobs and deploy them;
-        // // Update branch snapshot
-        // await Promise.all(
-        //     blobsWithSha.map(async (blob) => {
-        //         if (!snapshot.meta) return;
+    //     // // Map all blobs and deploy them;
+    //     // // Update branch snapshot
+    //     // await Promise.all(
+    //     //     blobsWithSha.map(async (blob) => {
+    //     //         if (!snapshot.meta) return;
 
-        //         const blobSha = await commit.createBlob(blob.content, blob.sha);
-        //         const blobAddr = await commit.getBlobAddr(blobSha);
-        //         console.debug('[Blob addr]:', blobAddr);
-        //         const foundIndex = snapshot.meta?.content.findIndex((metaItem) => (
-        //             metaItem && metaItem.name === blob.name
-        //         )) ?? -1;
-        //         if (foundIndex < 0) {
-        //             snapshot.meta.content.push({
-        //                 name: blob.name,
-        //                 address: blobAddr,
-        //                 firstCommitSha: commitSha,
-        //                 lastCommitSha: commitSha,
-        //                 lastCommitMsg: commitData
-        //             });
-        //         } else {
-        //             snapshot.meta.content[foundIndex] = {
-        //                 ...snapshot.meta.content[foundIndex],
-        //                 address: blobAddr,
-        //                 lastCommitSha: commitSha,
-        //                 lastCommitMsg: commitData
-        //             };
-        //         }
-        //     })
-        // );
-        // console.debug('[Snapshot addr]:', snapshot.address);
-        // await snapshot.setSnapshot(snapshot.meta?.content);
-    }
+    //     //         const blobSha = await commit.createBlob(blob.content, blob.sha);
+    //     //         const blobAddr = await commit.getBlobAddr(blobSha);
+    //     //         console.debug('[Blob addr]:', blobAddr);
+    //     //         const foundIndex = snapshot.meta?.content.findIndex((metaItem) => (
+    //     //             metaItem && metaItem.name === blob.name
+    //     //         )) ?? -1;
+    //     //         if (foundIndex < 0) {
+    //     //             snapshot.meta.content.push({
+    //     //                 name: blob.name,
+    //     //                 address: blobAddr,
+    //     //                 firstCommitSha: commitSha,
+    //     //                 lastCommitSha: commitSha,
+    //     //                 lastCommitMsg: commitData
+    //     //             });
+    //     //         } else {
+    //     //             snapshot.meta.content[foundIndex] = {
+    //     //                 ...snapshot.meta.content[foundIndex],
+    //     //                 address: blobAddr,
+    //     //                 lastCommitSha: commitSha,
+    //     //                 lastCommitMsg: commitData
+    //     //             };
+    //     //         }
+    //     //     })
+    //     // );
+    //     // console.debug('[Snapshot addr]:', snapshot.address);
+    //     // await snapshot.setSnapshot(snapshot.meta?.content);
+    // }
 
-    async getCommitAddr(commitSha: string): Promise<string> {
-        const result = await this.account.runLocal(
-            'getCommitAddr',
-            { nameCommit: commitSha }
-        );
-        return result.decoded?.output.value0;
-    }
+    // async getCommitAddr(commitSha: string): Promise<string> {
+    //     const result = await this.account.runLocal(
+    //         'getCommitAddr',
+    //         { nameCommit: commitSha }
+    //     );
+    //     return result.decoded?.output.value0;
+    // }
 
-    async createSnapshot(name: string): Promise<void> {
-        const { body } = await this.account.client.abi.encode_message_body({
-            abi: this.account.abi,
-            call_set: {
-                function_name: 'deployNewSnapshot',
-                input: { name }
-            },
-            is_internal: true,
-            signer: signerNone()
-        });
-        await giver(this.account.client, this.address, fromEvers(1.45), body);
-    }
+    // async createSnapshot(name: string): Promise<void> {
+    //     const { body } = await this.account.client.abi.encode_message_body({
+    //         abi: this.account.abi,
+    //         call_set: {
+    //             function_name: 'deployNewSnapshot',
+    //             input: { name }
+    //         },
+    //         is_internal: true,
+    //         signer: signerNone()
+    //     });
+    //     await giver(this.account.client, this.address, fromEvers(1.45), body);
+    // }
 }
 
 // export class GoshCommit implements IGoshCommit {

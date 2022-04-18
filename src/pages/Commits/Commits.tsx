@@ -2,15 +2,15 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import BranchSelect from "../../components/BranchSelect";
 import CopyClipboard from "../../components/CopyClipboard";
-import { getGoshRepositoryBranches } from "../../helpers";
+import { getGoshRepoBranches } from "../../helpers";
 // import { GoshCommit } from "../../types/classes";
 import { TGoshBranch, IGoshCommit, IGoshRepository } from "../../types/types";
 import { shortString } from "../../utils";
-import { TRepositoryLayoutOutletContext } from "../RepositoryLayout";
+import { TRepoLayoutOutletContext } from "../RepoLayout";
 
 
 const CommitsPage = () => {
-    const { goshRepository } = useOutletContext<TRepositoryLayoutOutletContext>();
+    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
     const { repoName, branchName = 'master' } = useParams();
     const navigate = useNavigate();
     const [branches, setBranches] = useState<TGoshBranch[]>([]);
@@ -31,16 +31,16 @@ const CommitsPage = () => {
 
     useEffect(() => {
         const initState = async (repo: IGoshRepository, currBranchName: string) => {
-            const { branches, branch } = await getGoshRepositoryBranches(repo, currBranchName);
-            if (branch) {
-                await getCommits(repo, branch);
-                setBranch(branch);
-            }
-            setBranches(branches);
+            // const { branches, branch } = await getGoshRepositoryBranches(repo, currBranchName);
+            // if (branch) {
+            //     await getCommits(repo, branch);
+            //     setBranch(branch);
+            // }
+            // setBranches(branches);
         }
 
-        initState(goshRepository, branchName);
-    }, [goshRepository, branchName]);
+        initState(goshRepo, branchName);
+    }, [goshRepo, branchName]);
 
     return (
         <>
