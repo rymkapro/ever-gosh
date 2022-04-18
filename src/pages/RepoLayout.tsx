@@ -25,6 +25,7 @@ const RepoLayout = () => {
     useEffect(() => {
         const getBranches = async (goshRepo: IGoshRepository) => {
             const branches = await getGoshRepoBranches(goshRepo, branchName);
+            console.debug('Branches', branches.branchList);
             console.debug('GoshRepo address', goshRepo.address);
             console.debug('GoshWallet address', goshWallet?.address);
             setBranches(branches);

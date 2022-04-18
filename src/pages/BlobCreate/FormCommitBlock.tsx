@@ -44,7 +44,7 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
             </div>
             <div className="flex mt-4 items-center gap-3">
                 <button
-                    className="btn--blue text-sm font-medium px-3 py-1.5"
+                    className="btn btn--body text-sm font-medium px-3 py-1.5"
                     type="submit"
                     disabled={isDisabled}
                 >

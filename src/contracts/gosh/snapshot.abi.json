@@ -9,7 +9,9 @@
 				{"name":"value0","type":"uint256"},
 				{"name":"rootrepo","type":"address"},
 				{"name":"codeSnapshot","type":"cell"},
-				{"name":"dataSnapshot","type":"cell"}
+				{"name":"dataSnapshot","type":"cell"},
+				{"name":"branch","type":"string"},
+				{"name":"name","type":"string"}
 			],
 			"outputs": [
 			]
@@ -17,7 +19,7 @@
 		{
 			"name": "deployNewSnapshot",
 			"inputs": [
-				{"name":"name","type":"string"}
+				{"name":"newbranch","type":"string"}
 			],
 			"outputs": [
 			]
@@ -26,6 +28,15 @@
 			"name": "setSnapshot",
 			"inputs": [
 				{"name":"snaphot","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setSnapshotSelf",
+			"inputs": [
+				{"name":"snaphot","type":"string"},
+				{"name":"branch","type":"string"}
 			],
 			"outputs": [
 			]
@@ -70,6 +81,8 @@
 		{"name":"_snapshot","type":"string"},
 		{"name":"m_codeSnapshot","type":"cell"},
 		{"name":"m_dataSnapshot","type":"cell"},
-		{"name":"NameOfFile","type":"string"}
+		{"name":"NameOfFile","type":"string"},
+		{"name":"_name","type":"string"},
+		{"name":"_branch","type":"string"}
 	]
 }

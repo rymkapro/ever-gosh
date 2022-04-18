@@ -85,7 +85,12 @@ export interface IGoshWallet extends IContract {
 
     getDaoAddr(): Promise<string>;
     createRepo(name: string): Promise<void>;
-    createBranch(repoName: string, newName: string, fromName: string): Promise<void>;
+    createBranch(
+        repoName: string,
+        newName: string,
+        fromName: string,
+        filesCount: number
+    ): Promise<void>;
     createCommit(
         repoName: string,
         branchName: string,
@@ -119,42 +124,34 @@ export interface IGoshRepository extends IContract {
     getBranches(): Promise<TGoshBranch[]>;
     getBranch(name: string): Promise<TGoshBranch>;
     getSnapshotAddr(branchName: string, filePath: string): Promise<string>;
-    // getCommitAddr(commitSha: string): Promise<string>;
-    // createCommit(
-    //     branchName: string,
-    //     commitData: { title: string; message: string; },
-    //     diffData: { name: string; diff: TDiffData[] }[],
-    //     blobs: { name: string; content: string; }[]
-    // ): Promise<void>;
-    // createBranch(name: string, fromName: string): Promise<void>;
-    // deleteBranch(name: string): Promise<void>;
-    // createSnapshot(name: string): Promise<void>;
+    getCommitAddr(branchName: string, commitSha: string): Promise<string>;
 }
 
 export interface IGoshCommit extends IContract {
     address: string;
     meta?: {
+        repoAddr: string;
         branchName: string;
         sha: string;
         content: {
             title: string;
             message: string;
             blobs: {
-                name: string;
                 sha: string;
+                name: string;
                 diff: TDiffData[];
             }[];
         }
-        parentAddr: string;
+        parent1Addr: string;
+        parent2Addr: string;
     }
 
     load(): Promise<void>;
     getCommit(): Promise<any>;
     getName(): Promise<string>;
-    getParent(): Promise<string>;
+    getParent(): Promise<string[]>;
     getBlobs(): Promise<string[]>;
     getBlobAddr(blobSha: string): Promise<string>;
-    createBlob(content: string, sha?: string): Promise<string>;
 }
 
 export interface IGoshBlob extends IContract {
@@ -164,6 +161,9 @@ export interface IGoshBlob extends IContract {
         content: string;
         commitAddr: string;
     }
+
+    load(): Promise<void>;
+    getBlob(): Promise<any>;
 }
 
 export interface IGoshSnapshot extends IContract {

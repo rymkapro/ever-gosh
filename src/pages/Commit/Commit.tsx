@@ -6,53 +6,59 @@ import { TRepoLayoutOutletContext } from "../RepoLayout";
 import { useMonaco } from "@monaco-editor/react";
 import { getCodeLanguageFromFilename, restoreFromDiff } from "../../helpers";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
+import { GoshBlob, GoshCommit } from "../../types/classes";
 
 
 const CommitPage = () => {
     const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const { commitName } = useParams();
+    const { branchName, commitName } = useParams();
     const monaco = useMonaco();
     const [commit, setCommit] = useState<IGoshCommit>();
     const [blobs, setBlobs] = useState<IGoshBlob[]>();
 
-    const getCommit = async (repo: IGoshRepository, name: string) => {
-        // const address = await repo.getCommitAddr(name);
-        // const commit = new GoshCommit(repo.account.client, address);
-        // await commit.load();
-
-        // const blobAddrs = await commit.getBlobs();
-        // const blobs = await Promise.all(
-        //     blobAddrs.map(async (addr) => {
-        //         const blob = new GoshBlob(commit.account.client, addr);
-        //         await blob.load();
-        //         return blob;
-        //     })
-        // );
-        // setCommit(commit);
-        // setBlobs(blobs);
-    }
-
     useEffect(() => {
-        if (commitName) getCommit(goshRepo, commitName);
-    }, [goshRepo, commitName]);
+        const getCommit = async (repo: IGoshRepository, branch: string, sha: string) => {
+            const address = await repo.getCommitAddr(branch, sha);
+            const commit = new GoshCommit(repo.account.client, address);
+            await commit.load();
+
+            const blobAddrs = await commit.getBlobs();
+            const blobs = await Promise.all(
+                blobAddrs.map(async (addr) => {
+                    const blob = new GoshBlob(commit.account.client, addr);
+                    await blob.load();
+                    return blob;
+                })
+            );
+            console.debug('Blob addrs', blobAddrs);
+            console.debug('Blobs', blobs);
+
+            setCommit(commit);
+            setBlobs(blobs);
+        }
+
+        if (goshRepo && branchName && commitName) getCommit(goshRepo, branchName, commitName);
+    }, [goshRepo, branchName, commitName]);
 
     return (
-        <div>
+        <div className="bordered-block px-7 py-8">
             {(!monaco || !commit) && (<p>Loading commit...</p>)}
             {monaco && commit && (
                 <>
-                    <div className="border rounded">
-                        <div className="font-medium px-3 py-2">
+                    <div>
+                        <div className="font-medium py-2">
                             {commit.meta?.content.title}
                         </div>
 
                         {commit.meta?.content.message && (
-                            <div className="px-3 mb-2 text-gray-500 text-sm">{commit.meta.content.message}</div>
+                            <div className="mb-2 text-gray-050a15/65 text-sm">
+                                {commit.meta.content.message}
+                            </div>
                         )}
 
                         <div className="flex border-t justify-end px-3 py-1">
-                            <div className="text-gray-600 text-xs">
-                                <span className="mr-2 text-gray-500">sha1</span>
+                            <div className="text-gray-050a15/75 text-xs">
+                                <span className="mr-2 text-gray-050a15/65">sha1</span>
                                 {commit.meta?.sha}
                             </div>
                         </div>

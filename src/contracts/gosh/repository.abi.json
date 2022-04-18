@@ -55,6 +55,16 @@
 			]
 		},
 		{
+			"name": "addSnapshot",
+			"inputs": [
+				{"name":"addr","type":"address"},
+				{"name":"oldbranch","type":"string"},
+				{"name":"newbranch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployCommit",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},

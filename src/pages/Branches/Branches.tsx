@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { faChevronRight, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Field, Form, Formik, FormikHelpers } from "formik";
 import { useMutation, useQuery } from "react-query";
@@ -15,7 +15,7 @@ import * as Yup from "yup";
 
 type TCreateBranchFormValues = {
     newName: string;
-    fromName: string;
+    from?: TGoshBranch;
 }
 
 export const BranchesPage = () => {
@@ -64,12 +64,18 @@ export const BranchesPage = () => {
 
     const onBranchCreate = async (
         values: TCreateBranchFormValues,
-        helpers: FormikHelpers<TCreateBranchFormValues>
+        helpers: FormikHelpers<any>
     ) => {
         try {
             if (!repoName) throw Error('Repository is undefined');
+            if (!values.from) throw Error('From branch is undefined');
 
-            await goshWallet.createBranch(repoName, values.newName, values.fromName);
+            await goshWallet.createBranch(
+                repoName,
+                values.newName,
+                values.from.name,
+                values.from.snapshot.length
+            );
             await brachesListQuery.refetch();
             helpers.resetForm();
         } catch (e: any) {
@@ -97,13 +103,12 @@ export const BranchesPage = () => {
                 <>
                     <div className="flex justify-between gap-4">
                         <Formik
-                            initialValues={{ newName: '', fromName: branch?.name || 'master' }}
+                            initialValues={{ newName: '', from: branch }}
                             onSubmit={onBranchCreate}
                             validationSchema={Yup.object().shape({
                                 newName: Yup.string()
                                     .notOneOf((brachesListQuery.data || []).map((b) => b.name), 'Branch exists')
-                                    .required('Branch name is required'),
-                                fromName: Yup.string().required(' ')
+                                    .required('Branch name is required')
                             })}
                         >
                             {({ isSubmitting, setFieldValue }) => (
@@ -113,7 +118,7 @@ export const BranchesPage = () => {
                                         branches={brachesListQuery.data || []}
                                         onChange={(selected) => {
                                             setBranch(selected);
-                                            setFieldValue('fromName', selected?.name);
+                                            setFieldValue('from', selected);
                                         }}
                                     />
                                     <span className="mx-3">

@@ -17,12 +17,12 @@ import DaoCreatePage from "./pages/DaoCreate";
 import ReposPage from "./pages/Repos";
 import RepoCreatePage from "./pages/RepoCreate";
 import RepoPage from "./pages/Repo";
+import BranchesPage from "./pages/Branches";
 import BlobCreatePage from "./pages/BlobCreate";
 import BlobUpdatePage from "./pages/BlobUpdate";
 import BlobPage from "./pages/Blob";
-// import CommitsPage from "./pages/Commits";
-// import CommitPage from "./pages/Commit";
-import BranchesPage from "./pages/Branches";
+import CommitsPage from "./pages/Commits";
+import CommitPage from "./pages/Commit";
 
 import "./assets/scss/style.scss";
 
@@ -57,23 +57,17 @@ const App = () => {
                         <Route path="repos/:repoName" element={<RepoLayout />}>
                             <Route index element={<RepoPage />} />
                             <Route path="tree/:branchName" element={<RepoPage />} />
+                            <Route path="branches" element={<BranchesPage />} />
                             <Route path="blobs/create/:branchName" element={<BlobCreatePage />} />
                             <Route path="blobs/update/:branchName/:blobName" element={<BlobUpdatePage />} />
                             <Route path="blob/:branchName/:blobName" element={<BlobPage />} />
-                            <Route path="branches" element={<BranchesPage />} />
+                            <Route path="commits/:branchName" element={<CommitsPage />} />
+                            <Route path="commit/:branchName/:commitName" element={<CommitPage />} />
                         </Route>
                         <Route element={<DaoLayout />}>
                             <Route index element={<DaoPage />} />
                             <Route path="repos" element={<ReposPage />} />
                         </Route>
-                    </Route>
-                    <Route path="/repositories" element={<ProtectedLayout />}>
-                        {/* <Route index element={<RepositoriesPage />} />
-                        <Route path=":repoName" element={<RepositoryLayout />}>
-                            <Route path="commits/:branchName" element={<CommitsPage />} />
-                            <Route path="commit/:commitName" element={<CommitPage />} />
-
-                        </Route> */}
                     </Route>
                     <Route path="*" element={<p>No match (404)</p>} />
                 </Routes>

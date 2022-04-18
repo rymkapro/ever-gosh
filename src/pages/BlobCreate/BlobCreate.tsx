@@ -47,6 +47,7 @@ const BlobCreatePage = () => {
                 blobs: [
                     {
                         sha: blobSha,
+                        name: values.name,
                         diff: await generateDiff(monaco, values.content)
                     }
                 ]

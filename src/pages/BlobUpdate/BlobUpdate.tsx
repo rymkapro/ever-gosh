@@ -50,6 +50,7 @@ const BlobUpdatePage = () => {
                 blobs: [
                     {
                         sha: blobSha,
+                        name: values.name,
                         diff: await generateDiff(monaco, values.content, snapshot?.meta?.content)
                     }
                 ]

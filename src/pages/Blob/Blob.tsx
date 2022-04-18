@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import BranchSelect from "../../components/BranchSelect";
-import { IGoshBlob, IGoshRepository, IGoshSnapshot, TGoshBranch } from "../../types/types";
+import { IGoshRepository, IGoshSnapshot } from "../../types/types";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import { useMonaco } from "@monaco-editor/react";
-// import { GoshBlob } from "../../types/classes";
-import { getCodeLanguageFromFilename, getGoshRepoBranches } from "../../helpers";
+import { getCodeLanguageFromFilename } from "../../helpers";
 import BlobPreview from "../../components/Blob/Preview";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPencil } from "@fortawesome/free-solid-svg-icons";
@@ -41,7 +40,7 @@ const BlobPage = () => {
                         branches={branches.branchList}
                         onChange={(selected) => {
                             if (selected) {
-                                navigate(`/orgs/${daoName}/repos/${repoName}/blob/${blobName}`);
+                                navigate(`/orgs/${daoName}/repos/${repoName}/blob/${selected.name}/${blobName}`);
                             }
                         }}
                     />
