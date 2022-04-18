@@ -17,7 +17,6 @@ import { useGoshWallet } from "../../hooks/gosh.hooks";
 
 
 type TFormValues = {
-    branch: string;
     name: string;
     content: string;
     title: string;
@@ -27,6 +26,7 @@ type TFormValues = {
 const BlobCreatePage = () => {
     const { daoName, repoName, branchName = 'master' } = useParams();
     const goshWallet = useGoshWallet(daoName);
+    const { branches } = useOutletContext<TRepoLayoutOutletContext>();
     const navigate = useNavigate();
     const monaco = useMonaco();
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
@@ -36,41 +36,37 @@ const BlobCreatePage = () => {
     const onCommitChanges = async (values: TFormValues) => {
         try {
             if (!goshWallet) throw Error('Can not get GoshWallet');
-            if (!repoName) throw Error('Repository name is undefined');
+            if (!repoName) throw Error('Repository is undefined');
+            if (!branches.branchCurr) throw Error('Branch is undefined');
 
-            console.log('GoshWallet address:', goshWallet.address);
+            // Prepare commit data
+            const blobSha = sha1(values.content, 'blob');
+            const commitData = {
+                title: values.title,
+                message: values.message,
+                blobs: [
+                    {
+                        sha: blobSha,
+                        diff: await generateDiff(monaco, values.content)
+                    }
+                ]
+            };
+            const commitDataStr = JSON.stringify(commitData)
+            const commitSha = sha1(commitDataStr, 'commit');
 
-            const da = await goshWallet.account.runLocal('getAddrDao', {});
-            console.log('Dao addr', da.decoded?.output.value0);
-
-            const rgad = await goshWallet.account.runLocal('getAddrRootGosh', {});
-            console.log('Root addr', rgad.decoded?.output.value0);
-
-
-
-            const commitSha = sha1(values.title, 'commit');
-            // const blobSha = sha1(values.content, 'blob');
-            console.log(repoName, branchName, commitSha);
-
+            // Deploy commit, blob, diff
             await goshWallet.createCommit(
                 repoName,
                 branchName,
                 commitSha,
-                'fullCommit',
-                '',
+                commitDataStr,
+                branches.branchCurr.commitAddr,
                 '0:0000000000000000000000000000000000000000000000000000000000000000'
             )
-            // await goshWallet.createBlob(repoName, commitSha, blobSha, values.content);
+            await goshWallet.createBlob(repoName, commitSha, blobSha, values.content);
+            await goshWallet.createDiff(repoName, branchName, values.name, values.content);
 
-            const diff = await generateDiff(monaco, values.content);
-            console.log(values, diff);
-            // await goshRepo.createCommit(
-            //     branchName,
-            //     { title: values.title, message: values.message },
-            //     [{ name: values.name, diff }],
-            //     [{ name: values.name, content: values.content }]
-            // );
-            // navigate(urlBack);
+            navigate(urlBack);
         } catch (e: any) {
             alert(e.message);
         }
@@ -79,7 +75,7 @@ const BlobCreatePage = () => {
     return (
         <div className="bordered-block px-7 py-8">
             <Formik
-                initialValues={{ branch: branchName, name: '', content: '', title: '', message: '' }}
+                initialValues={{ name: '', content: '', title: '', message: '' }}
                 validationSchema={Yup.object().shape({
                     name: Yup.string().required('Field is required'),
                     title: Yup.string().required('Field is required')
@@ -91,7 +87,7 @@ const BlobCreatePage = () => {
                         <div className="flex gap-3 items-baseline justify-between ">
                             <div className="flex items-baseline">
                                 <Link
-                                    to={`/repositories/${repoName}/tree/${branchName}`}
+                                    to={`/orgs/${daoName}/repos/${repoName}/tree/${branchName}`}
                                     className="font-medium text-extblue hover:underline"
                                 >
                                     {repoName}

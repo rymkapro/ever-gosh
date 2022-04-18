@@ -118,6 +118,7 @@ export interface IGoshRepository extends IContract {
     getName(): Promise<string>;
     getBranches(): Promise<TGoshBranch[]>;
     getBranch(name: string): Promise<TGoshBranch>;
+    getSnapshotAddr(branchName: string, filePath: string): Promise<string>;
     // getCommitAddr(commitSha: string): Promise<string>;
     // createCommit(
     //     branchName: string,
@@ -168,10 +169,11 @@ export interface IGoshBlob extends IContract {
 export interface IGoshSnapshot extends IContract {
     address: string;
     meta?: {
-        content: TGoshSnapshotMetaContentItem[];
+        name: string;
+        content: string;
     };
 
     load(): Promise<void>;
-    getSnapshot(): Promise<any>;
-    setSnapshot(content: TGoshSnapshotMetaContentItem[]): Promise<void>;
+    getName(): Promise<string>;
+    getSnapshot(): Promise<string>;
 }

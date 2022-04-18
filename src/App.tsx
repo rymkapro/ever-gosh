@@ -18,8 +18,8 @@ import ReposPage from "./pages/Repos";
 import RepoCreatePage from "./pages/RepoCreate";
 import RepoPage from "./pages/Repo";
 import BlobCreatePage from "./pages/BlobCreate";
-// import BlobUpdatePage from "./pages/BlobUpdate";
-// import BlobPage from "./pages/Blob";
+import BlobUpdatePage from "./pages/BlobUpdate";
+import BlobPage from "./pages/Blob";
 // import CommitsPage from "./pages/Commits";
 // import CommitPage from "./pages/Commit";
 import BranchesPage from "./pages/Branches";
@@ -58,6 +58,8 @@ const App = () => {
                             <Route index element={<RepoPage />} />
                             <Route path="tree/:branchName" element={<RepoPage />} />
                             <Route path="blobs/create/:branchName" element={<BlobCreatePage />} />
+                            <Route path="blobs/update/:branchName/:blobName" element={<BlobUpdatePage />} />
+                            <Route path="blob/:branchName/:blobName" element={<BlobPage />} />
                             <Route path="branches" element={<BranchesPage />} />
                         </Route>
                         <Route element={<DaoLayout />}>
@@ -68,8 +70,6 @@ const App = () => {
                     <Route path="/repositories" element={<ProtectedLayout />}>
                         {/* <Route index element={<RepositoriesPage />} />
                         <Route path=":repoName" element={<RepositoryLayout />}>
-                            <Route path="blobs/update/:branchName/:blobName" element={<BlobUpdatePage />} />
-                            <Route path="blob/:branchName/:blobName" element={<BlobPage />} />
                             <Route path="commits/:branchName" element={<CommitsPage />} />
                             <Route path="commit/:commitName" element={<CommitPage />} />
 

@@ -5,6 +5,7 @@ import GoshABI from "../contracts/gosh/gosh.abi.json";
 import GoshDaoABI from "../contracts/gosh/goshdao.abi.json";
 import GoshWalletABI from "../contracts/gosh/goshwallet.abi.json";
 import GoshRepositoryABI from "../contracts/gosh/repository.abi.json";
+import GoshSnapshotABI from "../contracts/gosh/snapshot.abi.json";
 import { fromEvers, getGiverData, getGoshDaoCreator, giver, sha1 } from "../helpers";
 import {
     IGoshBlob,
@@ -111,7 +112,7 @@ export class GoshDao implements IGoshDao {
 
     async createWallet(rootPubkey: string, pubkey: string): Promise<string> {
         await this.account.run('deployWallet', { pubkeyroot: rootPubkey, pubkey });
-        await this.daoCreator.sendMoney(rootPubkey, pubkey, this.address, fromEvers(20));
+        await this.daoCreator.sendMoney(rootPubkey, pubkey, this.address, fromEvers(50));
         return await this.getWalletAddr(rootPubkey, pubkey);
     }
 
@@ -261,6 +262,14 @@ export class GoshRepository implements IGoshRepository {
             commitAddr: decoded.value,
             snapshot: decoded.snapshot
         }
+    }
+
+    async getSnapshotAddr(branchName: string, filePath: string): Promise<string> {
+        const result = await this.account.runLocal(
+            'getSnapAddr',
+            { branch: branchName, name: filePath }
+        );
+        return result.decoded?.output.value0;
     }
 
     // async createBranch(name: string, fromName: string): Promise<void> {
@@ -516,43 +525,34 @@ export class GoshRepository implements IGoshRepository {
 //     }
 // }
 
-// class GoshSnapshot implements IGoshSnapshot {
-//     abi: any = GoshSnapshotABI;
-//     account: Account;
-//     address: string;
-//     meta?: {
-//         content: TGoshSnapshotMetaContentItem[];
-//     };
+export class GoshSnapshot implements IGoshSnapshot {
+    abi: any = GoshSnapshotABI;
+    account: Account;
+    address: string;
+    meta?: {
+        name: string;
+        content: string;
+    };
 
-//     constructor(client: TonClient, address: string) {
-//         this.address = address;
-//         this.account = new Account({ abi: this.abi }, { client, address });
-//     }
+    constructor(client: TonClient, address: string) {
+        this.address = address;
+        this.account = new Account({ abi: this.abi }, { client, address });
+    }
 
-//     async load(): Promise<void> {
-//         const snapshot = await this.getSnapshot();
-//         this.meta = {
-//             content: JSON.parse(snapshot || '[]')
-//         }
-//     }
+    async load(): Promise<void> {
+        this.meta = {
+            name: await this.getName(),
+            content: await this.getSnapshot()
+        }
+    }
 
-//     async getSnapshot(): Promise<any> {
-//         const result = await this.account.runLocal('getSnapshot', {});
-//         return result.decoded?.output.value0;
-//     }
+    async getName(): Promise<string> {
+        const result = await this.account.runLocal('getName', {});
+        return result.decoded?.output.value0;
+    }
 
-//     /**
-//      * Set snapshot
-//      * `msg.pubkey() == pubkey` (giver) or `msg.sender == _rootRepo` required
-//      * @param content
-//      */
-//     async setSnapshot(content: TGoshSnapshotMetaContentItem[]): Promise<void> {
-//         const wallet = getGiverData();
-//         const signer = signerKeys(wallet.keys);
-//         await this.account.run(
-//             'setSnapshot',
-//             { snaphot: JSON.stringify(content) },
-//             { signer }
-//         );
-//     }
-// }
+    async getSnapshot(): Promise<any> {
+        const result = await this.account.runLocal('getSnapshot', {});
+        return result.decoded?.output.value0;
+    }
+}

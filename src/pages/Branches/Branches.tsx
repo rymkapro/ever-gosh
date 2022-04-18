@@ -164,7 +164,7 @@ export const BranchesPage = () => {
                                         {branch.name}
                                     </Link>
                                 </div>
-                                <div>
+                                {/* <div>
                                     {branch.name !== 'master' && (
                                         <button
                                             type="button"
@@ -179,7 +179,7 @@ export const BranchesPage = () => {
                                             <span className="ml-2">Delete</span>
                                         </button>
                                     )}
-                                </div>
+                                </div> */}
                             </div>
                         ))}
                     </div>

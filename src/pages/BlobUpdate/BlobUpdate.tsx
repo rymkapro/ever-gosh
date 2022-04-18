@@ -11,14 +11,13 @@ import BlobEditor from "../../components/Blob/Editor";
 import FormCommitBlock from "../BlobCreate/FormCommitBlock";
 import { useMonaco } from "@monaco-editor/react";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
-import { IGoshBlob } from "../../types/types";
-import { generateDiff, getCodeLanguageFromFilename, getGoshRepoBranches } from "../../helpers";
-// import { GoshBlob } from "../../types/classes";
+import { IGoshRepository, IGoshSnapshot } from "../../types/types";
+import { generateDiff, getCodeLanguageFromFilename, sha1 } from "../../helpers";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
+import { GoshSnapshot } from "../../types/classes";
 
 
 type TFormValues = {
-    branch: string;
     name: string;
     content: string;
     title: string;
@@ -26,24 +25,50 @@ type TFormValues = {
 }
 
 const BlobUpdatePage = () => {
-    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const { repoName, branchName = 'master', blobName } = useParams();
+    const { goshRepo, goshWallet, branches } = useOutletContext<TRepoLayoutOutletContext>();
+    const { daoName, repoName, branchName = 'master', blobName } = useParams();
     const navigate = useNavigate();
     const monaco = useMonaco();
     const [activeTab, setActiveTab] = useState<number>(0);
-    const [blob, setBlob] = useState<IGoshBlob>();
+    const [snapshot, setSnapshot] = useState<IGoshSnapshot>();
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
-    const urlBack = `/repositories/${repoName}/blob/${branchName}/${blobName}`;
+    const urlBack = `/orgs/${daoName}/repos/${repoName}/blob/${branchName}/${blobName}`;
 
     const onCommitChanges = async (values: TFormValues) => {
         try {
-            const diff = await generateDiff(monaco, values.content, blob?.meta?.content);
-            // await goshRepo.createCommit(
-            //     branchName,
-            //     { title: values.title, message: values.message },
-            //     [{ name: values.name, diff }],
-            //     [{ name: values.name, content: values.content }]
-            // );
+            if (!goshWallet) throw Error('Can not get GoshWallet');
+            if (!repoName) throw Error('Repository is undefined');
+            if (!branches.branchCurr) throw Error('Branch is undefined');
+
+            console.log(branches.branchCurr);
+
+            // Prepare commit data
+            const blobSha = sha1(values.content, 'blob');
+            const commitData = {
+                title: values.title,
+                message: values.message,
+                blobs: [
+                    {
+                        sha: blobSha,
+                        diff: await generateDiff(monaco, values.content, snapshot?.meta?.content)
+                    }
+                ]
+            };
+            const commitDataStr = JSON.stringify(commitData)
+            const commitSha = sha1(commitDataStr, 'commit');
+
+            // Deploy commit, blob, diff
+            await goshWallet.createCommit(
+                repoName,
+                branchName,
+                commitSha,
+                commitDataStr,
+                branches.branchCurr.commitAddr,
+                '0:0000000000000000000000000000000000000000000000000000000000000000'
+            )
+            await goshWallet.createBlob(repoName, commitSha, blobSha, values.content);
+            await goshWallet.createDiff(repoName, branchName, values.name, values.content);
+
             navigate(urlBack);
         } catch (e: any) {
             alert(e.message);
@@ -51,22 +76,14 @@ const BlobUpdatePage = () => {
     }
 
     useEffect(() => {
-        const initState = async () => {
-            // const { branch } = await getGoshRepositoryBranches(goshRepository, branchName);
-            // if (branch) {
-            //     await branch.snapshot.load();
-            //     const blobItem = branch.snapshot.meta?.content.find((item) => item.name === blobName);
-            //     if (blobItem) {
-            //         const blob = new GoshBlob(goshRepository.account.client, blobItem.address);
-            //         await blob.load();
-            //         setBlob(blob);
-            //     } else {
-            //         setBlob(undefined);
-            //     }
-            // }
+        const getSnapshot = async (repo: IGoshRepository, branch: string, blob: string) => {
+            const snapAddr = await repo.getSnapshotAddr(branch, blob);
+            const snapshot = new GoshSnapshot(repo.account.client, snapAddr);
+            await snapshot.load();
+            setSnapshot(snapshot);
         }
 
-        initState();
+        if (goshRepo && branchName && blobName) getSnapshot(goshRepo, branchName, blobName);
     }, [goshRepo, branchName, blobName]);
 
     useEffect(() => {
@@ -77,13 +94,12 @@ const BlobUpdatePage = () => {
     }, [monaco, blobName])
 
     return (
-        <>
-            {monaco && blobName && blob && (
+        <div className="bordered-block px-7 py-8">
+            {monaco && blobName && snapshot && (
                 <Formik
                     initialValues={{
-                        branch: branchName,
                         name: blobName,
-                        content: blob.meta?.content || '',
+                        content: snapshot.meta?.content || '',
                         title: '',
                         message: ''
                     }}
@@ -98,7 +114,7 @@ const BlobUpdatePage = () => {
                             <div className="flex gap-3 items-baseline justify-between ">
                                 <div className="flex items-baseline">
                                     <Link
-                                        to={`/repositories/${repoName}/tree/${branchName}`}
+                                        to={`/orgs/${daoName}/repos/${repoName}/tree/${branchName}`}
                                         className="font-medium text-extblue hover:underline"
                                     >
                                         {repoName}
@@ -109,7 +125,7 @@ const BlobUpdatePage = () => {
                                             name="name"
                                             component={TextField}
                                             inputProps={{
-                                                className: 'text-sm py-1.5',
+                                                className: '!text-sm !py-1.5',
                                                 autoComplete: 'off',
                                                 placeholder: 'Name of new file',
                                                 disabled: true
@@ -117,12 +133,12 @@ const BlobUpdatePage = () => {
                                         />
                                     </div>
                                     <span className="mx-2">in</span>
-                                    <span className="text-sm">{repoName}:{branchName}</span>
+                                    <span>{branchName}</span>
                                 </div>
 
                                 <Link
                                     to={urlBack}
-                                    className="px-3 py-1.5 text-sm font-medium border rounded hover:bg-gray-50"
+                                    className="btn btn--body px-3 py-1.5 text-sm !font-normal"
                                 >
                                     Discard changes
                                 </Link>
@@ -171,7 +187,7 @@ const BlobUpdatePage = () => {
                                         <Tab.Panel>
                                             <BlobDiffPreview
                                                 className="pt-[1px]"
-                                                original={blob.meta?.content}
+                                                original={snapshot.meta?.content}
                                                 modified={values.content}
                                                 modifiedLanguage={blobCodeLanguage}
                                             />
@@ -189,7 +205,7 @@ const BlobUpdatePage = () => {
                     )}
                 </Formik>
             )}
-        </>
+        </div>
     );
 }
 

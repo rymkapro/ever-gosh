@@ -1,31 +1,38 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
-import { IGoshRepository, TGoshSnapshotMetaContentItem } from "../../types/types";
+import { IGoshRepository, IGoshSnapshot, TGoshBranch } from "../../types/types";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import BranchSelect from "../../components/BranchSelect";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClockRotateLeft, faCodeBranch } from "@fortawesome/free-solid-svg-icons";
+import { GoshSnapshot } from "../../types/classes";
 
 
 const RepoPage = () => {
     const { goshRepo, branches } = useOutletContext<TRepoLayoutOutletContext>();
     const { daoName, repoName, branchName = 'master' } = useParams();
     const navigate = useNavigate();
-    const [tree, setTree] = useState<TGoshSnapshotMetaContentItem[]>();
+    const [tree, setTree] = useState<IGoshSnapshot[]>();
 
     useEffect(() => {
-        const initState = async (repo: IGoshRepository, currBranchName: string) => {
-            // const { branches, branch } = await getGoshRepositoryBranches(repo, currBranchName);
-            // if (branch) {
-            //     await branch.snapshot.load();
-            //     setBranch(branch);
-            //     setTree(branch.snapshot.meta?.content);
-            // }
-            // setBranches(branches);
+        const getTree = async (repo: IGoshRepository, currBranch: TGoshBranch) => {
+            console.debug('Curr branch:', branches.branchCurr);
+            if (!currBranch.snapshot) setTree([]);
+            console.debug('Snapshot addr:', branches.branchCurr?.snapshot);
+
+            const snapshots = await Promise.all(
+                currBranch.snapshot.map(async (address) => {
+                    const snapshot = new GoshSnapshot(repo.account.client, address);
+                    await snapshot.load();
+                    return snapshot;
+                })
+            );
+            console.debug('GoshSnapshots:', snapshots);
+            setTree(snapshots);
         }
 
-        initState(goshRepo, branchName);
-    }, [goshRepo, branchName]);
+        if (goshRepo && branches.branchCurr) getTree(goshRepo, branches.branchCurr);
+    }, [goshRepo, branches.branchCurr]);
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -71,7 +78,7 @@ const RepoPage = () => {
                 </div>
             </div>
 
-            <div className="mt-5 px-5">
+            <div className="mt-5">
                 {tree === undefined && (
                     <p className="text-sm text-gray-500 text-center py-3">
                         Loading tree...
@@ -92,18 +99,18 @@ const RepoPage = () => {
                         <div className="basis-1/4 text-sm font-medium">
                             <Link
                                 className="hover:underline"
-                                to={`/repositories/${repoName}/blob/${branchName}/${blob?.name}`}
+                                to={`/orgs/${daoName}/repos/${repoName}/blob/${blob.meta?.name}`}
                             >
-                                {blob?.name}
+                                {blob.meta && blob.meta.name.split('/').slice(-1)}
                             </Link>
                         </div>
                         <div className="text-gray-500 text-sm">
-                            <Link
+                            {/* <Link
                                 className="hover:underline"
                                 to={`/repositories/${repoName}/commit/${blob.lastCommitSha}`}
                             >
                                 {blob.lastCommitMsg.title}
-                            </Link>
+                            </Link> */}
                         </div>
                     </div>
                 ))}
