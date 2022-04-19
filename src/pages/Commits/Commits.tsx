@@ -50,14 +50,14 @@ const CommitsPage = () => {
 
             <div className="mt-5 divide-y divide-gray-c4c4c4">
                 {commits === undefined && (
-                    <div className="text-sm text-gray-606060 py-3">
+                    <div className="text-sm text-gray-606060">
                         <Spinner className="mr-3" />
                         Loading commits...
                     </div>
                 )}
 
                 {commits && !commits?.length && (
-                    <div className="text-sm text-gray-606060 py-3">
+                    <div className="text-sm text-gray-606060 text-center">
                         There are no commits yet
                     </div>
                 )}

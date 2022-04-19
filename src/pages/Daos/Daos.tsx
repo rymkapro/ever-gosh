@@ -65,7 +65,7 @@ const DaosPage = () => {
 
             <div className="mt-8">
                 {goshDaos === undefined && (
-                    <div>
+                    <div className="text-gray-606060">
                         <Spinner className="mr-3" />
                         Loading organizations...
                     </div>

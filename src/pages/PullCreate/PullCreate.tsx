@@ -170,7 +170,7 @@ const PullCreatePage = () => {
                 )}
 
                 {compare && !compare.length && (
-                    <div className="text-sm text-gray-606060">
+                    <div className="text-sm text-gray-606060 text-center">
                         There is nothing to merge
                     </div>
                 )}

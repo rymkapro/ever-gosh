@@ -63,12 +63,12 @@ const BlobPage = () => {
             </div>
 
             {!snapshot && (
-                <div className="text-gray-606060">
+                <div className="text-gray-606060 text-sm">
                     <Spinner className="mr-3" />
                     Loading file...
                 </div>
             )}
-            {snapshot && !snapshot.meta && (<p className="text-gray-606060">File not found</p>)}
+            {snapshot && !snapshot.meta && (<div className="text-gray-606060 text-sm">File not found</div>)}
             {monaco && snapshot?.meta && (
                 <div className="border rounded overflow-hidden">
                     <div className="flex bg-gray-100 px-3 py-1 border-b justify-end">

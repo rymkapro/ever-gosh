@@ -6,6 +6,7 @@ import { IGoshRepository } from "../../types/types";
 import { useQuery } from "react-query";
 import RepoListItem from "./RepoListItem";
 import { TDaoLayoutOutletContext } from "../DaoLayout";
+import Spinner from "../../components/Spinner";
 
 
 const RepositoriesPage = () => {
@@ -75,15 +76,16 @@ const RepositoriesPage = () => {
 
             <div className="mt-5 divide-y divide-gray-c4c4c4">
                 {(repoListQuery.isIdle || repoListQuery.isLoading) && (
-                    <p className="text-sm text-gray-500 text-center py-3">
+                    <div className="text-sm text-gray-606060">
+                        <Spinner className="mr-3" />
                         Loading repositories...
-                    </p>
+                    </div>
                 )}
 
                 {repoListQuery.isFetched && !repoListQuery.data?.length && (
-                    <p className="text-sm text-gray-500 text-center py-3">
-                        There are no repositories
-                    </p>
+                    <div className="text-sm text-gray-606060 text-center">
+                        There are no repositories yet
+                    </div>
                 )}
 
                 {repoListQuery.data?.map((repository, index) => (

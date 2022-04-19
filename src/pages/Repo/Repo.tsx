@@ -83,14 +83,14 @@ const RepoPage = () => {
 
             <div className="mt-5">
                 {tree === undefined && (
-                    <div className="text-gray-606060">
+                    <div className="text-gray-606060 text-sm">
                         <Spinner className="mr-3" />
                         Loading tree...
                     </div>
                 )}
 
                 {tree && !tree?.length && (
-                    <div className="text-sm text-gray-606060 py-3">
+                    <div className="text-sm text-gray-606060 text-center">
                         There are no files yet
                     </div>
                 )}
