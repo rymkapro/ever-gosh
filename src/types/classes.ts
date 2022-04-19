@@ -117,7 +117,7 @@ export class GoshDao implements IGoshDao {
 
     async createWallet(rootPubkey: string, pubkey: string): Promise<string> {
         await this.account.run('deployWallet', { pubkeyroot: rootPubkey, pubkey });
-        await this.daoCreator.sendMoney(rootPubkey, pubkey, this.address, fromEvers(100));
+        await this.daoCreator.sendMoney(rootPubkey, pubkey, this.address, fromEvers(500));
         return await this.getWalletAddr(rootPubkey, pubkey);
     }
 
