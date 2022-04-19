@@ -26,17 +26,6 @@ export type TGoshBranch = {
     snapshot: string[];
 }
 
-export type TGoshSnapshotMetaContentItem = {
-    name: string;
-    address: string;
-    firstCommitSha: string;
-    lastCommitSha: string;
-    lastCommitMsg: {
-        title: string;
-        message: string;
-    };
-}
-
 export type TDiffData = {
     modifiedStartLineNumber: number;
     modifiedEndLineNumber: number;
