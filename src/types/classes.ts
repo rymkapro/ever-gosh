@@ -336,7 +336,7 @@ export class GoshCommit implements IGoshCommit {
             repoAddr: meta.repo,
             branchName: meta.branch,
             sha: meta.sha,
-            content: undefined,
+            content: meta.content,
             parent1Addr: meta.parent1,
             parent2Addr: meta.parent2
         }

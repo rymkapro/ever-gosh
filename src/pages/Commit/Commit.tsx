@@ -16,6 +16,16 @@ const CommitPage = () => {
     const [commit, setCommit] = useState<IGoshCommit>();
     const [blobs, setBlobs] = useState<IGoshBlob[]>();
 
+    const getCommitTitle = (commit: IGoshCommit) => {
+        try {
+            // @ts-ignore
+            const title = commit.meta?.content.split('\n').slice(-1)[0];
+            return title;
+        } catch {
+            return commit.meta?.sha;
+        }
+    }
+
     useEffect(() => {
         const getCommit = async (repo: IGoshRepository, branch: string, sha: string) => {
             const address = await repo.getCommitAddr(branch, sha);
@@ -46,11 +56,11 @@ const CommitPage = () => {
             {monaco && commit && (
                 <>
                     <div>
-                        {/* <div className="font-medium py-2">
-                            {commit.meta?.content.title}
+                        <div className="font-medium py-2">
+                            {getCommitTitle(commit)}
                         </div>
 
-                        {commit.meta?.content.message && (
+                        {/* {commit.meta?.content.message && (
                             <div className="mb-2 text-gray-050a15/65 text-sm">
                                 {commit.meta.content.message}
                             </div>
