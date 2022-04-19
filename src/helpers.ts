@@ -1,6 +1,6 @@
 import { TonClient } from "@eversdk/core";
 import { toast } from "react-toastify";
-import { SHA1 } from "crypto-js";
+import cryptoJs, { SHA1 } from "crypto-js";
 import { Buffer } from "buffer";
 import { GoshDaoCreator } from "./types/classes";
 import { IGoshDaoCreator, TDiffData } from "./types/types";
@@ -116,9 +116,65 @@ export const sha1 = (data: string, type: 'blob' | 'commit'): string => {
     let content = data;
     if (type === 'commit') content += '\n';
     const size = Buffer.from(content, 'utf-8').byteLength;
-    const object = `${type} ${size}\0${content}`;
-    const hash = SHA1(object)
+    const object = Buffer.from(`${type} ${size}\0${content}`);
+    const hash = SHA1(object.toString());
     return hash.toString();
+}
+
+export const sha1Tree = (tree: Buffer) => {
+    const size = tree.byteLength;
+    let words = cryptoJs.enc.Utf8.parse(`tree ${size}\0`);
+    words.concat(cryptoJs.enc.Hex.parse(tree.toString('hex')));
+    const hash = SHA1(words);
+    return hash.toString();
+}
+
+
+const groupByPath = (list: any) => {
+    const isTree = (i: any) => i.type === 'tree'
+
+    const result = list
+        .filter(isTree)
+        .reduce((acc: any, i: any) => {
+            const path = i.path !== '' ? `${i.path}/${i.name}` : i.name
+            if (!acc.path) acc[path] = []
+            return acc
+        }, { '': [] })
+
+    list.forEach((i: any) => {
+        result[i.path].push(i)
+    })
+    return result
+}
+
+export const constructTree = (filelist: string[]) => {
+    const list = filelist.map((entry: string) => {
+        const [mode, type, tail] = entry.split(' ')
+        const [sha, fname] = tail.split('\t')
+        const lastSlash = fname.lastIndexOf('/')
+        const path = lastSlash >= 0 ? fname.slice(0, lastSlash) : ''
+        return {
+            mode,
+            type,
+            sha,
+            path,
+            name: lastSlash >= 0 ? fname.slice(lastSlash + 1) : fname,
+        }
+    })
+    const trees = groupByPath(list)
+
+    const result = Object.keys(trees).sort().map(path => {
+        return Buffer.concat(
+            trees[path]
+                //@ts-ignore
+                .sort((a: any, b: any) => (a.name > b.name) - (a.name < b.name))
+                .map((i: any) => Buffer.concat([
+                    Buffer.from(`${i.mode === '040000' ? '40000' : i.mode} ${i.name}\0`),
+                    Buffer.from(i.sha, 'hex')
+                ]))
+        )
+    })
+    return result
 }
 
 /**

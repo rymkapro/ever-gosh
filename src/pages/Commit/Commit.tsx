@@ -46,7 +46,7 @@ const CommitPage = () => {
             {monaco && commit && (
                 <>
                     <div>
-                        <div className="font-medium py-2">
+                        {/* <div className="font-medium py-2">
                             {commit.meta?.content.title}
                         </div>
 
@@ -54,7 +54,7 @@ const CommitPage = () => {
                             <div className="mb-2 text-gray-050a15/65 text-sm">
                                 {commit.meta.content.message}
                             </div>
-                        )}
+                        )} */}
 
                         <div className="flex border-t justify-end px-3 py-1">
                             <div className="text-gray-050a15/75 text-xs">
@@ -64,7 +64,7 @@ const CommitPage = () => {
                         </div>
                     </div>
 
-                    {commit.meta?.content.blobs.map((item, index) => {
+                    {/* {commit.meta?.content.blobs.map((item, index) => {
                         const blob = blobs?.find((blob) => blob.meta?.sha === item.sha);
                         const language = getCodeLanguageFromFilename(monaco, item.name);
                         const original = restoreFromDiff(blob?.meta?.content || '', item.diff);
@@ -80,7 +80,7 @@ const CommitPage = () => {
                                 />
                             </div>
                         );
-                    })}
+                    })} */}
                 </>
             )}
         </div>

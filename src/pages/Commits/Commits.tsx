@@ -72,11 +72,11 @@ const CommitsPage = () => {
                                 className="hover:underline"
                                 to={`/orgs/${daoName}/repos/${repoName}/commit/${branchName}/${commit.meta?.sha}`}
                             >
-                                {commit.meta?.content.title}
+                                {commit.meta?.sha}
                             </Link>
-                            {commit.meta?.content.message && (
+                            {/* {commit.meta?.content.message && (
                                 <div className="text-sm text-gray-0a1124/65">{commit.meta.content.message}</div>
-                            )}
+                            )} */}
                         </div>
 
                         <div className="flex border border-gray-0a1124/65 rounded items-center text-gray-0a1124/65">

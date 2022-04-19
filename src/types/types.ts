@@ -125,7 +125,7 @@ export interface IGoshCommit extends IContract {
         repoAddr: string;
         branchName: string;
         sha: string;
-        content: {
+        content?: {
             title: string;
             message: string;
             blobs: {

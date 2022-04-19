@@ -312,7 +312,7 @@ export class GoshCommit implements IGoshCommit {
         repoAddr: string;
         branchName: string;
         sha: string;
-        content: {
+        content?: {
             title: string;
             message: string;
             blobs: {
@@ -336,7 +336,7 @@ export class GoshCommit implements IGoshCommit {
             repoAddr: meta.repo,
             branchName: meta.branch,
             sha: meta.sha,
-            content: JSON.parse(meta.content),
+            content: undefined,
             parent1Addr: meta.parent1,
             parent2Addr: meta.parent2
         }
