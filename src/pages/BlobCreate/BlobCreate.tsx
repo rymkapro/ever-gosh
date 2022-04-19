@@ -15,6 +15,7 @@ import BlobPreview from "../../components/Blob/Preview";
 import FormCommitBlock from "./FormCommitBlock";
 import { useRecoilValue } from "recoil";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
+import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 
 
 type TFormValues = {
@@ -25,8 +26,9 @@ type TFormValues = {
 }
 
 const BlobCreatePage = () => {
-    const { daoName, repoName, branchName = 'master' } = useParams();
-    const { goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
+    const { daoName, repoName, branchName = 'main' } = useParams();
+    const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
+    const { updateBranch } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const navigate = useNavigate();
     const monaco = useMonaco();
@@ -68,6 +70,7 @@ const BlobCreatePage = () => {
             await goshWallet.createBlob(repoName, commitSha, blobSha, values.content);
             await goshWallet.createDiff(repoName, branchName, values.name, values.content);
 
+            await updateBranch(branch.name);
             navigate(urlBack);
         } catch (e: any) {
             alert(e.message);

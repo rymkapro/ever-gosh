@@ -25,17 +25,17 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
             </Link>
 
             <div className="text-sm text-gray-606060">
-                Repository description
+                Gosh test repository
             </div>
 
             <div className="flex gap-1 mt-2">
-                {Array.from(new Array(4)).map((_, index) => (
+                {['gosh', 'vcs', 'ever', 'use', 'enjoy'].map((value, index) => (
                     <button
                         key={index}
                         type="button"
                         className="rounded-2xl bg-extblue/25 text-xs text-extblue px-2 py-1 hover:bg-extblue hover:text-white"
                     >
-                        tag-name
+                        {value}
                     </button>
                 ))}
             </div>
@@ -48,7 +48,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                     </div>
                     <div>
                         <FontAwesomeIcon icon={faCodeFork} className="mr-1" />
-                        4
+                        {repository.meta?.branchCount}
                     </div>
                     <div>
                         <FontAwesomeIcon icon={faStar} className="mr-1" />
@@ -60,7 +60,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                         text: repository.address
                     }}
                     className="hover:text-gray-050a15"
-                    label={shortString(repository.address, 4, 4)}
+                    label={shortString(repository.address)}
                 />
             </div>
         </div>

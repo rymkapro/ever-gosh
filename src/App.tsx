@@ -27,11 +27,13 @@ import PullsPage from "./pages/Pulls";
 import PullCreatePage from "./pages/PullCreate";
 
 import "./assets/scss/style.scss";
+import bgImage from "./assets/images/bg.png";  // TODO: Remove after UI design ready
 
 
 const App = () => {
     const client = useEverClient();
     const [isInitialized, setIsInitialized] = useState<boolean>(false);
+    // const location = useLocation(); // TODO: Remove after UI design ready
 
     useEffect(() => {
         if (!client) return;
@@ -40,7 +42,16 @@ const App = () => {
 
     if (!isInitialized) return <p>Loading...</p>
     return (
-        <div className="wrapper">
+        // TODO: remove .wrapper style after UI design ready
+        <div
+            className="wrapper"
+            style={{
+                // backgroundImage: ['/', '/account/signin', '/account/signup'].indexOf(location.pathname) >= 0
+                //     ? `url(${bgImage})`
+                //     : undefined,
+                backgroundImage: `url(${bgImage})`,
+            }}
+        >
             <Header />
             <main className="main grow">
                 <Routes>

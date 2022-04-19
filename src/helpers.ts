@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import { SHA1 } from "crypto-js";
 import { Buffer } from "buffer";
 import { GoshDaoCreator } from "./types/classes";
-import { IGoshDaoCreator, IGoshRepository, TDiffData, TGoshBranch } from "./types/types";
+import { IGoshDaoCreator, TDiffData } from "./types/types";
 
 
 export const getEndpoints = (): string[] => {
@@ -22,15 +22,6 @@ export const getGoshDaoCreator = (client: TonClient): IGoshDaoCreator => {
     const address = process.env.REACT_APP_CREATOR_ADDR;
     if (!address) throw Error('No GoshDaoCreator address specified');
     return new GoshDaoCreator(client, address);
-}
-
-export const getGoshRepoBranches = async (
-    repo: IGoshRepository,
-    selectedBranchName: string = 'master'
-): Promise<{ branchList: TGoshBranch[], branchCurr?: TGoshBranch }> => {
-    const branches = await repo.getBranches();
-    const branch = branches.find((branch) => branch.name === selectedBranchName);
-    return { branchList: branches, branchCurr: branch };
 }
 
 /**

@@ -37,6 +37,10 @@ export class GoshDaoCreator implements IGoshDaoCreator {
         await this.account.run('deployDao', { name, root_pubkey: rootPubkey });
     }
 
+    async sendMoneyDao(name: string, value: number): Promise<void> {
+        await this.account.run('sendMoneyDao', { name, value });
+    }
+
     async sendMoney(rootPubkey: string, pubkey: string, daoAddr: string, value: number): Promise<void> {
         await this.account.run(
             'sendMoney',
@@ -174,6 +178,10 @@ export class GoshWallet implements IGoshWallet {
         );
     }
 
+    async deleteBranch(repoName: string, branchName: string): Promise<void> {
+        await this.account.run('deleteBranch', { repoName, Name: branchName });
+    }
+
     async createCommit(
         repoName: string,
         branchName: string,
@@ -236,6 +244,7 @@ export class GoshRepository implements IGoshRepository {
     address: string;
     meta?: {
         name: string;
+        branchCount: number;
     }
 
     constructor(client: TonClient, address: string) {
@@ -244,8 +253,10 @@ export class GoshRepository implements IGoshRepository {
     }
 
     async load(): Promise<void> {
+        const branches = await this.getBranches();
         this.meta = {
-            name: await this.getName()
+            name: await this.getName(),
+            branchCount: branches.length
         }
     }
 

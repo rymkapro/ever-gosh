@@ -53,6 +53,7 @@ export interface IGoshDaoCreator extends IContract {
     address: string;
 
     createDao(name: string, rootPubkey: string): Promise<void>;
+    sendMoneyDao(name: string, value: number): Promise<void>;
     sendMoney(rootPubkey: string, pubkey: string, daoAddr: string, value: number): Promise<void>;
 }
 export interface IGoshRoot extends IContract {
@@ -91,6 +92,7 @@ export interface IGoshWallet extends IContract {
         fromName: string,
         filesCount: number
     ): Promise<void>;
+    deleteBranch(repoName: string, branchName: string): Promise<void>;
     createCommit(
         repoName: string,
         branchName: string,
@@ -117,6 +119,7 @@ export interface IGoshRepository extends IContract {
     address: string;
     meta?: {
         name: string;
+        branchCount: number;
     }
 
     load(): Promise<void>;

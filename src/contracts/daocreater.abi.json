@@ -51,6 +51,14 @@
 			"outputs": [
 				{"name":"value0","type":"address"}
 			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
 		}
 	],
 	"data": [

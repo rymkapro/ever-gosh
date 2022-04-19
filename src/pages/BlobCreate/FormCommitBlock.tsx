@@ -12,13 +12,15 @@ type TFormCommitBlockProps = {
     className?: string;
     isDisabled?: boolean;
     isSubmitting?: boolean;
+    extraFields?: any;
+    extraButtons?: any;
 }
 
 const FormCommitBlock = (props: TFormCommitBlockProps) => {
-    const { urlBack, className, isDisabled, isSubmitting } = props;
+    const { urlBack, className, isDisabled, isSubmitting, extraFields, extraButtons } = props;
 
     return (
-        <div className={classNames('mt-5 border rounded px-4 py-3 bg-white', className)}>
+        <div className={classNames('mt-5 border rounded px-4 py-3', className)}>
             <h3 className="text-lg font-semibold mb-2">Commit data</h3>
             <div>
                 <Field
@@ -42,9 +44,12 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                     }}
                 />
             </div>
+
+            {extraFields}
+
             <div className="flex mt-4 items-center gap-3">
                 <button
-                    className="btn btn--body text-sm font-medium px-3 py-1.5"
+                    className="btn btn--body font-medium px-4 py-2"
                     type="submit"
                     disabled={isDisabled}
                 >
@@ -54,11 +59,12 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                 {urlBack && (
                     <Link
                         to={urlBack}
-                        className="px-3 py-1.5 border rounded text-sm font-medium text-rose-500 border-rose-500 hover:bg-rose-50"
+                        className="px-4 py-2 border rounded font-medium text-rose-500 border-rose-500 hover:bg-rose-50"
                     >
                         Cancel
                     </Link>
                 )}
+                {extraButtons}
             </div>
         </div>
     );

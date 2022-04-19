@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { faChevronRight, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Field, Form, Formik, FormikHelpers } from "formik";
 import { useMutation } from "react-query";
@@ -7,12 +7,12 @@ import { Link, useOutletContext, useParams } from "react-router-dom";
 import BranchSelect from "../../components/BranchSelect";
 import TextField from "../../components/FormikForms/TextField";
 import Spinner from "../../components/Spinner";
-import { getGoshRepoBranches } from "../../helpers";
 import { TGoshBranch } from "../../types/types";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import * as Yup from "yup";
-import { useRecoilState, useRecoilValue } from "recoil";
-import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
+import { useRecoilValue } from "recoil";
+import { goshCurrBranchSelector } from "../../store/gosh.state";
+import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 
 
 type TCreateBranchFormValues = {
@@ -23,23 +23,21 @@ type TCreateBranchFormValues = {
 export const BranchesPage = () => {
     const { daoName, repoName } = useParams();
     const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
-    const [branches, setBranches] = useRecoilState(goshBranchesAtom);
-    const [branchName, setBranchName] = useState<string>('master');
+    const [branchName, setBranchName] = useState<string>('main');
+    const { branches, updateBranches } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const [search, setSearch] = useState<string>();
     const [branchesOnMutation, setBranchesOnMutation] = useState<string[]>([]);
     const branchDeleteMutation = useMutation(
         (name: string) => {
-            return new Promise(() => { })
-            // return goshRepo.deleteBranch(name);
+            if (!repoName) throw Error('Repository name is undefined');
+            return goshWallet.deleteBranch(repoName, name);
         },
         {
             onMutate: (variables) => {
                 setBranchesOnMutation((value) => [...value, variables]);
             },
-            onSuccess: () => {
-                // brachesListQuery.refetch()
-            },
+            onSuccess: () => updateBranches(),
             onError: (error: any) => {
                 console.error(error);
                 alert(error.message);
@@ -64,8 +62,7 @@ export const BranchesPage = () => {
                 values.from.name,
                 values.from.snapshot.length
             );
-            const { branchList } = await getGoshRepoBranches(goshRepo);
-            setBranches(branchList);
+            await updateBranches();
             helpers.resetForm();
         } catch (e: any) {
             console.error(e);
@@ -152,22 +149,23 @@ export const BranchesPage = () => {
                                 {branch.name}
                             </Link>
                         </div>
-                        {/* <div>
-                                    {branch.name !== 'master' && (
-                                        <button
-                                            type="button"
-                                            className="px-2.5 py-1.5 text-white text-xs rounded bg-rose-600 hover:bg-rose-500 disabled:bg-rose-400"
-                                            onClick={() => onBranchDelete(branch.name)}
-                                            disabled={branchDeleteMutation.isLoading && branchesOnMutation.indexOf(branch.name) >= 0}
-                                        >
-                                            {branchDeleteMutation.isLoading && branchesOnMutation.indexOf(branch.name) >= 0
-                                                ? <Spinner size="xs" />
-                                                : <FontAwesomeIcon icon={faTrash} size="sm" />
-                                            }
-                                            <span className="ml-2">Delete</span>
-                                        </button>
-                                    )}
-                                </div> */}
+                        <div>
+                            {branch.name !== 'main' && (
+                                <button
+                                    type="button"
+                                    className="px-2.5 py-1.5 text-white text-xs rounded bg-rose-600
+                                        hover:bg-rose-500 disabled:bg-rose-400"
+                                    onClick={() => onBranchDelete(branch.name)}
+                                    disabled={branchDeleteMutation.isLoading && branchesOnMutation.indexOf(branch.name) >= 0}
+                                >
+                                    {branchDeleteMutation.isLoading && branchesOnMutation.indexOf(branch.name) >= 0
+                                        ? <Spinner size="xs" />
+                                        : <FontAwesomeIcon icon={faTrash} size="sm" />
+                                    }
+                                    <span className="ml-2">Delete</span>
+                                </button>
+                            )}
+                        </div>
                     </div>
                 ))}
             </div>

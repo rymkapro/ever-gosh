@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashAlt } from "@fortawesome/free-regular-svg-icons";
 import Spinner from "../../components/Spinner";
 import { GoshDao } from "../../types/classes";
+import { fromEvers } from "../../helpers";
 
 
 type TFormValues = {
@@ -33,7 +34,11 @@ const DaoCreatePage = () => {
             console.debug('DAO address:', daoAddr);
             const dao = new GoshDao(goshRoot.account.client, daoAddr);
 
-            // Deploy wallets
+            // Topup GoshDao and deploy wallets
+            await goshRoot.daoCreator.sendMoneyDao(
+                values.name,
+                fromEvers(2 * values.participants.length)
+            );
             await Promise.all(values.participants.map(async (item) => {
                 const walletAddr = await dao.createWallet(rootPubkey, item);
                 console.debug('DAOWallet address:', walletAddr);

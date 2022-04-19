@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { faCode } from "@fortawesome/free-solid-svg-icons";
+import { faCode, faCodePullRequest } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
 import Spinner from "../components/Spinner";
-import { useGoshRepo, useGoshWallet } from "../hooks/gosh.hooks";
+import { useGoshRepo, useGoshWallet, useGoshRepoBranches } from "../hooks/gosh.hooks";
 import { IGoshRepository, IGoshWallet } from "../types/types";
 import { classNames } from "../utils";
-import { getGoshRepoBranches } from "../helpers";
-import { useSetRecoilState } from "recoil";
-import { goshBranchesAtom } from "../store/gosh.state";
 
 
 export type TRepoLayoutOutletContext = {
@@ -20,21 +17,19 @@ const RepoLayout = () => {
     const { daoName, repoName } = useParams();
     const goshRepo = useGoshRepo(daoName, repoName);
     const goshWallet = useGoshWallet(daoName);
-    const setBranches = useSetRecoilState(goshBranchesAtom);
+    const { updateBranches } = useGoshRepoBranches(goshRepo);
     const [isFetched, setIsFetched] = useState<boolean>(false);
 
     useEffect(() => {
-        console.debug('REPO LAYOUT')
-        const init = async (repo: IGoshRepository) => {
-            const { branchList } = await getGoshRepoBranches(repo);
-            setBranches(branchList);
+        const init = async () => {
+            await updateBranches();
             setIsFetched(true);
             console.debug('Repo addr:', goshRepo?.address);
             console.debug('Wallet addr:', goshWallet?.address);
         }
 
-        if (goshRepo && goshWallet) init(goshRepo);
-    }, [goshRepo, goshWallet, setBranches]);
+        if (goshRepo && goshWallet) init();
+    }, [goshRepo, goshWallet, updateBranches]);
 
     return (
         <div className="container my-10">
@@ -49,10 +44,10 @@ const RepoLayout = () => {
             </h1>
 
             {!isFetched && (
-                <>
+                <div className="text-gray-606060">
                     <Spinner className="mr-3" />
-                    Loading repository
-                </>
+                    Loading repository...
+                </div>
             )}
 
             {isFetched && (
@@ -76,7 +71,7 @@ const RepoLayout = () => {
                                 isActive ? '!text-gray-050a15 border-b border-b-gray-050a15' : null
                             )}
                         >
-                            <FontAwesomeIcon icon={faCode} size="sm" className="mr-2" />
+                            <FontAwesomeIcon icon={faCodePullRequest} size="sm" className="mr-2" />
                             Pull requests
                         </NavLink>
                     </div>

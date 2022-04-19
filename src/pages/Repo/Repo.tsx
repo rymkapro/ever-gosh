@@ -7,20 +7,22 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClockRotateLeft, faCodeBranch } from "@fortawesome/free-solid-svg-icons";
 import { GoshSnapshot } from "../../types/classes";
 import { useRecoilValue } from "recoil";
-import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
+import { goshCurrBranchSelector } from "../../store/gosh.state";
+import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
+import Spinner from "../../components/Spinner";
 
 
 const RepoPage = () => {
     const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const { daoName, repoName, branchName = 'master' } = useParams();
+    const { daoName, repoName, branchName = 'main' } = useParams();
     const navigate = useNavigate();
-    const branches = useRecoilValue(goshBranchesAtom);
+    const { branches } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const [tree, setTree] = useState<IGoshSnapshot[]>();
 
     useEffect(() => {
         const getTree = async (repo: IGoshRepository, currBranch: TGoshBranch) => {
-            console.debug('Snapshot addr:', currBranch.snapshot);
+            setTree(undefined);
             const snapshots = await Promise.all(
                 currBranch.snapshot.map(async (address) => {
                     const snapshot = new GoshSnapshot(repo.account.client, address);
@@ -81,15 +83,16 @@ const RepoPage = () => {
 
             <div className="mt-5">
                 {tree === undefined && (
-                    <p className="text-sm text-gray-500 text-center py-3">
+                    <div className="text-gray-606060">
+                        <Spinner className="mr-3" />
                         Loading tree...
-                    </p>
+                    </div>
                 )}
 
                 {tree && !tree?.length && (
-                    <p className="text-sm text-gray-500 text-center py-3">
+                    <div className="text-sm text-gray-606060 py-3">
                         There are no files yet
-                    </p>
+                    </div>
                 )}
 
                 {Boolean(tree?.length) && tree?.map((blob, index) => (

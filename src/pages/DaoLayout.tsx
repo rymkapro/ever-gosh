@@ -21,10 +21,10 @@ const DaoLayout = () => {
     return (
         <div className="container my-10">
             {!goshDao && (
-                <>
+                <div className="text-gray-606060">
                     <Spinner className="mr-3" />
-                    Loading organization
-                </>
+                    Loading organization...
+                </div>
             )}
 
             {goshDao && (

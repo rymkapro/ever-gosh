@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useRecoilValue } from "recoil";
+import Spinner from "../../components/Spinner";
 import { useGoshRoot } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
 import { GoshDao, GoshWallet } from "../../types/classes";
@@ -63,7 +64,12 @@ const DaosPage = () => {
             </div>
 
             <div className="mt-8">
-                {goshDaos === undefined && (<div>Loading...</div>)}
+                {goshDaos === undefined && (
+                    <div>
+                        <Spinner className="mr-3" />
+                        Loading organizations...
+                    </div>
+                )}
                 {!goshDaos?.length && (
                     <div className="text-gray-606060 text-center">You have no organizations yet</div>
                 )}

@@ -1,6 +1,7 @@
 import { KeyPair } from "@eversdk/core";
-import { useEffect, useMemo, useState } from "react";
-import { useRecoilValue } from "recoil";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { goshBranchesAtom } from "../store/gosh.state";
 import { userStateAtom } from "../store/user.state";
 import { GoshDao, GoshRoot, GoshWallet, GoshRepository } from "../types/classes";
 import { IGoshDao, IGoshRepository, IGoshRoot, IGoshWallet } from "../types/types";
@@ -81,4 +82,25 @@ export const useGoshRepo = (daoName?: string, name?: string) => {
     }, [goshRoot, daoName, name]);
 
     return goshRepo;
+}
+
+/** Reload GoshRepo branch/branches and update app state */
+export const useGoshRepoBranches = (goshRepo?: IGoshRepository) => {
+    const [branches, setBranches] = useRecoilState(goshBranchesAtom);
+
+    const updateBranches = useCallback(async () => {
+        const branches = await goshRepo?.getBranches();
+        if (branches) setBranches(branches);
+    }, [goshRepo, setBranches]);
+
+    const updateBranch = useCallback(async (branchName: string) => {
+        const branch = await goshRepo?.getBranch(branchName);
+        if (branch) {
+            setBranches((currVal) => currVal.map((item) => (
+                item.name !== branch.name ? item : branch
+            )));
+        }
+    }, [goshRepo, setBranches]);
+
+    return { branches, updateBranch, updateBranches };
 }

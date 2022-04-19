@@ -13,11 +13,12 @@ import { GoshSnapshot } from "../../types/classes";
 import Spinner from "../../components/Spinner";
 import { useRecoilValue } from "recoil";
 import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
+import { AccountType } from "@eversdk/appkit";
 
 
 const BlobPage = () => {
     const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const { daoName, repoName, branchName = 'master', blobName } = useParams();
+    const { daoName, repoName, branchName = 'main', blobName } = useParams();
     const branches = useRecoilValue(goshBranchesAtom);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const navigate = useNavigate();
@@ -26,9 +27,11 @@ const BlobPage = () => {
 
     useEffect(() => {
         const getSnapshot = async (repo: IGoshRepository, branch: string, blob: string) => {
+            setSnapshot(undefined);
             const snapAddr = await repo.getSnapshotAddr(branch, blob);
             const snapshot = new GoshSnapshot(repo.account.client, snapAddr);
-            await snapshot.load();
+            const { acc_type } = await snapshot.account.getAccount();
+            if (acc_type === AccountType.active) await snapshot.load();
             setSnapshot(snapshot);
         }
 
@@ -60,12 +63,12 @@ const BlobPage = () => {
             </div>
 
             {!snapshot && (
-                <>
-                    <Spinner className="mr-2" />
-                    Loading file
-                </>
+                <div className="text-gray-606060">
+                    <Spinner className="mr-3" />
+                    Loading file...
+                </div>
             )}
-            {snapshot && !snapshot.meta && (<p>File not found</p>)}
+            {snapshot && !snapshot.meta && (<p className="text-gray-606060">File not found</p>)}
             {monaco && snapshot?.meta && (
                 <div className="border rounded overflow-hidden">
                     <div className="flex bg-gray-100 px-3 py-1 border-b justify-end">

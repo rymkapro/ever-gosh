@@ -3,6 +3,7 @@ import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom
 import { useRecoilValue } from "recoil";
 import BranchSelect from "../../components/BranchSelect";
 import CopyClipboard from "../../components/CopyClipboard";
+import Spinner from "../../components/Spinner";
 import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
 import { GoshCommit } from "../../types/classes";
 import { TGoshBranch, IGoshCommit, IGoshRepository } from "../../types/types";
@@ -12,7 +13,7 @@ import { TRepoLayoutOutletContext } from "../RepoLayout";
 
 const CommitsPage = () => {
     const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const { daoName, repoName, branchName = 'master' } = useParams();
+    const { daoName, repoName, branchName = 'main' } = useParams();
     const branches = useRecoilValue(goshBranchesAtom);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const navigate = useNavigate();
@@ -20,6 +21,7 @@ const CommitsPage = () => {
 
     useEffect(() => {
         const getCommits = async (repo: IGoshRepository, branch: TGoshBranch) => {
+            setCommits(undefined);
             const commits: IGoshCommit[] = [];
             let commitAddr = branch.commitAddr;
             while (commitAddr) {
@@ -48,15 +50,16 @@ const CommitsPage = () => {
 
             <div className="mt-5 divide-y divide-gray-c4c4c4">
                 {commits === undefined && (
-                    <p className="text-sm text-gray-500 text-center py-3">
+                    <div className="text-sm text-gray-606060 py-3">
+                        <Spinner className="mr-3" />
                         Loading commits...
-                    </p>
+                    </div>
                 )}
 
                 {commits && !commits?.length && (
-                    <p className="text-sm text-gray-500 text-center py-3">
+                    <div className="text-sm text-gray-606060 py-3">
                         There are no commits yet
-                    </p>
+                    </div>
                 )}
 
                 {Boolean(commits?.length) && commits?.map((commit, index) => (
