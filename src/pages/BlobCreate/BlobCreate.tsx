@@ -4,7 +4,7 @@ import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import TextField from "../../components/FormikForms/TextField";
 import { useMonaco } from "@monaco-editor/react";
-import { constructTree, generateDiff, getCodeLanguageFromFilename, sha1, sha1Tree } from "../../helpers";
+import { getCodeLanguageFromFilename } from "../../helpers";
 import * as Yup from "yup";
 import { Tab } from "@headlessui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -16,8 +16,6 @@ import FormCommitBlock from "./FormCommitBlock";
 import { useRecoilValue } from "recoil";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
-import { IGoshRepository, TGoshBranch } from "../../types/types";
-import { GoshCommit, GoshSnapshot } from "../../types/classes";
 import { userStateAtom } from "../../store/user.state";
 
 
@@ -40,20 +38,6 @@ const BlobCreatePage = () => {
     const [activeTab, setActiveTab] = useState<number>(0);
     const urlBack = `/orgs/${daoName}/repos/${repoName}/tree/${branchName}`;
 
-    const getTree = async (repo: IGoshRepository, currBranch: TGoshBranch) => {
-        const tree = await Promise.all(
-            currBranch.snapshot.map(async (address) => {
-                const snapshot = new GoshSnapshot(repo.account.client, address);
-                await snapshot.load();
-
-                if (!snapshot.meta) throw Error('[BlobCreate]: Can not load snapshot');
-                const sha = sha1(snapshot.meta.content, 'blob');
-                return `100644 blob ${sha}\t${snapshot.meta.name}`;
-            })
-        );
-        return tree;
-    }
-
     const onCommitChanges = async (values: TFormValues) => {
         try {
             if (!userState.keys) throw Error('Can not get user keys');
@@ -61,70 +45,13 @@ const BlobCreatePage = () => {
             if (!repoName) throw Error('Repository is undefined');
             if (!branch) throw Error('Branch is undefined');
 
-            // Generate current tree
-            const blobSha = sha1(values.content, 'blob');
-            const preTree = await getTree(goshRepo, branch);
-            preTree.push(`100644 blob ${blobSha}\t${values.name}`);
-            console.debug('Pre tree', preTree);
-
-            const treeBuffer = constructTree(preTree);
-            console.debug('Tree buf', treeBuffer, treeBuffer[0].toString('hex'));
-            const treeSha = sha1Tree(treeBuffer[0]);
-            console.debug('Tree sha', treeSha);
-
-            // Get parent commit
-            console.debug('Branch commit addr', branch.commitAddr);
-            let lastCommitSha = null;
-            if (branch.commitAddr.length) {
-                const lastCommit = new GoshCommit(goshWallet.account.client, branch.commitAddr);
-                lastCommitSha = await lastCommit.getName();
-            }
-            console.debug('Last commit sha', lastCommitSha);
-
-            // Full commit
-            const unixTime = Math.floor(Date.now() / 1000);
-            const fullCommit = [
-                `tree ${treeSha}`,
-                lastCommitSha ? `parent ${lastCommitSha}` : null,
-                `author ${userState.keys.public} <${userState.keys.public}@gosh.sh> ${unixTime} +0300`,
-                `committer ${userState.keys.public} <${userState.keys.public}@gosh.sh> ${unixTime} +0300`,
-                '',
-                `${values.title}`
-            ];
-            console.debug('Full commit', fullCommit);
-            const fullCommitStr = fullCommit.filter((item) => item !== null).join('\n');
-            console.debug('Full commit', fullCommitStr);
-
-            const commitSha = sha1(fullCommitStr, 'commit');
-            console.debug('Commit sha', commitSha);
-
-            // // Prepare commit data
-            // const blobSha = sha1(values.content, 'blob');
-            // const commitData = {
-            //     title: values.title,
-            //     message: values.message,
-            //     blobs: [
-            //         {
-            //             sha: blobSha,
-            //             name: values.name,
-            //             diff: await generateDiff(monaco, values.content)
-            //         }
-            //     ]
-            // };
-            // const commitDataStr = JSON.stringify(commitData)
-            // const commitSha = sha1(commitDataStr, 'commit');
-
-            // Deploy commit, blob, diff
             await goshWallet.createCommit(
                 repoName,
-                branchName,
-                commitSha,
-                fullCommitStr,
-                branch.commitAddr,
-                '0:0000000000000000000000000000000000000000000000000000000000000000'
-            )
-            await goshWallet.createBlob(repoName, commitSha, blobSha, values.content);
-            await goshWallet.createDiff(repoName, branchName, values.name, values.content);
+                branch,
+                userState.keys.public,
+                [{ name: values.name, modified: values.content, original: '' }],
+                values.title
+            );
 
             await updateBranch(branch.name);
             navigate(urlBack);

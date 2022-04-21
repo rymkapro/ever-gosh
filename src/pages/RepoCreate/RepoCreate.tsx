@@ -18,7 +18,7 @@ const RepoCreatePage = () => {
 
     const onRepoCreate = async (values: TFormValues) => {
         try {
-            await goshWallet?.createRepo(values.name);
+            await goshWallet?.deployRepo(values.name);
             navigate(`/orgs/${daoName}/repos/${values.name}`, { replace: true });
         } catch (e: any) {
             console.error(e.message);

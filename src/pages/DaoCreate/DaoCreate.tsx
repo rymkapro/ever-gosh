@@ -30,7 +30,7 @@ const DaoCreatePage = () => {
 
             // Deploy GoshDao
             const rootPubkey = `0x${userState.keys.public}`;
-            const daoAddr = await goshRoot?.createDao(values.name, rootPubkey);
+            const daoAddr = await goshRoot?.deployDao(values.name, rootPubkey);
             console.debug('DAO address:', daoAddr);
             const dao = new GoshDao(goshRoot.account.client, daoAddr);
 
@@ -40,7 +40,7 @@ const DaoCreatePage = () => {
                 fromEvers(2 * values.participants.length)
             );
             await Promise.all(values.participants.map(async (item) => {
-                const walletAddr = await dao.createWallet(rootPubkey, item);
+                const walletAddr = await dao.deployWallet(rootPubkey, item);
                 console.debug('DAOWallet address:', walletAddr);
             }));
 

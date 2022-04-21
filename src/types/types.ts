@@ -26,10 +26,22 @@ export type TGoshBranch = {
     snapshot: string[];
 }
 
-export type TDiffData = {
-    modifiedStartLineNumber: number;
-    modifiedEndLineNumber: number;
-    originalLines: string[];
+export type TGoshCommitContent = {
+    author: string;
+    committer: string;
+    comment: string;
+}
+
+export type TGoshTreeItem = {
+    mode: '040000' | '100644';
+    type: 'tree' | 'blob';
+    sha: string;
+    path: string;
+    name: string;
+}
+
+export type TGoshTree = {
+    [key: string]: TGoshTreeItem[]
 }
 
 interface IContract {
@@ -41,7 +53,7 @@ interface IContract {
 export interface IGoshDaoCreator extends IContract {
     address: string;
 
-    createDao(name: string, rootPubkey: string): Promise<void>;
+    deployDao(name: string, rootPubkey: string): Promise<void>;
     sendMoneyDao(name: string, value: number): Promise<void>;
     sendMoney(rootPubkey: string, pubkey: string, daoAddr: string, value: number): Promise<void>;
 }
@@ -49,7 +61,7 @@ export interface IGoshRoot extends IContract {
     address: string;
     daoCreator: IGoshDaoCreator;
 
-    createDao(name: string, rootPubkey: string): Promise<string>;
+    deployDao(name: string, rootPubkey: string): Promise<string>;
     getDaoAddr(name: string): Promise<string>;
     getDaoWalletCode(pubkey: string): Promise<string>;
     getRepoAddr(name: string, daoAddr: string): Promise<string>;
@@ -64,7 +76,7 @@ export interface IGoshDao extends IContract {
     };
 
     load(): Promise<void>;
-    createWallet(rootPubkey: string, pubkey: string): Promise<string>;
+    deployWallet(rootPubkey: string, pubkey: string): Promise<string>;
     getWalletAddr(rootPubkey: string, pubkey: string): Promise<string>;
     getName(): Promise<string>;
     getRootPubkey(): Promise<string>;
@@ -74,7 +86,7 @@ export interface IGoshWallet extends IContract {
     address: string;
 
     getDaoAddr(): Promise<string>;
-    createRepo(name: string): Promise<void>;
+    deployRepo(name: string): Promise<void>;
     createBranch(
         repoName: string,
         newName: string,
@@ -84,19 +96,28 @@ export interface IGoshWallet extends IContract {
     deleteBranch(repoName: string, branchName: string): Promise<void>;
     createCommit(
         repoName: string,
+        branch: TGoshBranch,
+        pubkey: string,
+        blobs: { name: string; modified: string; original: string; }[],
+        message: string,
+        parent2?: TGoshBranch
+    ): Promise<void>;
+    deployCommit(
+        repoName: string,
         branchName: string,
-        commitSha: string,
+        commitName: string,
         commitData: string,
         parent1: string,
         parent2: string
     ): Promise<void>;
-    createBlob(
+    deployBlob(
         repoName: string,
-        commit: string,
-        blobSha: string,
-        blobContent: string
+        commitName: string,
+        blobName: string,
+        blobContent: string,
+        blobPrevSha: string
     ): Promise<void>;
-    createDiff(
+    deployDiff(
         repoName: string,
         branchName: string,
         filePath: string,
@@ -125,15 +146,7 @@ export interface IGoshCommit extends IContract {
         repoAddr: string;
         branchName: string;
         sha: string;
-        content?: {
-            title: string;
-            message: string;
-            blobs: {
-                sha: string;
-                name: string;
-                diff: TDiffData[];
-            }[];
-        }
+        content: TGoshCommitContent;
         parent1Addr: string;
         parent2Addr: string;
     }
@@ -149,13 +162,15 @@ export interface IGoshCommit extends IContract {
 export interface IGoshBlob extends IContract {
     address: string;
     meta?: {
-        sha: string;
+        name: string;
         content: string;
         commitAddr: string;
+        prevSha: string;
     }
 
     load(): Promise<void>;
     getBlob(): Promise<any>;
+    getPrevSha(): Promise<string>;
 }
 
 export interface IGoshSnapshot extends IContract {

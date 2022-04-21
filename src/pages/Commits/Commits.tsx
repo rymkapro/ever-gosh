@@ -19,16 +19,6 @@ const CommitsPage = () => {
     const navigate = useNavigate();
     const [commits, setCommits] = useState<IGoshCommit[]>();
 
-    const getCommitTitle = (commit: IGoshCommit) => {
-        try {
-            // @ts-ignore
-            const title = commit.meta?.content.split('\n').slice(-1)[0];
-            return title;
-        } catch {
-            return commit.meta?.sha;
-        }
-    }
-
     useEffect(() => {
         const getCommits = async (repo: IGoshRepository, branch: TGoshBranch) => {
             setCommits(undefined);
@@ -82,11 +72,8 @@ const CommitsPage = () => {
                                 className="hover:underline"
                                 to={`/orgs/${daoName}/repos/${repoName}/commit/${branchName}/${commit.meta?.sha}`}
                             >
-                                {getCommitTitle(commit)}
+                                {commit.meta?.content.comment}
                             </Link>
-                            {/* {commit.meta?.content.message && (
-                                <div className="text-sm text-gray-0a1124/65">{commit.meta.content.message}</div>
-                            )} */}
                         </div>
 
                         <div className="flex border border-gray-0a1124/65 rounded items-center text-gray-0a1124/65">

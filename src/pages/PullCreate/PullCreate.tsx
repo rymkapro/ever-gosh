@@ -6,7 +6,7 @@ import { Field, Form, Formik } from "formik";
 import { useNavigate, useOutletContext, useParams, useSearchParams } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
-import { generateDiff, getCodeLanguageFromFilename, sha1 } from "../../helpers";
+import { getCodeLanguageFromFilename } from "../../helpers";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { GoshSnapshot } from "../../types/classes";
 import { IGoshSnapshot } from "../../types/types";
@@ -16,6 +16,7 @@ import FormCommitBlock from "../BlobCreate/FormCommitBlock";
 import Spinner from "../../components/Spinner";
 import SwitchField from "../../components/FormikForms/SwitchField";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
+import { userStateAtom } from "../../store/user.state";
 
 
 type TCommitFormValues = {
@@ -38,6 +39,7 @@ const PullCreatePage = () => {
     );
     const [compare, setCompare] = useState<{ to?: IGoshSnapshot, from?: IGoshSnapshot }[]>();
     const monaco = useMonaco();
+    const userState = useRecoilValue(userStateAtom);
 
     useEffect(() => {
         const getSnapshots = async (addresses: string[]): Promise<IGoshSnapshot[]> => {
@@ -90,57 +92,37 @@ const PullCreatePage = () => {
         }
 
         if (goshWallet && branchFrom && branchTo) onCompare();
+
+        return () => { }
     }, [branchFrom, branchTo, goshWallet]);
 
     const onCommitMerge = async (values: TCommitFormValues) => {
         try {
-            if (!monaco) throw Error('[Merge]: Monaco is not initialized');
+            if (!userState.keys) throw Error('Can not get user keys');
             if (!repoName) throw Error('[Merge]: Repository is undefined');
             if (!branchFrom) throw Error('[Merge]: From branch is undefined');
             if (!branchTo) throw Error('[Merge]: To branch in undefined');
             if (branchFrom.name === branchTo.name) throw Error('[Merge]: Banches are equal');
             if (!compare?.length) throw Error('[Merge]: There are no changes to merge');
 
-            console.debug(values);
-            // Prepare commit data
-            const commitBlobs = await Promise.all(
-                compare.map(async ({ to, from }) => {
-                    if (!from?.meta) throw new Error('Empty file from');
-                    return {
-                        sha: sha1(from.meta.content, 'blob'),
-                        name: from.meta.name.split('/').slice(-1)[0],
-                        diff: await generateDiff(monaco, from.meta.content, to?.meta?.content),
-                        content: from.meta.content
-                    }
-                })
-            );
-            console.debug('Commit blobs:', commitBlobs);
-            const commitData = {
-                title: values.title,
-                message: values.message,
-                blobs: commitBlobs.map((item) => ({
-                    sha: item.sha,
-                    name: item.name,
-                    diff: item.diff
-                }))
-            }
-            console.debug('Commit data:', commitData);
-            const commitDataStr = JSON.stringify(commitData)
-            const commitSha = sha1(commitDataStr, 'commit');
-
-            // Deploy commit, blob, diff
+            // Prepare blobs
+            const blobs = compare.map(({ from, to }) => {
+                if (!from?.meta) throw new Error('Empty file from');
+                return {
+                    name: from.meta.name.split('/').slice(-1)[0],
+                    modified: from.meta.content,
+                    original: to?.meta?.content || ''
+                }
+            });
+            console.debug('Blobs', blobs);
             await goshWallet.createCommit(
                 repoName,
-                branchTo.name,
-                commitSha,
-                commitDataStr,
-                branchTo.commitAddr,
-                branchFrom.commitAddr
-            )
-            await Promise.all(commitBlobs.map(async (item) => {
-                await goshWallet.createBlob(repoName, commitSha, item.sha, item.content);
-                await goshWallet.createDiff(repoName, branchTo.name, item.name, item.content);
-            }));
+                branchTo,
+                userState.keys.public,
+                blobs,
+                values.title,
+                branchFrom
+            );
 
             // Delete branch after merge (if selected), update branches, redirect
             if (values.deleteBranch) await goshWallet.deleteBranch(repoName, branchFrom.name);
