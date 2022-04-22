@@ -34,11 +34,11 @@ const RepoLayout = () => {
     return (
         <div className="container my-10">
             <h1 className="flex items-center mb-6">
-                <Link to={`/orgs/${daoName}`} className="font-semibold text-xl hover:underline">
+                <Link to={`/${daoName}`} className="font-semibold text-xl hover:underline">
                     {daoName}
                 </Link>
                 <span className="mx-2">/</span>
-                <Link to={`/orgs/${daoName}/repos/${repoName}`} className="font-semibold text-xl hover:underline">
+                <Link to={`/${daoName}/${repoName}`} className="font-semibold text-xl hover:underline">
                     {repoName}
                 </Link>
             </h1>
@@ -54,7 +54,7 @@ const RepoLayout = () => {
                 <>
                     <div className="flex gap-x-6 mb-6">
                         <NavLink
-                            to={`/orgs/${daoName}/repos/${repoName}`}
+                            to={`/${daoName}/${repoName}`}
                             end
                             className={({ isActive }) => classNames(
                                 'text-base text-gray-050a15/50 hover:text-gray-050a15 py-1.5 px-2',
@@ -65,7 +65,7 @@ const RepoLayout = () => {
                             Code
                         </NavLink>
                         <NavLink
-                            to={`/orgs/${daoName}/repos/${repoName}/pulls`}
+                            to={`/${daoName}/${repoName}/pulls`}
                             className={({ isActive }) => classNames(
                                 'text-base text-gray-050a15/50 hover:text-gray-050a15 py-1.5 px-2',
                                 isActive ? '!text-gray-050a15 border-b border-b-gray-050a15' : null

@@ -19,7 +19,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
         <div className="py-3">
             <Link
                 className="text-xl font-semibold hover:underline"
-                to={`/orgs/${daoName}/repos/${repository.meta?.name}`}
+                to={`/${daoName}/${repository.meta?.name}`}
             >
                 {repository.meta?.name}
             </Link>

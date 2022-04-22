@@ -39,7 +39,7 @@ const BlobUpdatePage = () => {
     const [activeTab, setActiveTab] = useState<number>(0);
     const [snapshot, setSnapshot] = useState<IGoshSnapshot>();
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
-    const urlBack = `/orgs/${daoName}/repos/${repoName}/blob/${branchName}/${blobName}`;
+    const urlBack = `/${daoName}/${repoName}/blob/${branchName}/${blobName}`;
 
     const onCommitChanges = async (values: TFormValues) => {
         try {
@@ -108,7 +108,7 @@ const BlobUpdatePage = () => {
                             <div className="flex gap-3 items-baseline justify-between ">
                                 <div className="flex items-baseline">
                                     <Link
-                                        to={`/orgs/${daoName}/repos/${repoName}/tree/${branchName}`}
+                                        to={`/${daoName}/${repoName}/tree/${branchName}`}
                                         className="font-medium text-extblue hover:underline"
                                     >
                                         {repoName}

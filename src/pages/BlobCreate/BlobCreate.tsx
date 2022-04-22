@@ -36,7 +36,7 @@ const BlobCreatePage = () => {
     const monaco = useMonaco();
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
     const [activeTab, setActiveTab] = useState<number>(0);
-    const urlBack = `/orgs/${daoName}/repos/${repoName}/tree/${branchName}`;
+    const urlBack = `/${daoName}/${repoName}/tree/${branchName}`;
 
     const onCommitChanges = async (values: TFormValues) => {
         try {
@@ -76,7 +76,7 @@ const BlobCreatePage = () => {
                         <div className="flex gap-3 items-baseline justify-between ">
                             <div className="flex items-baseline">
                                 <Link
-                                    to={`/orgs/${daoName}/repos/${repoName}/tree/${branchName}`}
+                                    to={`/${daoName}/${repoName}/tree/${branchName}`}
                                     className="font-medium text-extblue hover:underline"
                                 >
                                     {repoName}

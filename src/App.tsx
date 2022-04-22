@@ -65,9 +65,13 @@ const App = () => {
                             <Route path="orgs" element={<DaosPage />} />
                         </Route>
                     </Route>
-                    <Route path="/orgs/:daoName" element={<ProtectedLayout />}>
+                    <Route path="/:daoName" element={<ProtectedLayout />}>
+                        <Route element={<DaoLayout />}>
+                            <Route index element={<DaoPage />} />
+                            <Route path="repos" element={<ReposPage />} />
+                        </Route>
                         <Route path="repos/create" element={<RepoCreatePage />} />
-                        <Route path="repos/:repoName" element={<RepoLayout />}>
+                        <Route path=":repoName" element={<RepoLayout />}>
                             <Route index element={<RepoPage />} />
                             <Route path="tree/:branchName" element={<RepoPage />} />
                             <Route path="branches" element={<BranchesPage />} />
@@ -75,14 +79,11 @@ const App = () => {
                             <Route path="blobs/update/:branchName/:blobName" element={<BlobUpdatePage />} />
                             <Route path="blob/:branchName/:blobName" element={<BlobPage />} />
                             <Route path="commits/:branchName" element={<CommitsPage />} />
-                            <Route path="commit/:branchName/:commitName" element={<CommitPage />} />
+                            <Route path="commits/:branchName/:commitName" element={<CommitPage />} />
                             <Route path="pulls/create" element={<PullCreatePage />} />
                             <Route path="pulls" element={<PullsPage />} />
                         </Route>
-                        <Route element={<DaoLayout />}>
-                            <Route index element={<DaoPage />} />
-                            <Route path="repos" element={<ReposPage />} />
-                        </Route>
+
                     </Route>
                     <Route path="*" element={<p>No match (404)</p>} />
                 </Routes>

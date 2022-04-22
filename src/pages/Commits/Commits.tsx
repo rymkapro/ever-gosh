@@ -56,7 +56,7 @@ const CommitsPage = () => {
                 branches={branches}
                 onChange={(selected) => {
                     if (selected) {
-                        navigate(`/orgs/${daoName}/repos/${repoName}/commits/${selected.name}`);
+                        navigate(`/${daoName}/${repoName}/commits/${selected.name}`);
                     }
                 }}
             />
@@ -83,7 +83,7 @@ const CommitsPage = () => {
                         <div>
                             <Link
                                 className="hover:underline"
-                                to={`/orgs/${daoName}/repos/${repoName}/commit/${branchName}/${commit.meta?.sha}`}
+                                to={`/${daoName}/${repoName}/commits/${branchName}/${commit.meta?.sha}`}
                             >
                                 {commit.meta?.content.title}
                             </Link>
@@ -102,7 +102,7 @@ const CommitsPage = () => {
                         <div className="flex border border-gray-0a1124/65 rounded items-center text-gray-0a1124/65">
                             <Link
                                 className="px-2 py-1 font-medium font-mono text-xs hover:underline hover:text-gray-0a1124"
-                                to={`/orgs/${daoName}/repos/${repoName}/commit/${branchName}/${commit.meta?.sha}`}
+                                to={`/${daoName}/${repoName}/commits/${branchName}/${commit.meta?.sha}`}
                             >
                                 {shortString(commit.meta?.sha || '', 7, 0, '')}
                             </Link>

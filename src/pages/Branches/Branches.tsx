@@ -143,7 +143,7 @@ export const BranchesPage = () => {
                     <div key={index} className="flex gap-4 items-center px-3 py-2 text-sm">
                         <div className="grow">
                             <Link
-                                to={`/orgs/${daoName}/repos/${repoName}/tree/${branch.name}`}
+                                to={`/${daoName}/${repoName}/tree/${branch.name}`}
                                 className="hover:underline"
                             >
                                 {branch.name}

@@ -78,7 +78,7 @@ const DaosPage = () => {
                     {goshDaos?.map((item, index) => (
                         <div key={index} className="py-2">
                             <Link
-                                to={`/orgs/${item.meta?.name}`}
+                                to={`/${item.meta?.name}`}
                                 className="text-xl font-semibold hover:underline"
                             >
                                 {item.meta?.name}

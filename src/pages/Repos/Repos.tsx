@@ -68,7 +68,7 @@ const RepositoriesPage = () => {
 
                 <Link
                     className="btn btn--body px-4 py-1.5 text-sm !font-normal"
-                    to={`/orgs/${goshDao.meta?.name}/repos/create`}
+                    to={`/${goshDao.meta?.name}/repos/create`}
                 >
                     New repository
                 </Link>

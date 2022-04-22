@@ -46,13 +46,13 @@ const RepoPage = () => {
                         branches={branches}
                         onChange={(selected) => {
                             if (selected) {
-                                navigate(`/orgs/${daoName}/repos/${repoName}/tree/${selected.name}`);
+                                navigate(`/${daoName}/${repoName}/tree/${selected.name}`);
                             }
                         }}
                     />
 
                     <Link
-                        to={`/orgs/${daoName}/repos/${repoName}/branches`}
+                        to={`/${daoName}/${repoName}/branches`}
                         className="ml-4 text-sm text-gray-050a15/65 hover:text-gray-050a15"
                     >
                         <span className="mr-1 font-semibold">
@@ -63,7 +63,7 @@ const RepoPage = () => {
                     </Link>
 
                     <Link
-                        to={`/orgs/${daoName}/repos/${repoName}/commits/${branchName}`}
+                        to={`/${daoName}/${repoName}/commits/${branchName}`}
                         className="ml-4 text-sm text-gray-050a15/65 hover:text-gray-050a15"
                     >
                         <FontAwesomeIcon icon={faClockRotateLeft} className="mr-1" />
@@ -73,7 +73,7 @@ const RepoPage = () => {
 
                 <div className="flex gap-3">
                     <Link
-                        to={`/orgs/${daoName}/repos/${repoName}/blobs/create/${branchName}`}
+                        to={`/${daoName}/${repoName}/blobs/create/${branchName}`}
                         className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                     >
                         Add file
@@ -103,7 +103,7 @@ const RepoPage = () => {
                         <div className="basis-1/4 text-sm font-medium">
                             <Link
                                 className="hover:underline"
-                                to={`/orgs/${daoName}/repos/${repoName}/blob/${blob.meta?.name}`}
+                                to={`/${daoName}/${repoName}/blob/${blob.meta?.name}`}
                             >
                                 {blob.meta && blob.meta.name.split('/').slice(-1)}
                             </Link>
@@ -111,9 +111,9 @@ const RepoPage = () => {
                         <div className="text-gray-500 text-sm">
                             {/* <Link
                                 className="hover:underline"
-                                to={`/repositories/${repoName}/commit/${blob.lastCommitSha}`}
+                                to={``}
                             >
-                                {blob.lastCommitMsg.title}
+                                Last file commit name
                             </Link> */}
                         </div>
                     </div>

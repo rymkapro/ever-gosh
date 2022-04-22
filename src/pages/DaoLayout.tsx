@@ -14,8 +14,8 @@ const DaoLayout = () => {
     const { daoName } = useParams();
     const goshDao = useGoshDao(daoName);
     const tabs = [
-        { to: `/orgs/${goshDao?.meta?.name}`, title: 'Overview' },
-        { to: `/orgs/${goshDao?.meta?.name}/repos`, title: 'Repositories' }
+        { to: `/${goshDao?.meta?.name}`, title: 'Overview' },
+        { to: `/${goshDao?.meta?.name}/repos`, title: 'Repositories' }
     ];
 
     return (
@@ -30,7 +30,7 @@ const DaoLayout = () => {
             {goshDao && (
                 <>
                     <h1 className="mb-6">
-                        <Link to={`/orgs/${goshDao.meta?.name}`} className="font-semibold text-2xl">
+                        <Link to={`/${goshDao.meta?.name}`} className="font-semibold text-2xl">
                             {goshDao.meta?.name}
                         </Link>
                     </h1>

@@ -47,12 +47,12 @@ const BlobPage = () => {
                         branches={branches}
                         onChange={(selected) => {
                             if (selected) {
-                                navigate(`/orgs/${daoName}/repos/${repoName}/blob/${selected.name}/${blobName}`);
+                                navigate(`/${daoName}/${repoName}/blob/${selected.name}/${blobName}`);
                             }
                         }}
                     />
                     <Link
-                        to={`/orgs/${daoName}/repos/${repoName}/tree/${branchName}`}
+                        to={`/${daoName}/${repoName}/tree/${branchName}`}
                         className="ml-3 text-extblue font-medium hover:underline"
                     >
                         {repoName}
@@ -82,7 +82,7 @@ const BlobPage = () => {
                             }}
                         />
                         <Link
-                            to={`/orgs/${daoName}/repos/${repoName}/blobs/update/${branchName}/${blobName}`}
+                            to={`/${daoName}/${repoName}/blobs/update/${branchName}/${blobName}`}
                             className="text-extblack/60 hover:text-extblack p-1 ml-2">
                             <FontAwesomeIcon icon={faPencil} size="sm" />
                         </Link>

@@ -128,7 +128,7 @@ const PullCreatePage = () => {
             // Delete branch after merge (if selected), update branches, redirect
             if (values.deleteBranch) await goshWallet.deleteBranch(repoName, branchFrom.name);
             await updateBranches();
-            navigate(`/orgs/${daoName}/repos/${repoName}/tree/${branchTo.name}`, { replace: true });
+            navigate(`/${daoName}/${repoName}/tree/${branchTo.name}`, { replace: true });
         } catch (e: any) {
             console.error(e.message);
             alert(e.message);

@@ -44,7 +44,7 @@ const PullsPage = () => {
                     className="btn btn--body px-3 py-1.5 !font-normal !text-sm"
                     disabled={branchFrom?.name === branchTo?.name}
                     onClick={() => {
-                        navigate(`/orgs/${daoName}/repos/${repoName}/pulls/create?from=${branchFrom?.name}&to=${branchTo?.name}`);
+                        navigate(`/${daoName}/${repoName}/pulls/create?from=${branchFrom?.name}&to=${branchTo?.name}`);
                     }}
                 >
                     Create pull request
