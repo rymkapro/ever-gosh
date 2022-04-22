@@ -80,10 +80,10 @@ export class GoshRoot implements IGoshRoot {
         return result.decoded?.output.value0;
     }
 
-    async getRepoAddr(name: string, daoAddr: string): Promise<string> {
+    async getRepoAddr(name: string, daoName: string): Promise<string> {
         const result = await this.account.runLocal(
             'getAddrRepository',
-            { name, dao: daoAddr }
+            { name, dao: daoName }
         );
         return result.decoded?.output.value0;
     }
@@ -116,7 +116,7 @@ export class GoshDao implements IGoshDao {
     }
 
     async deployWallet(rootPubkey: string, pubkey: string): Promise<string> {
-        await this.account.run('deployWallet', { pubkeyroot: rootPubkey, pubkey });
+        await this.account.run('deployWallet', { pubkey });
         await this.daoCreator.sendMoney(rootPubkey, pubkey, this.address, fromEvers(500));
         return await this.getWalletAddr(rootPubkey, pubkey);
     }

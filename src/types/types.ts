@@ -65,7 +65,7 @@ export interface IGoshRoot extends IContract {
     deployDao(name: string, rootPubkey: string): Promise<string>;
     getDaoAddr(name: string): Promise<string>;
     getDaoWalletCode(pubkey: string): Promise<string>;
-    getRepoAddr(name: string, daoAddr: string): Promise<string>;
+    getRepoAddr(name: string, daoName: string): Promise<string>;
     getDaoRepoCode(daoAddress: string): Promise<string>;
 }
 

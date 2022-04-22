@@ -72,8 +72,7 @@ export const useGoshRepo = (daoName?: string, name?: string) => {
 
     useEffect(() => {
         const createRepo = async (root: IGoshRoot, daoName: string, name: string) => {
-            const daoAddr = await root.getDaoAddr(daoName);
-            const repoAddr = await root.getRepoAddr(name, daoAddr);
+            const repoAddr = await root.getRepoAddr(name, daoName);
             const repository = new GoshRepository(root.account.client, repoAddr);
             setGoshRepo(repository);
         }
