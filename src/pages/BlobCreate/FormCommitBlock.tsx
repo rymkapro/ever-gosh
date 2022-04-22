@@ -37,7 +37,6 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                 <Field
                     name="message"
                     component={TextareaField}
-                    help="Markdown syntax is supported"
                     inputProps={{
                         className: 'text-sm py-1.5 w-full',
                         placeholder: 'Commit optional description'

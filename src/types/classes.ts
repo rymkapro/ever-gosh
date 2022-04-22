@@ -451,13 +451,19 @@ export class GoshCommit implements IGoshCommit {
     }
 
     parseContent(content: string): TGoshCommitContent {
+        console.debug('[GoshCommit] Commit content', content);
         const splitted = content.split('\n');
-        const frame = splitted.slice(0, -2);
+
+        const commentIndex = splitted.findIndex((v) => v === '');
+        const commentData = splitted.slice(commentIndex + 1);
+        const [title, ...message] = commentData;
         const parsed: { [key: string]: string } = {
-            comment: splitted.slice(-2)[1]
+            title,
+            message: message.filter((v) => v).join('\n')
         };
-        console.debug('[GoshCommit] ommit content', content);
-        frame.forEach((item) => {
+
+        const commitData = splitted.slice(0, commentIndex);
+        commitData.forEach((item) => {
             ['author', 'committer'].forEach((key) => {
                 if (item.search(key) >= 0) parsed[key] = item.replace(`${key} `, '');
             });

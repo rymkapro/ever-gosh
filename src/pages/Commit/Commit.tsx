@@ -97,14 +97,14 @@ const CommitPage = () => {
                 <>
                     <div>
                         <div className="font-medium py-2">
-                            {commit.meta?.content.comment}
+                            {commit.meta?.content.title}
                         </div>
 
-                        {/* {commit.meta?.content.message && (
-                            <div className="mb-2 text-gray-050a15/65 text-sm">
+                        {commit.meta?.content.message && (
+                            <pre className="mb-3 text-gray-050a15/65 text-sm">
                                 {commit.meta.content.message}
-                            </div>
-                        )} */}
+                            </pre>
+                        )}
 
                         <div className="flex border-t gap-x-6 py-1 text-gray-050a15/75 text-xs">
                             <div className="flex items-center">

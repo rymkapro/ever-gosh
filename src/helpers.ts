@@ -269,7 +269,6 @@ export const unixtimeWithTz = (): string => {
 
 export const getCommitTime = (str: string): Date => {
     const [unixtime] = str.split(' ').slice(-2);
-    console.log(unixtime);
     return new Date(+unixtime * 1000);
 }
 

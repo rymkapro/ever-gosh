@@ -29,7 +29,8 @@ export type TGoshBranch = {
 export type TGoshCommitContent = {
     author: string;
     committer: string;
-    comment: string;
+    title: string;
+    message: string;
 }
 
 export type TGoshTreeItem = {

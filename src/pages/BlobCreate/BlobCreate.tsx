@@ -45,12 +45,13 @@ const BlobCreatePage = () => {
             if (!repoName) throw Error('Repository is undefined');
             if (!branch) throw Error('Branch is undefined');
 
+            const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
             await goshWallet.createCommit(
                 repoName,
                 branch,
                 userState.keys.public,
                 [{ name: values.name, modified: values.content, original: '' }],
-                values.title
+                message
             );
 
             await updateBranch(branch.name);

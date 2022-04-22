@@ -49,6 +49,7 @@ const BlobUpdatePage = () => {
             if (!branch) throw Error('Branch is undefined');
             if (!snapshot?.meta) throw Error('File content is undefined');
 
+            const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
             await goshWallet.createCommit(
                 repoName,
                 branch,
@@ -58,7 +59,7 @@ const BlobUpdatePage = () => {
                     modified: values.content,
                     original: snapshot.meta.content
                 }],
-                values.title
+                message
             );
 
             await updateBranch(branch.name);

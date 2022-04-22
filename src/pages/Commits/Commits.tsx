@@ -4,6 +4,7 @@ import { useRecoilValue } from "recoil";
 import BranchSelect from "../../components/BranchSelect";
 import CopyClipboard from "../../components/CopyClipboard";
 import Spinner from "../../components/Spinner";
+import { getCommitTime } from "../../helpers";
 import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
 import { GoshCommit } from "../../types/classes";
 import { TGoshBranch, IGoshCommit, IGoshRepository } from "../../types/types";
@@ -18,6 +19,18 @@ const CommitsPage = () => {
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const navigate = useNavigate();
     const [commits, setCommits] = useState<IGoshCommit[]>();
+
+    const renderCommitter = (committer: string) => {
+        const [pubkey] = committer.split(' ');
+        return (
+            <CopyClipboard
+                label={shortString(pubkey)}
+                componentProps={{
+                    text: pubkey
+                }}
+            />
+        );
+    }
 
     useEffect(() => {
         const getCommits = async (repo: IGoshRepository, branch: TGoshBranch) => {
@@ -72,8 +85,18 @@ const CommitsPage = () => {
                                 className="hover:underline"
                                 to={`/orgs/${daoName}/repos/${repoName}/commit/${branchName}/${commit.meta?.sha}`}
                             >
-                                {commit.meta?.content.comment}
+                                {commit.meta?.content.title}
                             </Link>
+                            <div className="mt-2 flex gap-x-4 text-gray-050a15/75 text-xs">
+                                <div className="flex items-center">
+                                    <span className="mr-2 text-gray-050a15/65">Commit by</span>
+                                    {renderCommitter(commit.meta?.content.committer || '')}
+                                </div>
+                                <div>
+                                    <span className="mr-2 text-gray-050a15/65">at</span>
+                                    {getCommitTime(commit.meta?.content.committer || '').toLocaleString()}
+                                </div>
+                            </div>
                         </div>
 
                         <div className="flex border border-gray-0a1124/65 rounded items-center text-gray-0a1124/65">
