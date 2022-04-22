@@ -194,7 +194,7 @@ const PullCreatePage = () => {
                                 <FormCommitBlock
                                     isDisabled={!monaco || isSubmitting}
                                     isSubmitting={isSubmitting}
-                                    extraButtons={(
+                                    extraButtons={branchFrom?.name !== 'main' && (
                                         <Field
                                             name="deleteBranch"
                                             component={SwitchField}
