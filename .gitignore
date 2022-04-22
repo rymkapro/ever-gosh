@@ -22,5 +22,5 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-contracts.py
-contracts.sh
+contracts*.py
+contracts*.sh
