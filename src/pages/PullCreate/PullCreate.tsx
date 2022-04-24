@@ -115,6 +115,8 @@ const PullCreatePage = () => {
                 }
             });
             console.debug('Blobs', blobs);
+
+            if (branchTo.name === 'main') await goshWallet.lockVoting(0);
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
             await goshWallet.createCommit(
                 repoName,
@@ -128,7 +130,11 @@ const PullCreatePage = () => {
             // Delete branch after merge (if selected), update branches, redirect
             if (values.deleteBranch) await goshWallet.deleteBranch(repoName, branchFrom.name);
             await updateBranches();
-            navigate(`/${daoName}/${repoName}/tree/${branchTo.name}`, { replace: true });
+            navigate(
+                branchTo.name === 'main'
+                    ? `/${daoName}/${repoName}/pulls`
+                    : `/${daoName}/${repoName}/tree/${branchTo.name}`, { replace: true }
+            );
         } catch (e: any) {
             console.error(e.message);
             alert(e.message);

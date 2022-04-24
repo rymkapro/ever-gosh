@@ -10,7 +10,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashAlt } from "@fortawesome/free-regular-svg-icons";
 import Spinner from "../../components/Spinner";
 import { GoshDao } from "../../types/classes";
-import { fromEvers } from "../../helpers";
 
 
 type TFormValues = {
@@ -30,17 +29,15 @@ const DaoCreatePage = () => {
 
             // Deploy GoshDao
             const rootPubkey = `0x${userState.keys.public}`;
-            const daoAddr = await goshRoot?.deployDao(values.name, rootPubkey);
+            await goshRoot?.daoCreator.deployDao(values.name, rootPubkey);
+            const daoAddr = await goshRoot.getDaoAddr(values.name);
             console.debug('DAO address:', daoAddr);
             const dao = new GoshDao(goshRoot.account.client, daoAddr);
 
-            // Topup GoshDao and deploy wallets
-            await goshRoot.daoCreator.sendMoneyDao(
-                values.name,
-                fromEvers(2 * values.participants.length)
-            );
+            // Deploy wallets
             await Promise.all(values.participants.map(async (item) => {
-                const walletAddr = await dao.deployWallet(rootPubkey, item);
+                if (!userState.keys) throw Error('Empty user state');
+                const walletAddr = await dao.deployWallet(rootPubkey, item, userState.keys);
                 console.debug('DAOWallet address:', walletAddr);
             }));
 

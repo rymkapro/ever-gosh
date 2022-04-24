@@ -45,17 +45,28 @@ const BlobCreatePage = () => {
             if (!repoName) throw Error('Repository is undefined');
             if (!branch) throw Error('Branch is undefined');
 
+            if (branch.name === 'main') {
+                // await goshWallet.unlockVoting(0);
+                // console.debug('Token balance:', await goshWallet.getSmvTokenBalance());
+                await goshWallet.lockVoting(0);
+                // console.debug('Token balance:', await goshWallet.getSmvTokenBalance());
+            }
+
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
             await goshWallet.createCommit(
                 repoName,
                 branch,
                 userState.keys.public,
-                [{ name: values.name, modified: values.content, original: '' }],
+                [{
+                    name: values.name,
+                    modified: values.content,
+                    original: ''
+                }],
                 message
             );
 
             await updateBranch(branch.name);
-            navigate(urlBack);
+            navigate(branch.name === 'main' ? `/${daoName}/${repoName}/pulls` : urlBack);
         } catch (e: any) {
             alert(e.message);
         }

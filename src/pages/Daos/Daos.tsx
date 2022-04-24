@@ -4,20 +4,20 @@ import { useRecoilValue } from "recoil";
 import Spinner from "../../components/Spinner";
 import { useGoshRoot } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
-import { GoshDao, GoshWallet } from "../../types/classes";
+import { GoshDao, GoshSmvTokenRoot, GoshWallet } from "../../types/classes";
 import { IGoshDao, IGoshRoot } from "../../types/types";
 
 
 const DaosPage = () => {
     const userState = useRecoilValue(userStateAtom);
     const goshRoot = useGoshRoot();
-    const [goshDaos, setGoshDaos] = useState<IGoshDao[]>();
+    const [goshDaos, setGoshDaos] = useState<{ dao: IGoshDao; supply: number; }[]>();
 
     useEffect(() => {
         const getDaoList = async (goshRoot: IGoshRoot, pubkey: string) => {
             // Get GoshWallet code by user's pubkey and get all user's wallets
             const walletCode = await goshRoot.getDaoWalletCode(`0x${pubkey}`);
-            console.debug('GoshWallet code:', walletCode);
+            // console.debug('GoshWallet code:', walletCode);
             const walletsAddrs = await goshRoot.account.client.net.query_collection({
                 collection: 'accounts',
                 filter: {
@@ -30,11 +30,20 @@ const DaosPage = () => {
             // Get GoshDaos from user's GoshWallets
             const daos = await Promise.all(
                 (walletsAddrs?.result || []).map(async (item: any) => {
+                    // Get GoshDao object
                     const goshWallet = new GoshWallet(goshRoot.account.client, item.id);
                     const daoAddr = await goshWallet.getDaoAddr();
                     const dao = new GoshDao(goshRoot.account.client, daoAddr);
                     await dao.load();
-                    return dao;
+
+                    // Get GoshDao total supply
+                    const smvTokenRootAddr = await dao.getSmvRootTokenAddr();
+                    console.log('smvTokenRootAddr', smvTokenRootAddr);
+                    const smvTokenRoot = new GoshSmvTokenRoot(dao.account.client, smvTokenRootAddr);
+                    const totalSupply = await smvTokenRoot.getTotalSupply();
+                    console.log('totalSupply', totalSupply);
+
+                    return { dao, supply: totalSupply };
                 })
             );
             console.debug('GoshDaos:', daos);
@@ -76,13 +85,19 @@ const DaosPage = () => {
 
                 <div className="divide-y divide-gray-c4c4c4">
                     {goshDaos?.map((item, index) => (
-                        <div key={index} className="py-2">
-                            <Link
-                                to={`/${item.meta?.name}`}
-                                className="text-xl font-semibold hover:underline"
-                            >
-                                {item.meta?.name}
-                            </Link>
+                        <div key={index} className="py-2 flex items-center justify-between">
+                            <div>
+                                <Link
+                                    to={`/${item.dao.meta?.name}`}
+                                    className="text-xl font-semibold hover:underline"
+                                >
+                                    {item.dao.meta?.name}
+                                </Link>
+                            </div>
+                            <div>
+                                <span className="text-gray-606060 text-sm mr-2">Total supply:</span>
+                                {item.supply}
+                            </div>
                         </div>
                     ))}
                 </div>

@@ -25,6 +25,7 @@ import CommitsPage from "./pages/Commits";
 import CommitPage from "./pages/Commit";
 import PullsPage from "./pages/Pulls";
 import PullCreatePage from "./pages/PullCreate";
+import PullPage from "./pages/Pull";
 
 import "./assets/scss/style.scss";
 import bgImage from "./assets/images/bg.png";  // TODO: Remove after UI design ready
@@ -82,6 +83,7 @@ const App = () => {
                             <Route path="commits/:branchName/:commitName" element={<CommitPage />} />
                             <Route path="pulls/create" element={<PullCreatePage />} />
                             <Route path="pulls" element={<PullsPage />} />
+                            <Route path="pull/:pullAddress" element={<PullPage />} />
                         </Route>
 
                     </Route>

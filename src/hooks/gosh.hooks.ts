@@ -47,15 +47,8 @@ export const useGoshWallet = (daoName?: string) => {
     useEffect(() => {
         const createWallet = async (goshDao: IGoshDao, keys: KeyPair) => {
             const rootPubkey = await goshDao.getRootPubkey();
-            const goshWalletAddr = await goshDao.getWalletAddr(
-                rootPubkey,
-                `0x${keys.public}`
-            );
-            const goshWallet = new GoshWallet(
-                goshDao.account.client,
-                goshWalletAddr,
-                keys
-            );
+            const goshWalletAddr = await goshDao.getWalletAddr(rootPubkey, `0x${keys.public}`);
+            const goshWallet = new GoshWallet(goshDao.account.client, goshWalletAddr, keys);
             setGoshWallet(goshWallet);
         }
 
