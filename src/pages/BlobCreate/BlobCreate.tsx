@@ -17,7 +17,7 @@ import { useRecoilValue } from "recoil";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
-import RepoBreadcrumbs from "../../components/Repo/RepoBreadcrumbs";
+import RepoBreadcrumbs from "../../components/Repo/Breadcrumbs";
 
 
 type TFormValues = {

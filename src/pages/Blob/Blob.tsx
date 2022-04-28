@@ -14,7 +14,7 @@ import Spinner from "../../components/Spinner";
 import { useRecoilValue } from "recoil";
 import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
 import { AccountType } from "@eversdk/appkit";
-import RepoBreadcrumbs from "../../components/Repo/RepoBreadcrumbs";
+import RepoBreadcrumbs from "../../components/Repo/Breadcrumbs";
 
 
 const BlobPage = () => {
