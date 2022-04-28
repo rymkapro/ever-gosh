@@ -18,11 +18,12 @@ import { AccountType } from "@eversdk/appkit";
 
 const BlobPage = () => {
     const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const { daoName, repoName, branchName = 'main', blobName } = useParams();
-    const branches = useRecoilValue(goshBranchesAtom);
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
+    const { daoName, repoName, branchName = 'main' } = useParams();
+    const blobName = useParams()['*'];
     const navigate = useNavigate();
     const monaco = useMonaco();
+    const branches = useRecoilValue(goshBranchesAtom);
+    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const [snapshot, setSnapshot] = useState<IGoshSnapshot>();
 
     useEffect(() => {
@@ -57,8 +58,22 @@ const BlobPage = () => {
                     >
                         {repoName}
                     </Link>
-                    <span className="mx-2">/</span>
-                    <span className="font-meduim">{blobName}</span>
+                    {blobName?.split('/').map((path, index, array) => (
+                        <React.Fragment key={index}>
+                            {index < array.length && (<span className="mx-2">/</span>)}
+                            {index < array.length - 1
+                                ? (
+                                    <Link
+                                        to={`/${daoName}/${repoName}/tree/${branchName}/${array.slice(0, index + 1).join('/')}`}
+                                        className="text-extblue font-medium hover:underline"
+                                    >
+                                        {path}
+                                    </Link>
+                                )
+                                : <span className="font-meduim">{path}</span>
+                            }
+                        </React.Fragment>
+                    ))}
                 </div>
             </div>
 

@@ -243,7 +243,7 @@ export const calculateSubtrees = (tree: TGoshTree) => {
 }
 
 /** Split file path to path and file name */
-const splitByPath = (fullPath: string): [path: string, name: string] => {
+export const splitByPath = (fullPath: string): [path: string, name: string] => {
     const lastSlashIndex = fullPath.lastIndexOf('/');
     const path = lastSlashIndex >= 0 ? fullPath.slice(0, lastSlashIndex) : '';
     const name = lastSlashIndex >= 0 ? fullPath.slice(lastSlashIndex + 1) : fullPath;

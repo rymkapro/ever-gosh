@@ -1,41 +1,40 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
-import { IGoshRepository, IGoshSnapshot, TGoshBranch } from "../../types/types";
+import { IGoshRepository, TGoshBranch } from "../../types/types";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import BranchSelect from "../../components/BranchSelect";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClockRotateLeft, faCodeBranch } from "@fortawesome/free-solid-svg-icons";
-import { GoshSnapshot } from "../../types/classes";
-import { useRecoilValue } from "recoil";
-import { goshCurrBranchSelector } from "../../store/gosh.state";
+import { faClockRotateLeft, faCodeBranch, faFolder } from "@fortawesome/free-solid-svg-icons";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { goshCurrBranchSelector, goshRepoTreeAtom, goshRepoTreeSelector } from "../../store/gosh.state";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 import Spinner from "../../components/Spinner";
+import { getSnapshotTree, splitByPath } from "../../helpers";
+import { faFile } from "@fortawesome/free-regular-svg-icons";
 
 
 const RepoPage = () => {
     const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
     const { daoName, repoName, branchName = 'main' } = useParams();
+    const pathName = useParams()['*'] || '';
     const navigate = useNavigate();
     const { branches } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
-    const [tree, setTree] = useState<IGoshSnapshot[]>();
+    const setTree = useSetRecoilState(goshRepoTreeAtom);
+    const subtree = useRecoilValue(goshRepoTreeSelector(pathName));
+
+    const [dirUp] = splitByPath(pathName);
 
     useEffect(() => {
         const getTree = async (repo: IGoshRepository, currBranch: TGoshBranch) => {
             setTree(undefined);
-            const snapshots = await Promise.all(
-                currBranch.snapshot.map(async (address) => {
-                    const snapshot = new GoshSnapshot(repo.account.client, address);
-                    await snapshot.load();
-                    return snapshot;
-                })
-            );
-            console.debug('GoshSnapshots:', snapshots);
-            setTree(snapshots);
+            const { tree } = await getSnapshotTree(repo.account.client, currBranch);
+            console.debug('[Repo] - Tree:', tree);
+            setTree(tree);
         }
 
         if (goshRepo && branch) getTree(goshRepo, branch);
-    }, [goshRepo, branch]);
+    }, [goshRepo, branch, setTree]);
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -82,42 +81,60 @@ const RepoPage = () => {
             </div>
 
             <div className="mt-5">
-                {tree === undefined && (
+                {subtree === undefined && (
                     <div className="text-gray-606060 text-sm">
                         <Spinner className="mr-3" />
                         Loading tree...
                     </div>
                 )}
 
-                {tree && !tree?.length && (
+                {subtree && !subtree?.length && (
                     <div className="text-sm text-gray-606060 text-center">
                         There are no files yet
                     </div>
                 )}
 
-                {Boolean(tree?.length) && tree?.map((blob, index) => (
-                    <div
-                        key={index}
-                        className="flex gap-x-4 py-3 border-b border-gray-300 last:border-b-0"
+                {!!subtree && pathName && (
+                    <Link
+                        className="block py-3 border-b border-gray-300 font-medium"
+                        to={`/${daoName}/${repoName}/tree/${branchName}${dirUp && `/${dirUp}`}`}
                     >
-                        <div className="basis-1/4 text-sm font-medium">
-                            <Link
-                                className="hover:underline"
-                                to={`/${daoName}/${repoName}/blob/${blob.meta?.name}`}
-                            >
-                                {blob.meta && blob.meta.name.split('/').slice(-1)}
-                            </Link>
-                        </div>
-                        <div className="text-gray-500 text-sm">
-                            {/* <Link
+                        ..
+                    </Link>
+                )}
+                {!!subtree && subtree?.map((item, index) => {
+                    const path = [item.path, item.name].filter((part) => part !== '').join('/');
+                    const type = item.type === 'tree' ? 'tree' : 'blobs';
+
+                    return (
+                        <div
+                            key={index}
+                            className="flex gap-x-4 py-3 border-b border-gray-300 last:border-b-0"
+                        >
+                            <div className="basis-1/4 text-sm font-medium">
+                                <Link
+                                    className="hover:underline"
+                                    to={`/${daoName}/${repoName}/${type}/${branchName}/${path}`}
+                                >
+                                    <FontAwesomeIcon
+                                        className="mr-2"
+                                        icon={item.type === 'tree' ? faFolder : faFile}
+                                        fixedWidth
+                                    />
+                                    {item.name}
+                                </Link>
+                            </div>
+                            <div className="text-gray-500 text-sm">
+                                {/* <Link
                                 className="hover:underline"
                                 to={``}
                             >
                                 Last file commit name
                             </Link> */}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    )
+                })}
             </div>
         </div>
     );

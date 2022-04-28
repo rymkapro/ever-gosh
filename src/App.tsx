@@ -74,16 +74,16 @@ const App = () => {
                         <Route path="repos/create" element={<RepoCreatePage />} />
                         <Route path=":repoName" element={<RepoLayout />}>
                             <Route index element={<RepoPage />} />
-                            <Route path="tree/:branchName" element={<RepoPage />} />
+                            <Route path="tree/:branchName/*" element={<RepoPage />} />
                             <Route path="branches" element={<BranchesPage />} />
                             <Route path="blobs/create/:branchName" element={<BlobCreatePage />} />
                             <Route path="blobs/update/:branchName/:blobName" element={<BlobUpdatePage />} />
-                            <Route path="blob/:branchName/:blobName" element={<BlobPage />} />
+                            <Route path="blobs/:branchName/*" element={<BlobPage />} />
                             <Route path="commits/:branchName" element={<CommitsPage />} />
                             <Route path="commits/:branchName/:commitName" element={<CommitPage />} />
-                            <Route path="pulls/create" element={<PullCreatePage />} />
                             <Route path="pulls" element={<PullsPage />} />
-                            <Route path="pull/:pullAddress" element={<PullPage />} />
+                            <Route path="pulls/create" element={<PullCreatePage />} />
+                            <Route path="pulls/:pullAddress" element={<PullPage />} />
                         </Route>
 
                     </Route>
