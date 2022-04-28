@@ -119,7 +119,7 @@ const PullCreatePage = () => {
             if (branchTo.name === 'main') await goshWallet.lockVoting(0);
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
             await goshWallet.createCommit(
-                repoName,
+                goshRepo,
                 branchTo,
                 userState.keys.public,
                 blobs,
@@ -128,7 +128,7 @@ const PullCreatePage = () => {
             );
 
             // Delete branch after merge (if selected), update branches, redirect
-            if (values.deleteBranch) await goshWallet.deleteBranch(repoName, branchFrom.name);
+            if (values.deleteBranch) await goshWallet.deleteBranch(goshRepo, branchFrom.name);
             await updateBranches();
             navigate(
                 branchTo.name === 'main'

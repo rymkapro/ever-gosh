@@ -38,10 +38,8 @@ const DaosPage = () => {
 
                     // Get GoshDao total supply
                     const smvTokenRootAddr = await dao.getSmvRootTokenAddr();
-                    console.log('smvTokenRootAddr', smvTokenRootAddr);
                     const smvTokenRoot = new GoshSmvTokenRoot(dao.account.client, smvTokenRootAddr);
                     const totalSupply = await smvTokenRoot.getTotalSupply();
-                    console.log('totalSupply', totalSupply);
 
                     return { dao, supply: totalSupply };
                 })

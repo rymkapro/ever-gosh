@@ -30,8 +30,7 @@ export const BranchesPage = () => {
     const [branchesOnMutation, setBranchesOnMutation] = useState<string[]>([]);
     const branchDeleteMutation = useMutation(
         (name: string) => {
-            if (!repoName) throw Error('Repository name is undefined');
-            return goshWallet.deleteBranch(repoName, name);
+            return goshWallet.deleteBranch(goshRepo, name);
         },
         {
             onMutate: (variables) => {
@@ -53,11 +52,10 @@ export const BranchesPage = () => {
         helpers: FormikHelpers<any>
     ) => {
         try {
-            if (!repoName) throw Error('Repository is undefined');
             if (!values.from) throw Error('From branch is undefined');
 
-            await goshWallet.createBranch(
-                repoName,
+            await goshWallet.deployBranch(
+                goshRepo,
                 values.newName,
                 values.from.name,
                 values.from.snapshot.length

@@ -35,18 +35,6 @@
 			]
 		},
 		{
-			"name": "deployBlob",
-			"inputs": [
-				{"name":"pubkey","type":"uint256"},
-				{"name":"commitAddr","type":"address"},
-				{"name":"blobName","type":"string"},
-				{"name":"fullBlob","type":"string"},
-				{"name":"prevSha","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "deployBranch",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
@@ -86,14 +74,20 @@
 			]
 		},
 		{
-			"name": "deployCommit",
+			"name": "setCommit",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
 				{"name":"nameBranch","type":"string"},
-				{"name":"nameCommit","type":"string"},
-				{"name":"fullCommit","type":"string"},
-				{"name":"parent1","type":"address"},
-				{"name":"parent2","type":"address"}
+				{"name":"commit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setHEAD",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"nameBranch","type":"string"}
 			],
 			"outputs": [
 			]
@@ -159,6 +153,14 @@
 			]
 		},
 		{
+			"name": "getHEAD",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		},
+		{
 			"name": "getCommitAddr",
 			"inputs": [
 				{"name":"nameBranch","type":"string"},
@@ -173,6 +175,15 @@
 			"inputs": [
 				{"name":"branch","type":"string"},
 				{"name":"name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getBlobAddr",
+			"inputs": [
+				{"name":"nameBlob","type":"string"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
@@ -211,6 +222,7 @@
 		{"name":"_rootGosh","type":"address"},
 		{"name":"_name","type":"string"},
 		{"name":"_goshdao","type":"address"},
+		{"name":"_head","type":"string"},
 		{"name":"_Branches","type":"optional(cell)"}
 	]
 }

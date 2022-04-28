@@ -63,6 +63,8 @@ export interface IGoshRoot extends IContract {
     address: string;
     daoCreator: IGoshDaoCreator;
 
+    createDao(name: string, rootPubkey: string): Promise<IGoshDao>;
+
     getDaoAddr(name: string): Promise<string>;
     getDaoWalletCode(pubkey: string): Promise<string>;
     getRepoAddr(name: string, daoName: string): Promise<string>;
@@ -100,60 +102,51 @@ export interface IGoshDao extends IContract {
 export interface IGoshWallet extends IContract {
     address: string;
 
-    getDaoAddr(): Promise<string>;
-    deployRepo(name: string): Promise<void>;
-    createBranch(
-        repoName: string,
-        newName: string,
-        fromName: string,
-        filesCount: number
-    ): Promise<void>;
-    deleteBranch(repoName: string, branchName: string): Promise<void>;
+    getDao(): Promise<IGoshDao>;
+    getRoot(): Promise<IGoshRoot>;
     createCommit(
-        repoName: string,
+        repo: IGoshRepository,
         branch: TGoshBranch,
         pubkey: string,
         blobs: { name: string; modified: string; original: string; }[],
         message: string,
         parent2?: TGoshBranch
     ): Promise<void>;
+
+    getDaoAddr(): Promise<string>;
+    getRootAddr(): Promise<string>;
+    deployRepo(name: string): Promise<void>;
+    deployBranch(
+        repo: IGoshRepository,
+        newName: string,
+        fromName: string,
+        filesCount: number
+    ): Promise<void>;
+    deleteBranch(repo: IGoshRepository, branchName: string): Promise<void>;
     deployCommit(
         repoName: string,
         branchName: string,
         commitName: string,
         commitData: string,
         parent1: string,
-        parent2: string,
-        blobName1: string,
-        fullBlob1: string,
-        prevSha1: string,
-        blobName2: string,
-        fullBlob2: string,
-        prevSha2: string,
-        diffName: string,
-        diff: string
+        parent2: string
     ): Promise<void>;
-    // deployCommit(
-    //     repoName: string,
-    //     branchName: string,
-    //     commitName: string,
-    //     commitData: string,
-    //     parent1: string,
-    //     parent2: string
-    // ): Promise<void>;
     deployBlob(
         repoName: string,
+        branchName: string,
         commitName: string,
         blobName: string,
         blobContent: string,
         blobPrevSha: string
     ): Promise<void>;
-    deployDiff(
+    setCommit(
         repoName: string,
         branchName: string,
-        filePath: string,
-        diff: string
+        commitName: string,
+        diffName: string[],
+        diff: string[]
     ): Promise<void>;
+    setBlobs(repoName: string, commitName: string, blobAddr: string[]): Promise<void>;
     getSmvLockerAddr(): Promise<string>;
     getSmvTokenBalance(): Promise<number>;
     getSmvClientAddr(lockerAddr: string, proposalId: string): Promise<string>;
@@ -183,6 +176,7 @@ export interface IGoshRepository extends IContract {
     getBranch(name: string): Promise<TGoshBranch>;
     getSnapshotAddr(branchName: string, filePath: string): Promise<string>;
     getCommitAddr(branchName: string, commitSha: string): Promise<string>;
+    getBlobAddr(blobName: string): Promise<string>;
 }
 
 export interface IGoshCommit extends IContract {
@@ -201,7 +195,6 @@ export interface IGoshCommit extends IContract {
     getName(): Promise<string>;
     getParent(): Promise<string[]>;
     getBlobs(): Promise<string[]>;
-    getBlobAddr(blobSha: string): Promise<string>;
 }
 
 export interface IGoshBlob extends IContract {

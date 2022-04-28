@@ -53,7 +53,7 @@ const BlobUpdatePage = () => {
 
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
             await goshWallet.createCommit(
-                repoName,
+                goshRepo,
                 branch,
                 userState.keys.public,
                 [{

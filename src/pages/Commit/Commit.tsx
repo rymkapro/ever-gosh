@@ -53,7 +53,7 @@ const CommitPage = () => {
                         // If blob has prevSha, load this prev blob
                         let prevBlob = undefined;
                         if (blob.meta?.prevSha) {
-                            const prevBlobAddr = await commit.getBlobAddr(`blob ${blob.meta.prevSha}`);
+                            const prevBlobAddr = await goshRepo.getBlobAddr(`blob ${blob.meta.prevSha}`);
                             prevBlob = new GoshBlob(repo.account.client, prevBlobAddr);
                             await prevBlob.load();
                         }
