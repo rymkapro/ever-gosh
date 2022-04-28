@@ -277,7 +277,7 @@ export class GoshWallet implements IGoshWallet {
         parent2?: TGoshBranch
     ): Promise<void> {
         if (!repo.meta) await repo.load();
-        if (!repo.meta?.name) throw Error('Repository is undefined');
+        if (!repo.meta?.name) throw Error('Repository name is undefined');
         const repoName = repo.meta.name;
 
         // Prepare blobs
