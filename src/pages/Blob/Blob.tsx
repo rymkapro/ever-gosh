@@ -14,30 +14,32 @@ import Spinner from "../../components/Spinner";
 import { useRecoilValue } from "recoil";
 import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
 import { AccountType } from "@eversdk/appkit";
+import RepoBreadcrumbs from "../../components/Repo/RepoBreadcrumbs";
 
 
 const BlobPage = () => {
     const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
     const { daoName, repoName, branchName = 'main' } = useParams();
-    const blobName = useParams()['*'];
     const navigate = useNavigate();
     const monaco = useMonaco();
     const branches = useRecoilValue(goshBranchesAtom);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const [snapshot, setSnapshot] = useState<IGoshSnapshot>();
 
+    const pathName = useParams()['*'];
+
     useEffect(() => {
-        const getSnapshot = async (repo: IGoshRepository, branch: string, blob: string) => {
+        const getSnapshot = async (repo: IGoshRepository, branch: string, path: string) => {
             setSnapshot(undefined);
-            const snapAddr = await repo.getSnapshotAddr(branch, blob);
+            const snapAddr = await repo.getSnapshotAddr(branch, path);
             const snapshot = new GoshSnapshot(repo.account.client, snapAddr);
             const { acc_type } = await snapshot.account.getAccount();
             if (acc_type === AccountType.active) await snapshot.load();
             setSnapshot(snapshot);
         }
 
-        if (goshRepo && branchName && blobName) getSnapshot(goshRepo, branchName, blobName);
-    }, [goshRepo, branchName, blobName]);
+        if (goshRepo && branchName && pathName) getSnapshot(goshRepo, branchName, pathName);
+    }, [goshRepo, branchName, pathName]);
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -48,32 +50,18 @@ const BlobPage = () => {
                         branches={branches}
                         onChange={(selected) => {
                             if (selected) {
-                                navigate(`/${daoName}/${repoName}/blob/${selected.name}/${blobName}`);
+                                navigate(`/${daoName}/${repoName}/blobs/${selected.name}/${pathName}`);
                             }
                         }}
                     />
-                    <Link
-                        to={`/${daoName}/${repoName}/tree/${branchName}`}
-                        className="ml-3 text-extblue font-medium hover:underline"
-                    >
-                        {repoName}
-                    </Link>
-                    {blobName?.split('/').map((path, index, array) => (
-                        <React.Fragment key={index}>
-                            {index < array.length && (<span className="mx-2">/</span>)}
-                            {index < array.length - 1
-                                ? (
-                                    <Link
-                                        to={`/${daoName}/${repoName}/tree/${branchName}/${array.slice(0, index + 1).join('/')}`}
-                                        className="text-extblue font-medium hover:underline"
-                                    >
-                                        {path}
-                                    </Link>
-                                )
-                                : <span className="font-meduim">{path}</span>
-                            }
-                        </React.Fragment>
-                    ))}
+                    <div className="inline-block ml-4">
+                        <RepoBreadcrumbs
+                            daoName={daoName}
+                            repoName={repoName}
+                            branchName={branchName}
+                            pathName={pathName}
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -97,7 +85,7 @@ const BlobPage = () => {
                             }}
                         />
                         <Link
-                            to={`/${daoName}/${repoName}/blobs/update/${branchName}/${blobName}`}
+                            to={`/${daoName}/${repoName}/blobs/update/${branchName}/${pathName}`}
                             className="text-extblack/60 hover:text-extblack p-1 ml-2">
                             <FontAwesomeIcon icon={faPencil} size="sm" />
                         </Link>

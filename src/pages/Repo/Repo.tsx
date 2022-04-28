@@ -72,7 +72,7 @@ const RepoPage = () => {
 
                 <div className="flex gap-3">
                     <Link
-                        to={`/${daoName}/${repoName}/blobs/create/${branchName}`}
+                        to={`/${daoName}/${repoName}/blobs/create/${branchName}${pathName && `/${pathName}`}`}
                         className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                     >
                         Add file

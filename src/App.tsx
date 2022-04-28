@@ -76,8 +76,8 @@ const App = () => {
                             <Route index element={<RepoPage />} />
                             <Route path="tree/:branchName/*" element={<RepoPage />} />
                             <Route path="branches" element={<BranchesPage />} />
-                            <Route path="blobs/create/:branchName" element={<BlobCreatePage />} />
-                            <Route path="blobs/update/:branchName/:blobName" element={<BlobUpdatePage />} />
+                            <Route path="blobs/create/:branchName/*" element={<BlobCreatePage />} />
+                            <Route path="blobs/update/:branchName/*" element={<BlobUpdatePage />} />
                             <Route path="blobs/:branchName/*" element={<BlobPage />} />
                             <Route path="commits/:branchName" element={<CommitsPage />} />
                             <Route path="commits/:branchName/:commitName" element={<CommitPage />} />

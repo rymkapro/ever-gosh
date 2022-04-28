@@ -12,13 +12,14 @@ import FormCommitBlock from "../BlobCreate/FormCommitBlock";
 import { useMonaco } from "@monaco-editor/react";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import { IGoshRepository, IGoshSnapshot } from "../../types/types";
-import { getCodeLanguageFromFilename } from "../../helpers";
+import { getCodeLanguageFromFilename, splitByPath } from "../../helpers";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 import { GoshSnapshot } from "../../types/classes";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useRecoilValue } from "recoil";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
+import RepoBreadcrumbs from "../../components/Repo/RepoBreadcrumbs";
 
 
 type TFormValues = {
@@ -29,7 +30,7 @@ type TFormValues = {
 }
 
 const BlobUpdatePage = () => {
-    const { daoName, repoName, branchName = 'main', blobName } = useParams();
+    const { daoName, repoName, branchName = 'main' } = useParams();
     const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
     const userState = useRecoilValue(userStateAtom);
     const { updateBranch } = useGoshRepoBranches(goshRepo);
@@ -39,7 +40,9 @@ const BlobUpdatePage = () => {
     const [activeTab, setActiveTab] = useState<number>(0);
     const [snapshot, setSnapshot] = useState<IGoshSnapshot>();
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
-    const urlBack = `/${daoName}/${repoName}/blob/${branchName}/${blobName}`;
+
+    const pathName = useParams()['*'];
+    const urlBack = `/${daoName}/${repoName}/blobs/${branchName}${pathName && `/${pathName}`}`;
 
     const onCommitChanges = async (values: TFormValues) => {
         try {
@@ -51,13 +54,14 @@ const BlobUpdatePage = () => {
 
             if (branch.name === 'main') await goshWallet.lockVoting(0);
 
+            const [path] = splitByPath(pathName || '');
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
             await goshWallet.createCommit(
                 goshRepo,
                 branch,
                 userState.keys.public,
                 [{
-                    name: values.name,
+                    name: `${path && `${path}/`}${values.name}`,
                     modified: values.content,
                     original: snapshot.meta.content
                 }],
@@ -72,29 +76,29 @@ const BlobUpdatePage = () => {
     }
 
     useEffect(() => {
-        const getSnapshot = async (repo: IGoshRepository, branch: string, blob: string) => {
-            const snapAddr = await repo.getSnapshotAddr(branch, blob);
+        const getSnapshot = async (repo: IGoshRepository, branch: string, path: string) => {
+            const snapAddr = await repo.getSnapshotAddr(branch, path);
             const snapshot = new GoshSnapshot(repo.account.client, snapAddr);
             await snapshot.load();
             setSnapshot(snapshot);
         }
 
-        if (goshRepo && branchName && blobName) getSnapshot(goshRepo, branchName, blobName);
-    }, [goshRepo, branchName, blobName]);
+        if (goshRepo && branchName && pathName) getSnapshot(goshRepo, branchName, pathName);
+    }, [goshRepo, branchName, pathName]);
 
     useEffect(() => {
-        if (monaco && blobName) {
-            const language = getCodeLanguageFromFilename(monaco, blobName);
+        if (monaco && pathName) {
+            const language = getCodeLanguageFromFilename(monaco, pathName);
             setBlobCodeLanguage(language);
         }
-    }, [monaco, blobName])
+    }, [monaco, pathName])
 
     return (
         <div className="bordered-block px-7 py-8">
-            {monaco && blobName && snapshot && (
+            {monaco && pathName && snapshot && (
                 <Formik
                     initialValues={{
-                        name: blobName,
+                        name: splitByPath(pathName)[1],
                         content: snapshot.meta?.content || '',
                         title: '',
                         message: ''
@@ -109,13 +113,14 @@ const BlobUpdatePage = () => {
                         <Form>
                             <div className="flex gap-3 items-baseline justify-between ">
                                 <div className="flex items-baseline">
-                                    <Link
-                                        to={`/${daoName}/${repoName}/tree/${branchName}`}
-                                        className="font-medium text-extblue hover:underline"
-                                    >
-                                        {repoName}
-                                    </Link>
-                                    <span className="mx-2">/</span>
+                                    <RepoBreadcrumbs
+                                        daoName={daoName}
+                                        repoName={repoName}
+                                        branchName={branchName}
+                                        pathName={pathName}
+                                        pathOnly={true}
+                                        isBlob={false}
+                                    />
                                     <div>
                                         <Field
                                             name="name"

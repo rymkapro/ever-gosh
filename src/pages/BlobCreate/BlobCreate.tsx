@@ -4,7 +4,7 @@ import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import TextField from "../../components/FormikForms/TextField";
 import { useMonaco } from "@monaco-editor/react";
-import { getCodeLanguageFromFilename } from "../../helpers";
+import { getCodeLanguageFromFilename, splitByPath } from "../../helpers";
 import * as Yup from "yup";
 import { Tab } from "@headlessui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -17,6 +17,7 @@ import { useRecoilValue } from "recoil";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
+import RepoBreadcrumbs from "../../components/Repo/RepoBreadcrumbs";
 
 
 type TFormValues = {
@@ -36,7 +37,9 @@ const BlobCreatePage = () => {
     const monaco = useMonaco();
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
     const [activeTab, setActiveTab] = useState<number>(0);
-    const urlBack = `/${daoName}/${repoName}/tree/${branchName}`;
+
+    const pathName = useParams()['*'];
+    const urlBack = `/${daoName}/${repoName}/tree/${branchName}${pathName && `/${pathName}`}`;
 
     const onCommitChanges = async (values: TFormValues) => {
         try {
@@ -53,7 +56,7 @@ const BlobCreatePage = () => {
                 branch,
                 userState.keys.public,
                 [{
-                    name: values.name,
+                    name: `${pathName && `${pathName}/`}${values.name}`,
                     modified: values.content,
                     original: ''
                 }],
@@ -81,13 +84,13 @@ const BlobCreatePage = () => {
                     <Form>
                         <div className="flex gap-3 items-baseline justify-between ">
                             <div className="flex items-baseline">
-                                <Link
-                                    to={`/${daoName}/${repoName}/tree/${branchName}`}
-                                    className="font-medium text-extblue hover:underline"
-                                >
-                                    {repoName}
-                                </Link>
-                                <span className="mx-2">/</span>
+                                <RepoBreadcrumbs
+                                    daoName={daoName}
+                                    repoName={repoName}
+                                    branchName={branchName}
+                                    pathName={pathName}
+                                    isBlob={false}
+                                />
                                 <div>
                                     <Field
                                         name="name"
