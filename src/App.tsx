@@ -7,6 +7,7 @@ import Header from "./components/Header";
 import ProtectedLayout from "./pages/ProtectedLayout";
 import AccountLayout from "./pages/AccountLayout";
 import DaoLayout from "./pages/DaoLayout";
+import DaoSettingsLayout from "./pages/DaoSettingsLayout";
 import RepoLayout from "./pages/RepoLayout";
 import HomePage from "./pages/Home";
 import SignupPage from "./pages/Signup";
@@ -14,6 +15,8 @@ import SigninPage from "./pages/Signin";
 import DaosPage from "./pages/Daos";
 import DaoPage from "./pages/Dao";
 import DaoCreatePage from "./pages/DaoCreate";
+import DaoWalletPage from "./pages/DaoWallet";
+import DaoParticipantsPage from "./pages/DaoParticipants";
 import ReposPage from "./pages/Repos";
 import RepoCreatePage from "./pages/RepoCreate";
 import RepoPage from "./pages/Repo";
@@ -71,6 +74,10 @@ const App = () => {
                         <Route element={<DaoLayout />}>
                             <Route index element={<DaoPage />} />
                             <Route path="repos" element={<ReposPage />} />
+                            <Route path="settings" element={<DaoSettingsLayout />}>
+                                <Route path="wallet" element={<DaoWalletPage />} />
+                                <Route path="participants" element={<DaoParticipantsPage />} />
+                            </Route>
                         </Route>
                         <Route path="repos/create" element={<RepoCreatePage />} />
                         <Route path=":repoName" element={<RepoLayout />}>

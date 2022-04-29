@@ -4,7 +4,7 @@ import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import TextField from "../../components/FormikForms/TextField";
 import { useMonaco } from "@monaco-editor/react";
-import { getCodeLanguageFromFilename, splitByPath } from "../../helpers";
+import { getCodeLanguageFromFilename } from "../../helpers";
 import * as Yup from "yup";
 import { Tab } from "@headlessui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";

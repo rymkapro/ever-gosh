@@ -14,8 +14,9 @@ const DaoLayout = () => {
     const { daoName } = useParams();
     const goshDao = useGoshDao(daoName);
     const tabs = [
-        { to: `/${goshDao?.meta?.name}`, title: 'Overview' },
-        { to: `/${goshDao?.meta?.name}/repos`, title: 'Repositories' }
+        { to: `/${daoName}`, title: 'Overview' },
+        { to: `/${daoName}/repos`, title: 'Repositories' },
+        { to: `/${daoName}/settings`, title: 'Settings' }
     ];
 
     return (
@@ -40,7 +41,7 @@ const DaoLayout = () => {
                             <NavLink
                                 key={index}
                                 to={item.to}
-                                end
+                                end={index === 0}
                                 className={({ isActive }) => classNames(
                                     'text-base text-gray-050a15/50 hover:text-gray-050a15 py-1.5 px-2',
                                     isActive ? '!text-gray-050a15 border-b border-b-gray-050a15' : null
