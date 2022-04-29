@@ -63,6 +63,14 @@ const BlobPage = () => {
                         />
                     </div>
                 </div>
+                <div>
+                    <Link
+                        to={`/${daoName}/${repoName}/find/${branchName}`}
+                        className="btn btn--body px-4 py-1.5 text-sm !font-normal"
+                    >
+                        Go to file
+                    </Link>
+                </div>
             </div>
 
             {!snapshot && (

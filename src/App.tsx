@@ -26,6 +26,7 @@ import CommitPage from "./pages/Commit";
 import PullsPage from "./pages/Pulls";
 import PullCreatePage from "./pages/PullCreate";
 import PullPage from "./pages/Pull";
+import GotoPage from "./pages/Goto";
 
 import "./assets/scss/style.scss";
 import bgImage from "./assets/images/bg.png";  // TODO: Remove after UI design ready
@@ -84,6 +85,7 @@ const App = () => {
                             <Route path="pulls" element={<PullsPage />} />
                             <Route path="pulls/create" element={<PullCreatePage />} />
                             <Route path="pulls/:pullAddress" element={<PullPage />} />
+                            <Route path="find/:branchName" element={<GotoPage />} />
                         </Route>
 
                     </Route>

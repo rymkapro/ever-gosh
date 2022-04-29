@@ -1,3 +1,4 @@
+import { NetworkQueriesProtocol } from "@eversdk/core";
 import { atom } from "recoil";
 import { getEndpoints } from "../helpers";
 import { TEverState } from "../types/types";
@@ -8,7 +9,8 @@ export const everStateAtom = atom<TEverState>({
     default: {
         config: {
             network: {
-                endpoints: getEndpoints()
+                endpoints: getEndpoints(),
+                queries_protocol: NetworkQueriesProtocol.HTTP
             }
         }
     }

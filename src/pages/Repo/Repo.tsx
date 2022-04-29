@@ -21,14 +21,14 @@ const RepoPage = () => {
     const { branches } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const setTree = useSetRecoilState(goshRepoTreeAtom);
-    const subtree = useRecoilValue(goshRepoTreeSelector(pathName));
+    const subtree = useRecoilValue(goshRepoTreeSelector({ type: 'tree', path: pathName }));
 
     const [dirUp] = splitByPath(pathName);
 
     useEffect(() => {
         const getTree = async (repo: IGoshRepository, currBranch: TGoshBranch) => {
             setTree(undefined);
-            const { tree } = await getSnapshotTree(repo.account.client, currBranch);
+            const tree = await getSnapshotTree(repo.account.client, currBranch);
             console.debug('[Repo] - Tree:', tree);
             setTree(tree);
         }
@@ -71,6 +71,12 @@ const RepoPage = () => {
                 </div>
 
                 <div className="flex gap-3">
+                    <Link
+                        to={`/${daoName}/${repoName}/find/${branchName}`}
+                        className="btn btn--body px-4 py-1.5 text-sm !font-normal"
+                    >
+                        Go to file
+                    </Link>
                     <Link
                         to={`/${daoName}/${repoName}/blobs/create/${branchName}${pathName && `/${pathName}`}`}
                         className="btn btn--body px-4 py-1.5 text-sm !font-normal"
