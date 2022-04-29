@@ -23,11 +23,10 @@ export type TAccountData = {
 export type TGoshBranch = {
     name: string;
     commitAddr: string;
-    snapshot: string[];
 }
 
 export type TGoshCommitContent = {
-    root: string;
+    tree: string;
     author: string;
     committer: string;
     title: string;
@@ -116,12 +115,7 @@ export interface IGoshWallet extends IContract {
     getDaoAddr(): Promise<string>;
     getRootAddr(): Promise<string>;
     deployRepo(name: string): Promise<void>;
-    deployBranch(
-        repo: IGoshRepository,
-        newName: string,
-        fromName: string,
-        filesCount: number
-    ): Promise<void>;
+    deployBranch(repo: IGoshRepository, newName: string, fromName: string): Promise<void>;
     deleteBranch(repo: IGoshRepository, branchName: string): Promise<void>;
     deployCommit(
         repoName: string,
@@ -139,13 +133,7 @@ export interface IGoshWallet extends IContract {
         blobContent: string,
         blobPrevSha: string
     ): Promise<void>;
-    setCommit(
-        repoName: string,
-        branchName: string,
-        commitName: string,
-        diffName: string[],
-        diff: string[]
-    ): Promise<void>;
+    setCommit(repoName: string, branchName: string, commitName: string): Promise<void>;
     setBlobs(repoName: string, commitName: string, blobAddr: string[]): Promise<void>;
     getSmvLockerAddr(): Promise<string>;
     getSmvTokenBalance(): Promise<number>;
@@ -174,7 +162,6 @@ export interface IGoshRepository extends IContract {
     getName(): Promise<string>;
     getBranches(): Promise<TGoshBranch[]>;
     getBranch(name: string): Promise<TGoshBranch>;
-    getSnapshotAddr(branchName: string, filePath: string): Promise<string>;
     getCommitAddr(branchName: string, commitSha: string): Promise<string>;
     getBlobAddr(blobName: string): Promise<string>;
 }
@@ -209,18 +196,6 @@ export interface IGoshBlob extends IContract {
     load(): Promise<void>;
     getBlob(): Promise<any>;
     getPrevSha(): Promise<string>;
-}
-
-export interface IGoshSnapshot extends IContract {
-    address: string;
-    meta?: {
-        name: string;
-        content: string;
-    };
-
-    load(): Promise<void>;
-    getName(): Promise<string>;
-    getSnapshot(): Promise<string>;
 }
 
 export interface IGoshSmvProposal extends IContract {

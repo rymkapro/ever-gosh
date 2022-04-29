@@ -1,31 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { faFile } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link, useOutletContext, useParams } from "react-router-dom";
-import { useRecoilValue, useSetRecoilState } from "recoil";
-import { getSnapshotTree } from "../../helpers";
-import { goshCurrBranchSelector, goshRepoTreeAtom, goshRepoTreeSelector } from "../../store/gosh.state";
-import { IGoshRepository, TGoshBranch } from "../../types/types";
+import { useRecoilValue } from "recoil";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 
 
 const GotoPage = () => {
     const { daoName, repoName, branchName = 'main' } = useParams();
-    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
-    const setTree = useSetRecoilState(goshRepoTreeAtom);
+    const { goshRepoTree } = useOutletContext<TRepoLayoutOutletContext>();
     const [search, setSearch] = useState<string>('');
-    const blobs = useRecoilValue(goshRepoTreeSelector({ type: 'items', path: search }));
-
-    useEffect(() => {
-        const getTree = async (repo: IGoshRepository, currBranch: TGoshBranch) => {
-            const tree = await getSnapshotTree(repo.account.client, currBranch);
-            console.debug('[Goto] - Tree object:', tree);
-            setTree(tree);
-        }
-
-        if (goshRepo && branch) getTree(goshRepo, branch);
-    }, [goshRepo, branch, setTree]);
+    const treeItems = useRecoilValue(goshRepoTree.getTreeItems(search));
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -48,7 +33,7 @@ const GotoPage = () => {
                 </div>
             </div>
 
-            {!!blobs && blobs?.map((item, index) => {
+            {!!treeItems && treeItems?.map((item, index) => {
                 const path = `${item.path && `${item.path}/`}${item.name}`
                 return (
                     <div

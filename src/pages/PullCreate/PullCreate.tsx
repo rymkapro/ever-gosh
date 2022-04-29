@@ -8,8 +8,6 @@ import { useRecoilValue } from "recoil";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 import { getCodeLanguageFromFilename } from "../../helpers";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
-import { GoshSnapshot } from "../../types/classes";
-import { IGoshSnapshot } from "../../types/types";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import * as Yup from "yup";
 import FormCommitBlock from "../BlobCreate/FormCommitBlock";
@@ -37,20 +35,20 @@ const PullCreatePage = () => {
     const branchTo = useRecoilValue(
         goshCurrBranchSelector(searchParams.get('to') || 'main')
     );
-    const [compare, setCompare] = useState<{ to?: IGoshSnapshot, from?: IGoshSnapshot }[]>();
+    const [compare, setCompare] = useState<{ to?: any, from?: any }[]>();
     const monaco = useMonaco();
     const userState = useRecoilValue(userStateAtom);
 
     useEffect(() => {
-        const getSnapshots = async (addresses: string[]): Promise<IGoshSnapshot[]> => {
-            return await Promise.all(
-                addresses.map(async (address) => {
-                    const snapshot = new GoshSnapshot(goshWallet.account.client, address);
-                    await snapshot.load();
-                    return snapshot;
-                })
-            );
-        }
+        // const getSnapshots = async (addresses: string[]): Promise<IGoshSnapshot[]> => {
+        //     return await Promise.all(
+        //         addresses.map(async (address) => {
+        //             const snapshot = new GoshSnapshot(goshWallet.account.client, address);
+        //             await snapshot.load();
+        //             return snapshot;
+        //         })
+        //     );
+        // }
 
         const onCompare = async () => {
             try {
@@ -62,29 +60,29 @@ const PullCreatePage = () => {
                 };
 
                 setCompare(undefined);
-                const fromSnapshots = await getSnapshots(branchFrom.snapshot);
-                console.debug('From branch snapshots:', fromSnapshots);
-                const toSnapshots = await getSnapshots(branchTo.snapshot);
-                console.debug('To branch snapshots:', toSnapshots);
+                // const fromSnapshots = await getSnapshots(branchFrom.snapshot);
+                // console.debug('From branch snapshots:', fromSnapshots);
+                // const toSnapshots = await getSnapshots(branchTo.snapshot);
+                // console.debug('To branch snapshots:', toSnapshots);
 
-                const compare: { to?: IGoshSnapshot, from?: IGoshSnapshot }[] = [];
-                for (let i = 0; i < Math.max(fromSnapshots.length, toSnapshots.length); i++) {
-                    if (i < toSnapshots.length) {
-                        const to = toSnapshots[i];
-                        const from = fromSnapshots.find((snap) => {
-                            const fromNameClean = snap.meta?.name.split('/').slice(-1)[0];
-                            const toNameClean = to.meta?.name.split('/').slice(-1)[0];
-                            console.log('From name:', fromNameClean, 'To name:', toNameClean);
-                            return fromNameClean === toNameClean;
-                        });
-                        if (!from || to.meta?.content === from.meta?.content) continue;
-                        compare.push({ to, from });
-                    } else {
-                        compare.push({ to: undefined, from: fromSnapshots[i] });
-                    }
-                }
-                console.debug('Compare list:', compare);
-                setCompare(compare);
+                // const compare: { to?: IGoshSnapshot, from?: IGoshSnapshot }[] = [];
+                // for (let i = 0; i < Math.max(fromSnapshots.length, toSnapshots.length); i++) {
+                //     if (i < toSnapshots.length) {
+                //         const to = toSnapshots[i];
+                //         const from = fromSnapshots.find((snap) => {
+                //             const fromNameClean = snap.meta?.name.split('/').slice(-1)[0];
+                //             const toNameClean = to.meta?.name.split('/').slice(-1)[0];
+                //             console.log('From name:', fromNameClean, 'To name:', toNameClean);
+                //             return fromNameClean === toNameClean;
+                //         });
+                //         if (!from || to.meta?.content === from.meta?.content) continue;
+                //         compare.push({ to, from });
+                //     } else {
+                //         compare.push({ to: undefined, from: fromSnapshots[i] });
+                //     }
+                // }
+                // console.debug('Compare list:', compare);
+                // setCompare(compare);
             } catch (e: any) {
                 console.error(e.message);
                 alert(e.message);

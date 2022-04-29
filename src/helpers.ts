@@ -2,8 +2,14 @@ import { TonClient } from "@eversdk/core";
 import { toast } from "react-toastify";
 import cryptoJs, { SHA1 } from "crypto-js";
 import { Buffer } from "buffer";
-import { GoshDaoCreator, GoshSnapshot } from "./types/classes";
-import { IGoshDaoCreator, TGoshBranch, TGoshTree, TGoshTreeItem } from "./types/types";
+import { GoshBlob, GoshCommit, GoshDaoCreator } from "./types/classes";
+import {
+    IGoshDaoCreator,
+    IGoshRepository,
+    TGoshBranch,
+    TGoshTree,
+    TGoshTreeItem
+} from "./types/types";
 
 
 export const getEndpoints = (): string[] => {
@@ -158,6 +164,22 @@ export const getTreeItemsFromPath = (filePath: string, fileContent: string): TGo
     return items;
 }
 
+const getTreeItemsFromBlob = (content: string): TGoshTreeItem[] => {
+    return content.split('\n').map((entry: string) => {
+        const [mode, type, tail] = entry.split(' ')
+        const [sha, fname] = tail.split('\t')
+        const lastSlash = fname.lastIndexOf('/')
+        const path = lastSlash >= 0 ? fname.slice(0, lastSlash) : ''
+        return {
+            mode: mode as TGoshTreeItem['mode'],
+            type: type as TGoshTreeItem['type'],
+            sha,
+            path,
+            name: lastSlash >= 0 ? fname.slice(lastSlash + 1) : fname,
+        }
+    });
+}
+
 /** Build grouped by path tree from TGoshTreeItem[] */
 export const getTreeFromItems = (items: TGoshTreeItem[]): TGoshTree => {
     const isTree = (i: TGoshTreeItem) => i.type === 'tree'
@@ -176,36 +198,43 @@ export const getTreeFromItems = (items: TGoshTreeItem[]): TGoshTree => {
     return result;
 }
 
-export const getSnapshotTree = async (
-    client: TonClient,
+export const getRepoTree = async (
+    repo: IGoshRepository,
     branch: TGoshBranch
 ): Promise<{ tree: TGoshTree; items: TGoshTreeItem[]; }> => {
-    // Load branch snapshots
-    const snapshots = await Promise.all(
-        branch.snapshot.map(async (address) => {
-            const snapshot = new GoshSnapshot(client, address);
-            await snapshot.load();
-            if (!snapshot.meta) throw Error('[getSnapshotTree]: Can not load snapshot');
-            return snapshot;
-        })
-    );
+    /** Recursive walker through tree blobs */
+    const blobTreeWalker = async (path: string, subitems: TGoshTreeItem[]) => {
+        const trees = subitems.filter((item) => item.type === 'tree');
+        if (!trees) return;
 
-    // Create list of TGoshTreeItem
-    const items: TGoshTreeItem[] = [];
-    snapshots.forEach((snapshot) => {
-        if (!snapshot.meta) throw Error('[getSnapshotTree]: Snapshot meta is empty');
-        const filePath = snapshot.meta.name.replace(`${branch.name}/`, '');
-        const fileItems = getTreeItemsFromPath(filePath, snapshot.meta.content);
-        fileItems.forEach((fileItem) => {
-            if (!items.find((item) => item.path === fileItem.path && item.name === fileItem.name)) {
-                items.push(fileItem);
-            }
-        });
-    });
+        await Promise.all(trees.map(async (tree) => {
+            const treeAddr = await repo.getBlobAddr(`tree ${tree.sha}`);
+            const treeBlob = new GoshBlob(repo.account.client, treeAddr);
+            await treeBlob.load();
 
-    // Build tree and calculate subtrees hashes
+            const treeItems = getTreeItemsFromBlob(treeBlob.meta?.content || '');
+            treeItems.forEach((item) => item.path = `${path && `${path}/`}${tree.name}`);
+            items.push(...treeItems);
+            await blobTreeWalker(tree.name, treeItems);
+        }));
+    }
+
+    // Get latest branch commit
+    if (!branch.commitAddr) return { tree: { '': [] }, items: [] };
+    const commit = new GoshCommit(repo.account.client, branch.commitAddr);
+    await commit.load();
+
+    // Get root tree blob
+    const rootTreeBlobAddr = await repo.getBlobAddr(`tree ${commit.meta?.content.tree}`);
+    const rootTreeBlob = new GoshBlob(repo.account.client, rootTreeBlobAddr);
+    await rootTreeBlob.load();
+
+    // Get root tree items and recursively get subtrees
+    const items = getTreeItemsFromBlob(rootTreeBlob.meta?.content || '');
+    await blobTreeWalker('', items);
+
+    // Build full tree
     const tree = getTreeFromItems(items);
-    calculateSubtrees(tree);
     return { tree, items };
 }
 

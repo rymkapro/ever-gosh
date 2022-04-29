@@ -1,40 +1,27 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
-import { IGoshRepository, TGoshBranch } from "../../types/types";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import BranchSelect from "../../components/BranchSelect";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClockRotateLeft, faCodeBranch, faFolder } from "@fortawesome/free-solid-svg-icons";
-import { useRecoilValue, useSetRecoilState } from "recoil";
-import { goshCurrBranchSelector, goshRepoTreeAtom, goshRepoTreeSelector } from "../../store/gosh.state";
+import { useRecoilValue } from "recoil";
+import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 import Spinner from "../../components/Spinner";
-import { getSnapshotTree, splitByPath } from "../../helpers";
+import { splitByPath } from "../../helpers";
 import { faFile } from "@fortawesome/free-regular-svg-icons";
 
 
 const RepoPage = () => {
-    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
+    const { goshRepo, goshRepoTree } = useOutletContext<TRepoLayoutOutletContext>();
     const { daoName, repoName, branchName = 'main' } = useParams();
     const pathName = useParams()['*'] || '';
     const navigate = useNavigate();
     const { branches } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
-    const setTree = useSetRecoilState(goshRepoTreeAtom);
-    const subtree = useRecoilValue(goshRepoTreeSelector({ type: 'tree', path: pathName }));
+    const subtree = useRecoilValue(goshRepoTree.getSubtree(pathName));
 
     const [dirUp] = splitByPath(pathName);
-
-    useEffect(() => {
-        const getTree = async (repo: IGoshRepository, currBranch: TGoshBranch) => {
-            setTree(undefined);
-            const tree = await getSnapshotTree(repo.account.client, currBranch);
-            console.debug('[Repo] - Tree:', tree);
-            setTree(tree);
-        }
-
-        if (goshRepo && branch) getTree(goshRepo, branch);
-    }, [goshRepo, branch, setTree]);
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -108,7 +95,7 @@ const RepoPage = () => {
                         ..
                     </Link>
                 )}
-                {!!subtree && subtree?.map((item, index) => {
+                {!!subtree && subtree?.map((item: any, index: number) => {
                     const path = [item.path, item.name].filter((part) => part !== '').join('/');
                     const type = item.type === 'tree' ? 'tree' : 'blobs';
 

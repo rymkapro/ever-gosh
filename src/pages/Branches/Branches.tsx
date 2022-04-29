@@ -54,12 +54,7 @@ export const BranchesPage = () => {
         try {
             if (!values.from) throw Error('From branch is undefined');
 
-            await goshWallet.deployBranch(
-                goshRepo,
-                values.newName,
-                values.from.name,
-                values.from.snapshot.length
-            );
+            await goshWallet.deployBranch(goshRepo, values.newName, values.from.name);
             await updateBranches();
             helpers.resetForm();
         } catch (e: any) {
