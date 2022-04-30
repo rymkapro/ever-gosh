@@ -11,15 +11,6 @@ export type TUserState = {
     keys?: KeyPair;
 }
 
-export type TAccountData = {
-    address: string;
-    balance: number;
-    acc_type: number;
-    acc_type_name: string;
-    code?: string;
-    data?: string;
-}
-
 export type TGoshBranch = {
     name: string;
     commitAddr: string;
