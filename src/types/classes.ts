@@ -204,6 +204,11 @@ export class GoshDao implements IGoshDao {
         return result.decoded?.output.value0;
     }
 
+    async getWallets(): Promise<string[]> {
+        const result = await this.account.runLocal('getWallets', {});
+        return result.decoded?.output.value0;
+    }
+
     async getName(): Promise<string> {
         const result = await this.account.runLocal('getNameDao', {});
         return result.decoded?.output.value0;
@@ -421,6 +426,11 @@ export class GoshWallet implements IGoshWallet {
 
     async getRootAddr(): Promise<string> {
         const result = await this.account.runLocal('getAddrRootGosh', {});
+        return result.decoded?.output.value0;
+    }
+
+    async getPubkey(): Promise<string> {
+        const result = await this.account.runLocal('getWalletPubkey', {});
         return result.decoded?.output.value0;
     }
 

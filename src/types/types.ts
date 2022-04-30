@@ -83,6 +83,7 @@ export interface IGoshDao extends IContract {
     load(): Promise<void>;
     deployWallet(rootPubkey: string, pubkey: string, keys: KeyPair): Promise<string>;
     getWalletAddr(rootPubkey: string, pubkey: string): Promise<string>;
+    getWallets(): Promise<string[]>;
     getName(): Promise<string>;
     getRootPubkey(): Promise<string>;
     getSmvRootTokenAddr(): Promise<string>;
@@ -114,6 +115,7 @@ export interface IGoshWallet extends IContract {
 
     getDaoAddr(): Promise<string>;
     getRootAddr(): Promise<string>;
+    getPubkey(): Promise<string>;
     deployRepo(name: string): Promise<void>;
     deployBranch(repo: IGoshRepository, newName: string, fromName: string): Promise<void>;
     deleteBranch(repo: IGoshRepository, branchName: string): Promise<void>;
