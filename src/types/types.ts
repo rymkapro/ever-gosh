@@ -133,7 +133,12 @@ export interface IGoshWallet extends IContract {
         blobContent: string,
         blobPrevSha: string
     ): Promise<void>;
-    setCommit(repoName: string, branchName: string, commitName: string): Promise<void>;
+    setCommit(
+        repoName: string,
+        branchName: string,
+        commitName: string,
+        amount: number
+    ): Promise<void>;
     setBlobs(repoName: string, commitName: string, blobAddr: string[]): Promise<void>;
     getSmvLockerAddr(): Promise<string>;
     getSmvTokenBalance(): Promise<number>;

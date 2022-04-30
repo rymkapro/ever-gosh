@@ -393,18 +393,25 @@ export class GoshWallet implements IGoshWallet {
 
         // Set blobs for commit
         const blobAddrs = await Promise.all(
-            blobsToDeploy.name.map(async (name) => {
-                console.debug('Blob name:', name);
-                const addr = await repo.getBlobAddr(name);
-                console.debug('Blob addr:', addr);
-                return addr;
-            })
+            blobsToDeploy.name.map(async (name) => await repo.getBlobAddr(name))
         );
         console.debug('Blobs addrs:', blobAddrs);
         await this.setBlobs(repoName, commitName, blobAddrs);
 
-        // Set repo commit
-        await this.setCommit(repoName, branch.name, commitName);
+        // Set repo commit (wait if is not a proposal)
+        await this.setCommit(repoName, branch.name, commitName, 1);
+        if (branch.name !== 'main') {
+            await new Promise<void>((resolve) => {
+                const interval = setInterval(async () => {
+                    const upd = await repo.getBranch(branch.name);
+                    console.debug('[Create commit] - Branches (curr/upd):', branch, upd);
+                    if (upd.commitAddr !== branch.commitAddr) {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, 1500);
+            });
+        }
     }
 
     async getDaoAddr(): Promise<string> {
@@ -531,10 +538,15 @@ export class GoshWallet implements IGoshWallet {
         );
     }
 
-    async setCommit(repoName: string, branchName: string, commitName: string): Promise<void> {
+    async setCommit(
+        repoName: string,
+        branchName: string,
+        commitName: string,
+        amount: number
+    ): Promise<void> {
         await this.account.run(
             'setCommit',
-            { repoName, branchName, commit: commitName }
+            { repoName, branchName, commit: commitName, number: amount }
         );
     }
 

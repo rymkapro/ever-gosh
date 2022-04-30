@@ -29,7 +29,7 @@ const RepoBreadcrumbs = (props: TRepoPathProps) => {
             {[repoName, ...path].map((path, index, array) => {
                 const part = index > 0 ? array.slice(1, index + 1).join('/') : '';
                 if (index > 0 && !path) return null;
-                if (!pathOnly && isBlob && index == array.length - 1) return (
+                if (!pathOnly && isBlob && index === array.length - 1) return (
                     <React.Fragment key={index}>
                         <span className="font-medium">{path}</span>
                     </React.Fragment>
