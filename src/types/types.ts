@@ -6,8 +6,13 @@ export type TEverState = {
     config: ClientConfig;
 }
 
-export type TUserState = {
+export type TUserStatePersist = {
     phrase?: string;
+    nonce?: string;
+    pin?: string;
+}
+
+export type TUserState = TUserStatePersist & {
     keys?: KeyPair;
 }
 

@@ -4,9 +4,10 @@ import * as Yup from "yup";
 import TextareaField from "../../components/FormikForms/TextareaField";
 import { useEverClient } from "../../hooks/ever.hooks";
 import { useSetRecoilState } from "recoil";
-import { userStateAtom } from "../../store/user.state";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../../components/Spinner";
+import { appModalStateAtom } from "../../store/app.state";
+import PinCodeModal from "../../components/Modal/PinCode";
 
 
 type TFormValues = {
@@ -16,7 +17,7 @@ type TFormValues = {
 const SigninPage = () => {
     const navigate = useNavigate();
     const everClient = useEverClient();
-    const setUserState = useSetRecoilState(userStateAtom);
+    const setModal = useSetRecoilState(appModalStateAtom);
 
     const onFormSubmit = async (values: TFormValues, helpers: FormikHelpers<TFormValues>) => {
         const result = await everClient.crypto.mnemonic_verify({ phrase: values.phrase });
@@ -25,11 +26,16 @@ const SigninPage = () => {
             return;
         }
 
-        const keys = await everClient.crypto.mnemonic_derive_sign_keys({
-            phrase: values.phrase
+        setModal({
+            static: true,
+            isOpen: true,
+            element: (
+                <PinCodeModal
+                    phrase={values.phrase}
+                    onUnlock={() => navigate('/account/orgs', { replace: true })}
+                />
+            )
         });
-        setUserState({ phrase: values.phrase, keys });
-        navigate('/account/orgs', { replace: true });
     }
 
     return (

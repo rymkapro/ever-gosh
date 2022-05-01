@@ -32,13 +32,12 @@ import PullPage from "./pages/Pull";
 import GotoPage from "./pages/Goto";
 
 import "./assets/scss/style.scss";
-import bgImage from "./assets/images/bg.png";  // TODO: Remove after UI design ready
+import BaseModal from "./components/Modal/BaseModal";
 
 
 const App = () => {
     const client = useEverClient();
     const [isInitialized, setIsInitialized] = useState<boolean>(false);
-    // const location = useLocation(); // TODO: Remove after UI design ready
 
     useEffect(() => {
         if (!client) return;
@@ -47,16 +46,7 @@ const App = () => {
 
     if (!isInitialized) return <p>Loading...</p>
     return (
-        // TODO: remove .wrapper style after UI design ready
-        <div
-            className="wrapper"
-            style={{
-                // backgroundImage: ['/', '/account/signin', '/account/signup'].indexOf(location.pathname) >= 0
-                //     ? `url(${bgImage})`
-                //     : undefined,
-                backgroundImage: `url(${bgImage})`,
-            }}
-        >
+        <div className="wrapper">
             <Header />
             <main className="main grow">
                 <Routes>
@@ -100,8 +90,9 @@ const App = () => {
                 </Routes>
             </main>
             <footer className="footer"></footer>
-            <ToastContainer />
 
+            <ToastContainer />
+            <BaseModal />
         </div>
     );
 }

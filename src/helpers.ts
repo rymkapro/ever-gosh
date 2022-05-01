@@ -296,6 +296,31 @@ export const getCommitTime = (str: string): Date => {
     return new Date(+unixtime * 1000);
 }
 
+export const generateRandomBytes = async (
+    client: TonClient,
+    length: number,
+    hex: boolean = false
+): Promise<string> => {
+    const result = await client.crypto.generate_random_bytes({ length });
+    if (hex) return Buffer.from(result.bytes, 'base64').toString('hex');
+    return result.bytes;
+}
+
+export const chacha20 = {
+    async encrypt(client: TonClient, data: string, key: string, nonce: string): Promise<string> {
+        const result = await client.crypto.chacha20({
+            data,
+            key: key.padStart(64, '0'),
+            nonce
+        });
+        return result.data;
+    },
+    async decrypt(client: TonClient, data: string, key: string, nonce: string): Promise<string> {
+        const result = await client.crypto.chacha20({ data, key: key.padStart(64, '0'), nonce });
+        return result.data;
+    }
+}
+
 /**
  * Toast shortcuts
  */

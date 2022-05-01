@@ -5,10 +5,10 @@ import TextareaField from "../../components/FormikForms/TextareaField";
 import SwitchField from "../../components/FormikForms/SwitchField";
 import { useEverClient } from "../../hooks/ever.hooks";
 import { useSetRecoilState } from "recoil";
-import { userStateAtom } from "../../store/user.state";
 import { useNavigate } from "react-router-dom";
-import Spinner from "../../components/Spinner";
 import { TonClient } from "@eversdk/core";
+import { appModalStateAtom } from "../../store/app.state";
+import PinCodeModal from "../../components/Modal/PinCode";
 
 
 type TFormValues = {
@@ -19,7 +19,7 @@ type TFormValues = {
 const SignupPage = () => {
     const navigate = useNavigate();
     const everClient = useEverClient();
-    const setUserState = useSetRecoilState(userStateAtom);
+    const setModal = useSetRecoilState(appModalStateAtom);
     const [phrase, setPhrase] = useState<string>('');
 
     const generatePhrase = async (client: TonClient) => {
@@ -27,12 +27,17 @@ const SignupPage = () => {
         setPhrase(result.phrase);
     }
 
-    const onFormSubmit = async (values: TFormValues) => {
-        const keys = await everClient.crypto.mnemonic_derive_sign_keys({
-            phrase: values.phrase
+    const onFormSubmit = (values: TFormValues) => {
+        setModal({
+            static: true,
+            isOpen: true,
+            element: (
+                <PinCodeModal
+                    phrase={values.phrase}
+                    onUnlock={() => navigate('/account/orgs', { replace: true })}
+                />
+            )
         });
-        setUserState({ phrase: values.phrase, keys });
-        navigate('/account/orgs', { replace: true });
     }
 
     useEffect(() => {
@@ -57,7 +62,7 @@ const SignupPage = () => {
                 })}
                 enableReinitialize={true}
             >
-                {({ isSubmitting }) => (
+                {() => (
                     <Form className="px-5 sm:px-124px">
                         <div>
                             <Field
@@ -87,10 +92,8 @@ const SignupPage = () => {
                         <div className="mt-6">
                             <button
                                 type="submit"
-                                disabled={isSubmitting}
                                 className="btn btn--body w-full py-3 text-xl leading-normal"
                             >
-                                {isSubmitting && <Spinner className="mr-3" size={'lg'} />}
                                 Create account
                             </button>
                         </div>

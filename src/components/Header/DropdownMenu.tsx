@@ -3,14 +3,23 @@ import { Menu, Transition } from "@headlessui/react";
 import { Link } from "react-router-dom";
 import { classNames } from "../../utils";
 import { useResetRecoilState } from "recoil";
-import { userStateAtom } from "../../store/user.state";
+import { userStateAtom, userStatePersistAtom } from "../../store/user.state";
 
 
 const DropdownMenu = () => {
-    const userStateReset = useResetRecoilState(userStateAtom);
+    const resetUserState = useResetRecoilState(userStateAtom);
+    const resetUserStatePersist = useResetRecoilState(userStatePersistAtom);
     const items = [
         { to: '/account/orgs', title: 'Organizations', className: 'text-gray-050a15' },
-        { to: '', title: 'Sign out', className: 'text-red-dd3a3a', onClick: () => userStateReset() }
+        {
+            to: '',
+            title: 'Sign out',
+            className: 'text-red-dd3a3a',
+            onClick: () => {
+                resetUserState();
+                resetUserStatePersist();
+            }
+        }
     ];
 
     return (
