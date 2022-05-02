@@ -405,18 +405,18 @@ export class GoshWallet implements IGoshWallet {
 
         // Set repo commit (wait if is not a proposal)
         await this.setCommit(repoName, branch.name, commitName, 1);
-        if (branch.name !== 'main') {
-            await new Promise<void>((resolve) => {
-                const interval = setInterval(async () => {
-                    const upd = await repo.getBranch(branch.name);
-                    console.debug('[Create commit] - Branches (curr/upd):', branch, upd);
-                    if (upd.commitAddr !== branch.commitAddr) {
-                        clearInterval(interval);
-                        resolve();
-                    }
-                }, 1500);
-            });
-        }
+        // if (branch.name !== 'main') {
+        await new Promise<void>((resolve) => {
+            const interval = setInterval(async () => {
+                const upd = await repo.getBranch(branch.name);
+                console.debug('[Create commit] - Branches (curr/upd):', branch, upd);
+                if (upd.commitAddr !== branch.commitAddr) {
+                    clearInterval(interval);
+                    resolve();
+                }
+            }, 1500);
+        });
+        // }
     }
 
     async getDaoAddr(): Promise<string> {
