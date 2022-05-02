@@ -2,13 +2,13 @@ import React from "react";
 import { Disclosure } from "@headlessui/react";
 import { Link, useLocation } from "react-router-dom";
 import { useRecoilValue } from "recoil";
-import { userStateAtom } from "../../store/user.state";
+import { userStatePersistAtom } from "../../store/user.state";
 import logoBlack from "../../assets/images/logo-black.svg";
 import DropdownMenu from "./DropdownMenu";
 
 
 const Header = () => {
-    const userState = useRecoilValue(userStateAtom);
+    const userStatePersist = useRecoilValue(userStatePersistAtom);
     const location = useLocation();
 
     return (
@@ -55,7 +55,7 @@ const Header = () => {
                             {/* <Disclosure.Button className="btn btn--header btn--burger icon-burger" /> */}
 
                             {/* Menu dropdown (is used as for mobile, as for desktop for now) */}
-                            {userState.phrase && <DropdownMenu />}
+                            {userStatePersist.phrase && <DropdownMenu />}
                         </div>
 
                         <Disclosure.Panel className="sm:hidden">

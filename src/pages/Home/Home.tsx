@@ -1,11 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useRecoilValue } from "recoil";
-import { userStateAtom } from "../../store/user.state";
+import { userStatePersistAtom } from "../../store/user.state";
 
 
 const HomePage = () => {
-    const userState = useRecoilValue(userStateAtom);
+    const userStatePersist = useRecoilValue(userStatePersistAtom);
 
     return (
         <section className="max-w-7xl mx-auto pt-16 px-2">
@@ -23,7 +23,7 @@ const HomePage = () => {
                     </p>
                 </div>
                 <div className="my-10 flex flex-wrap justify-center gap-x-8 gap-y-4">
-                    {userState.phrase ? (
+                    {userStatePersist.phrase ? (
                         <div>
                             <Link
                                 to="/account/orgs"
