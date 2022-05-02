@@ -150,7 +150,7 @@ export interface IGoshWallet extends IContract {
         choice: boolean,
         amount: number
     ): Promise<void>;
-    tryProposalResult(proposalAddr: string): Promise<boolean>;
+    tryProposalResult(proposalAddr: string): Promise<void>;
     updateHead(): Promise<void>;
 }
 

@@ -1,4 +1,4 @@
-import { Account, AccountType } from "@eversdk/appkit";
+import { Account, AccountRunOptions, AccountType } from "@eversdk/appkit";
 import { KeyPair, signerKeys, signerNone, TonClient } from "@eversdk/core";
 import GoshDaoCreatorABI from "../contracts/daocreater.abi.json";
 import GoshABI from "../contracts/gosh.abi.json";
@@ -120,10 +120,7 @@ export class GoshRoot implements IGoshRoot {
     }
 
     async getRepoAddr(name: string, daoName: string): Promise<string> {
-        const result = await this.account.runLocal(
-            'getAddrRepository',
-            { name, dao: daoName }
-        );
+        const result = await this.account.runLocal('getAddrRepository', { name, dao: daoName });
         return result.decoded?.output.value0;
     }
 
@@ -446,7 +443,7 @@ export class GoshWallet implements IGoshWallet {
         if (acc.acc_type === AccountType.active) return;
 
         // If repo is not deployed, deploy and wait for status `active`
-        await this.account.run('deployRepository', { nameRepo: name });
+        await this.run('deployRepository', { nameRepo: name });
         return new Promise((resolve) => {
             const interval = setInterval(async () => {
                 const acc = await repo.account.getAccount();
@@ -468,10 +465,7 @@ export class GoshWallet implements IGoshWallet {
         if (branch.name === newName) return;
 
         // Deploy new branch and wait for branch is deployed and all snapshots are copied
-        await this.account.run(
-            'deployBranch',
-            { repoName: repo.meta.name, newName, fromName }
-        );
+        await this.run('deployBranch', { repoName: repo.meta.name, newName, fromName });
         return new Promise((resolve) => {
             const interval = setInterval(async () => {
                 const branch = await repo.getBranch(newName);
@@ -493,7 +487,7 @@ export class GoshWallet implements IGoshWallet {
         if (!branch.name) return;
 
         // Delete branch and wait for it to be deleted
-        await this.account.run('deleteBranch', { repoName: repo.meta.name, Name: branchName });
+        await this.run('deleteBranch', { repoName: repo.meta.name, Name: branchName });
         return new Promise((resolve) => {
             const interval = setInterval(async () => {
                 const branch = await repo.getBranch(branchName);
@@ -514,7 +508,7 @@ export class GoshWallet implements IGoshWallet {
         parent1: string,
         parent2: string
     ): Promise<void> {
-        await this.account.run(
+        await this.run(
             'deployCommit',
             {
                 repoName,
@@ -535,7 +529,7 @@ export class GoshWallet implements IGoshWallet {
         blobContent: string,
         blobPrevSha: string
     ): Promise<void> {
-        await this.account.run(
+        await this.run(
             'deployBlob',
             {
                 repoName,
@@ -554,14 +548,11 @@ export class GoshWallet implements IGoshWallet {
         commitName: string,
         amount: number
     ): Promise<void> {
-        await this.account.run(
-            'setCommit',
-            { repoName, branchName, commit: commitName, number: amount }
-        );
+        await this.run('setCommit', { repoName, branchName, commit: commitName, number: amount });
     }
 
     async setBlobs(repoName: string, commitName: string, blobAddr: string[]): Promise<void> {
-        await this.account.run('setBlob', { repoName, commitName, blobs: blobAddr });
+        await this.run('setBlob', { repoName, commitName, blobs: blobAddr });
     }
 
     async getSmvLockerAddr(): Promise<string> {
@@ -583,17 +574,15 @@ export class GoshWallet implements IGoshWallet {
     }
 
     async lockVoting(amount: number): Promise<void> {
-        await this.account.run('lockVoting', { amount });
+        await this.run('lockVoting', { amount });
     }
 
     async unlockVoting(amount: number): Promise<void> {
-        await this.account.run('unlockVoting', { amount });
+        await this.run('unlockVoting', { amount });
     }
 
-    async tryProposalResult(proposalAddr: string): Promise<boolean> {
-        const result = await this.account.run('tryProposalResult', { proposal: proposalAddr });
-        console.debug('Proposal result', result);
-        return false;
+    async tryProposalResult(proposalAddr: string): Promise<void> {
+        await this.run('tryProposalResult', { proposal: proposalAddr });
     }
 
     async voteFor(
@@ -603,14 +592,33 @@ export class GoshWallet implements IGoshWallet {
         choice: boolean,
         amount: number
     ): Promise<void> {
-        await this.account.run(
+        await this.run(
             'voteFor',
             { platformCode, clientCode, proposal: proposalAddr, choice, amount }
         )
     }
 
     async updateHead(): Promise<void> {
-        await this.account.run('updateHead', {});
+        await this.run('updateHead', {});
+    }
+
+    async run(functionName: string, input: object, options?: AccountRunOptions): Promise<void> {
+        // Check wallet balance and topup if needed
+        const balance = await this.account.getBalance();
+        if (+balance < fromEvers(60)) {
+            if (this.account.signer.type !== 'Keys') throw Error('Wallet pubkey is undefined');
+
+            const dao = await this.getDao();
+            await dao.daoCreator.sendMoney(
+                await dao.getRootPubkey(),
+                `0x${this.account.signer.keys.public}`,
+                dao.address,
+                fromEvers(500)
+            )
+        }
+
+        // Run contract
+        await this.account.run(functionName, input, options);
     }
 }
 
@@ -840,8 +848,6 @@ export class GoshSmvProposal implements IGoshSmvProposal {
     async getVotes(): Promise<{ yes: number; no: number; }> {
         const yes = await this.account.runLocal('votesYes', {});
         const no = await this.account.runLocal('votesNo', {});
-        console.debug('VY', yes)
-        console.debug('VN', no)
         return {
             yes: +yes.decoded?.output.votesYes,
             no: +no.decoded?.output.votesNo
