@@ -67,6 +67,7 @@ const BlobCreatePage = () => {
             // navigate(branch.name === 'main' ? `/${daoName}/${repoName}/pulls` : urlBack);
             navigate(urlBack);
         } catch (e: any) {
+            console.error(e.message);
             alert(e.message);
         }
     }

@@ -399,9 +399,12 @@ export class GoshWallet implements IGoshWallet {
         );
         console.debug('Blobs addrs:', blobAddrs);
         await this.setBlobs(repoName, commitName, blobAddrs);
+        console.debug('[Create commit] - Set blobs: OK');
 
         // Set repo commit (wait if is not a proposal)
-        await this.setCommit(repoName, branch.name, commitName, 1);
+        // Formula: 0.3 + 0.3 * numCommits (* 2 if parent2)
+        const value = fromEvers(0.3 + 0.3 * 1) * (parent2 ? 2 : 1);
+        await this.setCommit(repoName, branch.name, commitName, branch.commitAddr, value);
         // if (branch.name !== 'main') {
         await new Promise<void>((resolve) => {
             const interval = setInterval(async () => {
@@ -546,9 +549,14 @@ export class GoshWallet implements IGoshWallet {
         repoName: string,
         branchName: string,
         commitName: string,
-        amount: number
+        branchCommit: string,
+        value: number
     ): Promise<void> {
-        await this.run('setCommit', { repoName, branchName, commit: commitName, number: amount });
+        console.debug('[Set commmit]:', repoName, branchName, commitName, `"${branchCommit}"`, value);
+        await this.run(
+            'setCommit',
+            { repoName, branchName, commit: commitName, branchcommit: branchCommit, value }
+        );
     }
 
     async setBlobs(repoName: string, commitName: string, blobAddr: string[]): Promise<void> {

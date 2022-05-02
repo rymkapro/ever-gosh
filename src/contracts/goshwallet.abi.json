@@ -51,8 +51,9 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
+				{"name":"branchcommit","type":"address"},
 				{"name":"commit","type":"string"},
-				{"name":"number","type":"uint128"}
+				{"name":"value","type":"uint128"}
 			],
 			"outputs": [
 			]
