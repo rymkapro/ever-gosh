@@ -10,6 +10,7 @@ import DaoLayout from "./pages/DaoLayout";
 import DaoSettingsLayout from "./pages/DaoSettingsLayout";
 import RepoLayout from "./pages/RepoLayout";
 import HomePage from "./pages/Home";
+import SettingsPage from "./pages/Settings";
 import SignupPage from "./pages/Signup";
 import SigninPage from "./pages/Signin";
 import DaosPage from "./pages/Daos";
@@ -58,6 +59,7 @@ const App = () => {
                         <Route element={<AccountLayout />}>
                             <Route index element={null} />
                             <Route path="orgs" element={<DaosPage />} />
+                            <Route path="settings" element={<SettingsPage />} />
                         </Route>
                     </Route>
                     <Route path="/:daoName" element={<ProtectedLayout />}>
