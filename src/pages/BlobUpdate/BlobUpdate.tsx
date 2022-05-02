@@ -54,7 +54,7 @@ const BlobUpdatePage = () => {
             if (!branch) throw Error('Branch is undefined');
             if (!blob?.meta) throw Error('File content is undefined');
 
-            if (branch.name === 'main') await goshWallet.lockVoting(0);
+            // if (branch.name === 'main') await goshWallet.lockVoting(0);
 
             const [path] = splitByPath(pathName || '');
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
@@ -71,7 +71,8 @@ const BlobUpdatePage = () => {
             );
 
             await updateBranch(branch.name);
-            navigate(branch.name === 'main' ? `/${daoName}/${repoName}/pulls` : urlBack);
+            // navigate(branch.name === 'main' ? `/${daoName}/${repoName}/pulls` : urlBack);
+            navigate(urlBack);
         } catch (e: any) {
             alert(e.message);
         }
