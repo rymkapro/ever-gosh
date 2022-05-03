@@ -6,7 +6,7 @@ import { Field, Form, Formik } from "formik";
 import { useNavigate, useOutletContext, useParams, useSearchParams } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
-import { getCodeLanguageFromFilename } from "../../helpers";
+import { getCodeLanguageFromFilename, getRepoTree } from "../../helpers";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import * as Yup from "yup";
@@ -15,6 +15,8 @@ import Spinner from "../../components/Spinner";
 import SwitchField from "../../components/FormikForms/SwitchField";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
+import { IGoshBlob, TGoshTreeItem } from "../../types/types";
+import { GoshBlob } from "../../types/classes";
 
 
 type TCommitFormValues = {
@@ -40,15 +42,12 @@ const PullCreatePage = () => {
     const userState = useRecoilValue(userStateAtom);
 
     useEffect(() => {
-        // const getSnapshots = async (addresses: string[]): Promise<IGoshSnapshot[]> => {
-        //     return await Promise.all(
-        //         addresses.map(async (address) => {
-        //             const snapshot = new GoshSnapshot(goshWallet.account.client, address);
-        //             await snapshot.load();
-        //             return snapshot;
-        //         })
-        //     );
-        // }
+        const getBlob = async (hash: string): Promise<IGoshBlob> => {
+            const addr = await goshRepo.getBlobAddr(`blob ${hash}`);
+            const blob = new GoshBlob(goshRepo.account.client, addr);
+            await blob.load();
+            return blob;
+        }
 
         const onCompare = async () => {
             try {
@@ -60,39 +59,66 @@ const PullCreatePage = () => {
                 };
 
                 setCompare(undefined);
-                // const fromSnapshots = await getSnapshots(branchFrom.snapshot);
-                // console.debug('From branch snapshots:', fromSnapshots);
-                // const toSnapshots = await getSnapshots(branchTo.snapshot);
-                // console.debug('To branch snapshots:', toSnapshots);
+                const fromTree = await getRepoTree(goshRepo, branchFrom);
+                const fromTreeItems = [...fromTree.items].filter((item) => item.type === 'blob');
+                console.debug('[Pull create] - From tree blobs:', fromTreeItems);
+                const toTree = await getRepoTree(goshRepo, branchTo);
+                const toTreeItems = [...toTree.items].filter((item) => item.type === 'blob');
+                console.debug('[Pull create] - To tree blobs:', toTreeItems);
 
-                // const compare: { to?: IGoshSnapshot, from?: IGoshSnapshot }[] = [];
-                // for (let i = 0; i < Math.max(fromSnapshots.length, toSnapshots.length); i++) {
-                //     if (i < toSnapshots.length) {
-                //         const to = toSnapshots[i];
-                //         const from = fromSnapshots.find((snap) => {
-                //             const fromNameClean = snap.meta?.name.split('/').slice(-1)[0];
-                //             const toNameClean = to.meta?.name.split('/').slice(-1)[0];
-                //             console.log('From name:', fromNameClean, 'To name:', toNameClean);
-                //             return fromNameClean === toNameClean;
-                //         });
-                //         if (!from || to.meta?.content === from.meta?.content) continue;
-                //         compare.push({ to, from });
-                //     } else {
-                //         compare.push({ to: undefined, from: fromSnapshots[i] });
-                //     }
-                // }
-                // console.debug('Compare list:', compare);
-                // setCompare(compare);
+                // Find items that exist in both trees and were changed
+                const intersected = toTreeItems.filter((item) => {
+                    return fromTreeItems.find((fItem) => (
+                        fItem.path === item.path &&
+                        fItem.name === item.name &&
+                        fItem.sha !== item.sha
+                    ));
+                });
+                console.debug('[Pull crreate] - Intersected:', intersected);
+
+                // Find items that where added by `fromBranch`
+                const added = fromTreeItems.filter((item) => {
+                    return !toTreeItems.find((tItem) => (
+                        tItem.path === item.path &&
+                        tItem.name === item.name
+                    ));
+                });
+                console.debug('[Pull crreate] - Added:', added);
+
+                // Merge intersected and added and generate compare list
+                const compare: {
+                    to?: { item: TGoshTreeItem; blob: IGoshBlob; },
+                    from?: { item: TGoshTreeItem; blob: IGoshBlob; }
+                }[] = [];
+                await Promise.all(
+                    intersected.map(async (item) => {
+                        const from = fromTreeItems.find((fItem) => fItem.path === item.path && fItem.name === item.name);
+                        const to = toTreeItems.find((tItem) => tItem.path === item.path && tItem.name === item.name);
+                        if (from && to) {
+                            const fromBlob = await getBlob(from.sha);
+                            const toBlob = await getBlob(to.sha);
+                            compare.push({ to: { item: to, blob: toBlob }, from: { item: from, blob: fromBlob } });
+                        }
+                    })
+                );
+                await Promise.all(
+                    added.map(async (item) => {
+                        const fromBlob = await getBlob(item.sha);
+                        compare.push({ to: undefined, from: { item, blob: fromBlob } });
+                    })
+                );
+                console.debug('[Pull create] - Compare list:', compare);
+                setCompare(compare);
             } catch (e: any) {
                 console.error(e.message);
                 alert(e.message);
             }
         }
 
-        if (goshWallet && branchFrom && branchTo) onCompare();
+        if (goshRepo && branchFrom && branchTo) onCompare();
 
         return () => { }
-    }, [branchFrom, branchTo, goshWallet]);
+    }, [branchFrom, branchTo, goshRepo]);
 
     const onCommitMerge = async (values: TCommitFormValues) => {
         try {
@@ -105,16 +131,16 @@ const PullCreatePage = () => {
 
             // Prepare blobs
             const blobs = compare.map(({ from, to }) => {
-                if (!from?.meta) throw new Error('Empty file from');
+                if (!from.item || !from.blob.meta) throw new Error('Empty file from');
                 return {
-                    name: from.meta.name.split('/').slice(-1)[0],
-                    modified: from.meta.content,
-                    original: to?.meta?.content || ''
+                    name: `${from.item.path && `${from.item.path}/`}${from.item.name}`,
+                    modified: from.blob.meta?.content,
+                    original: to?.blob.meta?.content || ''
                 }
             });
             console.debug('Blobs', blobs);
 
-            if (branchTo.name === 'main') await goshWallet.lockVoting(0);
+            // if (branchTo.name === 'main') await goshWallet.lockVoting(0);
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
             await goshWallet.createCommit(
                 goshRepo,
@@ -128,11 +154,12 @@ const PullCreatePage = () => {
             // Delete branch after merge (if selected), update branches, redirect
             if (values.deleteBranch) await goshWallet.deleteBranch(goshRepo, branchFrom.name);
             await updateBranches();
-            navigate(
-                branchTo.name === 'main'
-                    ? `/${daoName}/${repoName}/pulls`
-                    : `/${daoName}/${repoName}/tree/${branchTo.name}`, { replace: true }
-            );
+            // navigate(
+            //     branchTo.name === 'main'
+            //         ? `/${daoName}/${repoName}/pulls`
+            //         : `/${daoName}/${repoName}/tree/${branchTo.name}`, { replace: true }
+            // );
+            navigate(`/${daoName}/${repoName}/tree/${branchTo.name}`, { replace: true });
         } catch (e: any) {
             console.error(e.message);
             alert(e.message);
@@ -163,7 +190,8 @@ const PullCreatePage = () => {
                 )}
 
                 {compare?.map(({ to, from }, index) => {
-                    const fileName = (to?.meta?.name || from?.meta?.name)?.split('/').slice(-1)[0];
+                    const item = to?.item || from?.item;
+                    const fileName = `${item.path && `${item.path}/`}${item.name}`;
                     if (!fileName) return null;
 
                     const language = getCodeLanguageFromFilename(monaco, fileName);
@@ -173,8 +201,8 @@ const PullCreatePage = () => {
                                 {fileName}
                             </div>
                             <BlobDiffPreview
-                                original={to?.meta?.content}
-                                modified={from?.meta?.content}
+                                original={to?.blob.meta?.content}
+                                modified={from?.blob.meta?.content}
                                 modifiedLanguage={language}
                             />
                         </div>

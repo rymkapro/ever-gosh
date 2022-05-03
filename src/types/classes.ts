@@ -308,7 +308,7 @@ export class GoshWallet implements IGoshWallet {
             const blobPathItems = getTreeItemsFromPath(blob.name, blob.modified);
             console.debug('Blob path items:', blobPathItems);
             blobPathItems.forEach((pathItem) => {
-                if (!updatedPaths.find((path) => path === pathItem.path)) {
+                if (updatedPaths.findIndex((path) => path === pathItem.path) < 0) {
                     updatedPaths.push(pathItem.path);
                 }
 
