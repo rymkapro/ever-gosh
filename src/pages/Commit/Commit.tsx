@@ -32,7 +32,7 @@ const CommitPage = () => {
     useEffect(() => {
         const getCommit = async (repo: IGoshRepository, branch: string, name: string) => {
             // Get commit data
-            const address = await repo.getCommitAddr(branch, name);
+            const address = await repo.getCommitAddr(name);
             const commit = new GoshCommit(repo.account.client, address);
             await commit.load();
 

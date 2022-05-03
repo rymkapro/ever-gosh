@@ -5,25 +5,26 @@ import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom
 import { useRecoilValue } from "recoil";
 import BranchSelect from "../../components/BranchSelect";
 import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
-import { IGoshRoot, IGoshSmvLocker, IGoshSmvProposal, IGoshWallet, TGoshBranch } from "../../types/types";
+import { IGoshCommit, IGoshDao, IGoshRoot, IGoshSmvLocker, IGoshSmvProposal, IGoshWallet, TGoshBranch } from "../../types/types";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
-import { useGoshRoot } from "../../hooks/gosh.hooks";
+import { useGoshDao, useGoshRoot, useGoshWallet } from "../../hooks/gosh.hooks";
 import Spinner from "../../components/Spinner";
 import { classNames, shortString } from "../../utils";
 import CopyClipboard from "../../components/CopyClipboard";
-import { GoshSmvClient, GoshSmvLocker, GoshSmvProposal } from "../../types/classes";
+import { GoshCommit, GoshRepository, GoshSmvClient, GoshSmvLocker, GoshSmvProposal } from "../../types/classes";
 
 
 const PullsPage = () => {
     const { daoName, repoName } = useParams();
     const goshRoot = useGoshRoot();
-    const { goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
+    const goshDao = useGoshDao(daoName);
+    const goshWallet = useGoshWallet(daoName);
     const navigate = useNavigate();
     const branches = useRecoilValue(goshBranchesAtom);
     const defaultBranch = useRecoilValue(goshCurrBranchSelector('main'));
     const [branchFrom, setBranchFrom] = useState<TGoshBranch | undefined>(defaultBranch);
     const [branchTo, setBranchTo] = useState<TGoshBranch | undefined>(defaultBranch);
-    const [proposals, setProposals] = useState<{ prop: IGoshSmvProposal; locked: number; }[]>();
+    const [proposals, setProposals] = useState<{ prop: IGoshSmvProposal; commit?: IGoshCommit; locked: number; }[]>();
     const [locker, setLocker] = useState<IGoshSmvLocker>();
     const [balance, setBalance] = useState<number>();
 
@@ -42,26 +43,39 @@ const PullsPage = () => {
         setBalance(balance);
     }
 
-    const getPullList = async (goshRoot: IGoshRoot) => {
+    const getPullList = async (goshRoot: IGoshRoot, goshDao: IGoshDao, goshWallet: IGoshWallet) => {
         // Get SMVProposal code
-        const proposalCode = await goshRoot.getSmvProposalCode();
+        const proposalCode = await goshDao.getSmvProposalCode();
         // console.debug('SMVProposal code:', proposalCode);
-        const proposalssAddrs = await goshRoot.account.client.net.query_collection({
+        const proposalssAddrs = await goshDao.account.client.net.query_collection({
             collection: 'accounts',
             filter: {
                 code: { eq: proposalCode }
             },
             result: 'id'
         });
-        console.debug('SMVProposal addreses:', proposalssAddrs?.result || []);
+        console.debug('[Pulls] - SMVProposal addreses:', proposalssAddrs?.result || []);
 
         const proposals = await Promise.all(
             (proposalssAddrs?.result || [])
-                .filter((item: any) => item.id !== '0:a85dfabeadfd81e8bd96dfc3b1c28f5fbac429a41ea12183880b4eb496afbd4c')
                 .map(async (item: any) => {
                     // Get GoshProposal object
-                    const proposal = new GoshSmvProposal(goshRoot.account.client, item.id);
+                    console.debug('[Pulls] - Prop addr:', item.id)
+                    const proposal = new GoshSmvProposal(goshDao.account.client, item.id);
                     await proposal.load();
+
+                    // Get commit
+                    let commit = undefined;
+                    if (proposal.meta?.commit && daoName) {
+                        const repoAddr = await goshRoot.getRepoAddr(
+                            proposal.meta.commit.repoName,
+                            daoName
+                        );
+                        const goshRepo = new GoshRepository(goshDao.account.client, repoAddr);
+                        const commitAddr = await goshRepo.getCommitAddr(proposal.meta.commit.commitName);
+                        commit = new GoshCommit(goshDao.account.client, commitAddr);
+                        await commit.load();
+                    };
 
                     // Get amount of user's locked tokens in proposal
                     let locked = 0;
@@ -79,7 +93,7 @@ const PullsPage = () => {
                         } catch { }
                     }
 
-                    return { prop: proposal, locked };
+                    return { prop: proposal, commit, locked };
                 })
         );
         console.debug('SMVProposals:', proposals);
@@ -97,8 +111,8 @@ const PullsPage = () => {
     }, [locker]);
 
     useEffect(() => {
-        if (goshRoot) getPullList(goshRoot);
-    }, [goshRoot]);
+        if (!repoName && goshRoot && goshDao && goshWallet) getPullList(goshRoot, goshDao, goshWallet);
+    }, [repoName, goshRoot, goshDao, goshWallet]);
 
     useEffect(() => {
         if (goshWallet) {
@@ -109,121 +123,133 @@ const PullsPage = () => {
 
     return (
         <div className="bordered-block px-7 py-8">
-            <div className="flex items-center gap-x-4">
-                <BranchSelect
-                    branch={branchFrom}
-                    branches={branches}
-                    onChange={(selected) => {
-                        if (selected) {
-                            setBranchFrom(selected);
-                        }
-                    }}
-                />
-                <span>
-                    <FontAwesomeIcon icon={faChevronRight} size="sm" />
-                </span>
-                <BranchSelect
-                    branch={branchTo}
-                    branches={branches}
-                    onChange={(selected) => {
-                        if (selected) {
-                            setBranchTo(selected);
-                        }
-                    }}
-                />
-                <button
-                    className="btn btn--body px-3 py-1.5 !font-normal !text-sm"
-                    disabled={branchFrom?.name === branchTo?.name}
-                    onClick={() => {
-                        navigate(`/${daoName}/${repoName}/pulls/create?from=${branchFrom?.name}&to=${branchTo?.name}`);
-                    }}
-                >
-                    Create pull request
-                </button>
-            </div>
-
-            <div className="mt-8">
-                <div className="mt-6 mb-5 flex items-center gap-x-6 bg-gray-100 rounded px-4 py-3">
-                    <div>
-                        <span className="font-semibold mr-2">SMV balance:</span>
-                        {locker?.meta?.votesTotal}
-                    </div>
-                    <div>
-                        <span className="font-semibold mr-2">Locked:</span>
-                        {locker?.meta?.votesLocked}
-                    </div>
-                    <div>
-                        <span className="font-semibold mr-2">Wallet balance:</span>
-                        {balance}
-                    </div>
-                    <div className="grow text-right">
-                        <FontAwesomeIcon
-                            icon={faCircle}
-                            className={classNames(
-                                'ml-2',
-                                locker?.meta?.isBusy ? 'text-rose-600' : 'text-green-900'
-                            )}
-                        />
-                    </div>
-                </div>
-
-                {proposals === undefined && (
-                    <div className="text-gray-606060">
-                        <Spinner className="mr-3" />
-                        Loading proposals...
-                    </div>
-                )}
-                {proposals && !proposals?.length && (
-                    <div className="text-gray-606060 text-center">There are no proposals yet</div>
-                )}
-
-                <div className="divide-y divide-gray-c4c4c4">
-                    {proposals?.map((item, index) => (
-                        <div key={index} className="flex items-center gap-x-5 py-3">
-                            <div className="basis-2/5">
-                                <Link
-                                    to={`/${daoName}/${repoName}/pull/${item.prop.address}`}
-                                    className="text-lg font-semibold hover:underline"
-                                >
-                                    {item.prop.meta?.commit.fullCommit.title}
-                                </Link>
-                                <div className="text-gray-606060 text-sm">
-                                    <CopyClipboard
-                                        label={`${'Proposal: '}${shortString(item.prop.meta?.id || '')}`}
-                                        componentProps={{
-                                            text: item.prop.meta?.id || ''
-                                        }}
-                                    />
-                                </div>
-                                <div className="text-xs text-gray-606060 mt-1">
-                                    {item.prop.meta?.time.start.toLocaleString()}
-                                    <span className="mx-1">-</span>
-                                    {item.prop.meta?.time.finish.toLocaleString()}
-                                </div>
-                            </div>
-                            <div className="grow">
-                                {item.prop.meta?.commit.repoName}:{item.prop.meta?.commit.branchName}
-                                <div className="text-gray-606060 text-sm">
-                                    <CopyClipboard
-                                        label={`${'Commit: '}${shortString(item.prop.meta?.commit.commitName || '')}`}
-                                        componentProps={{
-                                            text: item.prop.meta?.commit.commitName || ''
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                {item.prop.meta?.isCompleted
-                                    ? <span className="text-green-900">Completed</span>
-                                    : (<><Spinner className="mr-2" size="sm" /> Running</>)
+            {repoName && (
+                <>
+                    <div className="flex items-center gap-x-4">
+                        <BranchSelect
+                            branch={branchFrom}
+                            branches={branches}
+                            onChange={(selected) => {
+                                if (selected) {
+                                    setBranchFrom(selected);
                                 }
-                            </div>
-                            <div>
-                                <span className="text-green-900 text-xl">{item.prop.meta?.votes.yes}</span>
-                                <span className="mx-1">/</span>
-                                <span className="text-rose-600 text-xl">{item.prop.meta?.votes.no}</span>
-                            </div>
-                            {!!item.locked && item.prop.isCompleted && (
+                            }}
+                            disabled
+                        />
+                        <span>
+                            <FontAwesomeIcon icon={faChevronRight} size="sm" />
+                        </span>
+                        <BranchSelect
+                            branch={branchTo}
+                            branches={branches}
+                            onChange={(selected) => {
+                                if (selected) {
+                                    setBranchTo(selected);
+                                }
+                            }}
+                            disabled
+                        />
+                        <button
+                            className="btn btn--body px-3 py-1.5 !font-normal !text-sm"
+                            disabled={true || branchFrom?.name === branchTo?.name}
+                            onClick={() => {
+                                navigate(`/${daoName}/${repoName}/pulls/create?from=${branchFrom?.name}&to=${branchTo?.name}`);
+                            }}
+                        >
+                            Create pull request
+                        </button>
+                    </div>
+                    <p className="text-rose-500 text-sm mb-6">
+                        Create pull requests are not available in current release.
+                        <br />
+                        Use local client for this purpose.
+                    </p>
+                </>
+            )}
+
+            {!repoName && (
+                <div>
+                    <div className="mt-6 mb-5 flex items-center gap-x-6 bg-gray-100 rounded px-4 py-3">
+                        <div>
+                            <span className="font-semibold mr-2">SMV balance:</span>
+                            {locker?.meta?.votesTotal}
+                        </div>
+                        <div>
+                            <span className="font-semibold mr-2">Locked:</span>
+                            {locker?.meta?.votesLocked}
+                        </div>
+                        <div>
+                            <span className="font-semibold mr-2">Wallet balance:</span>
+                            {balance}
+                        </div>
+                        <div className="grow text-right">
+                            <FontAwesomeIcon
+                                icon={faCircle}
+                                className={classNames(
+                                    'ml-2',
+                                    locker?.meta?.isBusy ? 'text-rose-600' : 'text-green-900'
+                                )}
+                            />
+                        </div>
+                    </div>
+
+                    {proposals === undefined && (
+                        <div className="text-gray-606060">
+                            <Spinner className="mr-3" />
+                            Loading proposals...
+                        </div>
+                    )}
+                    {proposals && !proposals?.length && (
+                        <div className="text-gray-606060 text-center">There are no proposals yet</div>
+                    )}
+
+                    <div className="divide-y divide-gray-c4c4c4">
+                        {proposals?.map((item, index) => (
+                            <div key={index} className="flex items-center gap-x-5 py-3">
+                                <div className="basis-2/5">
+                                    <Link
+                                        to={`/${daoName}/events/${item.prop.address}`}
+                                        className="text-lg font-semibold hover:underline"
+                                    >
+                                        {item.commit?.meta?.content.title}
+                                    </Link>
+                                    <div className="text-gray-606060 text-sm">
+                                        <CopyClipboard
+                                            label={`${'Proposal: '}${shortString(item.prop.meta?.id || '')}`}
+                                            componentProps={{
+                                                text: item.prop.meta?.id || ''
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="text-xs text-gray-606060 mt-1">
+                                        {item.prop.meta?.time.start.toLocaleString()}
+                                        <span className="mx-1">-</span>
+                                        {item.prop.meta?.time.finish.toLocaleString()}
+                                    </div>
+                                </div>
+                                <div className="grow">
+                                    {item.prop.meta?.commit.repoName}:{item.prop.meta?.commit.branchName}
+                                    <div className="text-gray-606060 text-sm">
+                                        <CopyClipboard
+                                            label={`${'Commit: '}${shortString(item.prop.meta?.commit.commitName || '')}`}
+                                            componentProps={{
+                                                text: item.prop.meta?.commit.commitName || ''
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    {item.prop.meta?.isCompleted
+                                        ? <span className="text-green-900">Completed</span>
+                                        : (<><Spinner className="mr-2" size="sm" /> Running</>)
+                                    }
+                                </div>
+                                <div>
+                                    <span className="text-green-900 text-xl">{item.prop.meta?.votes.yes}</span>
+                                    <span className="mx-1">/</span>
+                                    <span className="text-rose-600 text-xl">{item.prop.meta?.votes.no}</span>
+                                </div>
+                                {/* {!!item.locked && item.prop.isCompleted && (
                                 <div>
                                     <button
                                         type="button"
@@ -233,11 +259,12 @@ const PullsPage = () => {
                                         Release
                                     </button>
                                 </div>
-                            )}
-                        </div>
-                    ))}
+                            )} */}
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }

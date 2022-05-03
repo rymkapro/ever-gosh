@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { Field, Form, Formik } from "formik";
-import { Link, useOutletContext, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import TextField from "../../components/FormikForms/TextField";
 import Spinner from "../../components/Spinner";
-import { GoshSmvClient, GoshSmvLocker, GoshSmvProposal } from "../../types/classes";
-import { IGoshSmvLocker, IGoshSmvProposal, IGoshWallet } from "../../types/types";
-import { TRepoLayoutOutletContext } from "../RepoLayout";
+import { GoshBlob, GoshCommit, GoshRepository, GoshSmvClient, GoshSmvLocker, GoshSmvProposal } from "../../types/classes";
+import { IGoshBlob, IGoshCommit, IGoshRepository, IGoshSmvLocker, IGoshSmvProposal, IGoshWallet } from "../../types/types";
 import * as Yup from "yup";
 import CopyClipboard from "../../components/CopyClipboard";
 import { classNames, shortString } from "../../utils";
-import { getCommitTree } from "../../helpers";
+import { getCodeLanguageFromFilename, getCommitTree } from "../../helpers";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
-import { useGoshRepoBranches, useGoshRoot } from "../../hooks/gosh.hooks";
+import { useGoshDao, useGoshRepoBranches, useGoshRoot, useGoshWallet } from "../../hooks/gosh.hooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircle } from "@fortawesome/free-solid-svg-icons";
+import { useMonaco } from "@monaco-editor/react";
 
 
 type TFormValues = {
@@ -22,13 +22,19 @@ type TFormValues = {
 }
 
 const PullPage = () => {
-    const { daoName, repoName, pullAddress } = useParams();
+    const { daoName, pullAddress } = useParams();
     const goshRoot = useGoshRoot();
-    const { goshWallet, goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const [prop, setProp] = useState<{ prop: IGoshSmvProposal, locked: number; }>();
-    const [blob, setBlob] = useState<any>();
+    const goshDao = useGoshDao(daoName);
+    const goshWallet = useGoshWallet(daoName);
+    const [prop, setProp] = useState<{ prop: IGoshSmvProposal; locked: number; }>();
+    const [commit, setCommit] = useState<{
+        commit: IGoshCommit;
+        blobs: { name: '', curr: IGoshBlob, prev?: IGoshBlob }[];
+    }>();
+    const monaco = useMonaco();
     const [locker, setLocker] = useState<IGoshSmvLocker>();
     const [balance, setBalance] = useState<number>();
+    const [goshRepo, setGoshRepo] = useState<IGoshRepository>();
     const { updateBranch } = useGoshRepoBranches(goshRepo);
     const [release, setRelease] = useState<boolean>(false);
 
@@ -46,7 +52,63 @@ const PullPage = () => {
         setBalance(balance);
     }
 
-    const _setProp = async (prop: IGoshSmvProposal) => {
+    const getCommit = async (repo: IGoshRepository, name: string): Promise<[IGoshCommit, any[]]> => {
+        // Get commit data
+        const address = await repo.getCommitAddr(name);
+        const commit = new GoshCommit(repo.account.client, address);
+        await commit.load();
+
+        // Get commit blobs
+        const blobAddrs = await commit.getBlobs();
+        const blobTrees: IGoshBlob[] = [];
+        const blobs: { name: string; curr: IGoshBlob; prev?: IGoshBlob; }[] = [];
+        await Promise.all(
+            blobAddrs.map(async (addr) => {
+                // Create blob and load it's data
+                const blob = new GoshBlob(repo.account.client, addr);
+                await blob.load();
+                if (!blob.meta) throw Error('Can not load blob meta');
+
+                // Extract tree blob from common blobs
+                if (blob.meta.name.indexOf('tree ') >= 0) blobTrees.push(blob);
+                else {
+                    // If blob has prevSha, load this prev blob
+                    let prevBlob = undefined;
+                    if (blob.meta?.prevSha) {
+                        const prevBlobAddr = await repo.getBlobAddr(`blob ${blob.meta.prevSha}`);
+                        prevBlob = new GoshBlob(repo.account.client, prevBlobAddr);
+                        await prevBlob.load();
+                    }
+                    blobs.push({ name: '', curr: blob, prev: prevBlob });
+                }
+            })
+        );
+        console.debug('Trees blobs', blobTrees);
+        console.debug('Common blobs', blobs);
+
+        // Construct commit tree
+        const filesList = blobTrees
+            .map((blob) => blob.meta?.content || '')
+            .reduce((a: string[], content) => [...a, ...content.split('\n')], []);
+        console.debug('Files list', filesList);
+        const commitTree = getCommitTree(filesList);
+        console.debug('Commit tree', commitTree);
+
+        // Update blobs names (path) from tree
+        Object.values(commitTree).forEach((items) => {
+            items.forEach((item) => {
+                const found = blobs.find((bItem) => (
+                    bItem.curr.meta?.name === `${item.type} ${item.sha}`
+                ));
+                if (found) found.name = item.name;
+            })
+        });
+        console.debug('Ready to render blobs', blobs);
+
+        return [commit, blobs];
+    }
+
+    const _setProp = async (prop: IGoshSmvProposal, goshWallet: IGoshWallet) => {
         let locked = 0;
         if (prop.meta) {
             const propLockerAddr = await prop.getLockerAddr();
@@ -64,7 +126,7 @@ const PullPage = () => {
         setProp({ prop, locked });
     }
 
-    const onProposalCheck = async (goshProposal: IGoshSmvProposal) => {
+    const onProposalCheck = async (goshProposal: IGoshSmvProposal, goshWallet: IGoshWallet) => {
         try {
             await goshWallet.tryProposalResult(goshProposal.address);
             await locker?.load();
@@ -74,7 +136,7 @@ const PullPage = () => {
                 await updateBranch(goshProposal.meta?.commit.branchName);
             }
             await getTokenBalance(goshWallet);
-            await _setProp(goshProposal);
+            await _setProp(goshProposal, goshWallet);
         } catch (e: any) {
             console.error(e.message)
         }
@@ -83,6 +145,8 @@ const PullPage = () => {
     const onProposalSubmit = async (values: TFormValues) => {
         try {
             if (!goshRoot) throw Error('GoshRoot is undefined');
+            if (!goshDao) throw Error('GoshDao is undefined');
+            if (!goshWallet) throw Error('GoshWallet is undefined');
             if (!prop) throw Error('Proposal is undefined');
 
             if (prop.prop.meta?.time.start && Date.now() < prop.prop.meta?.time.start.getTime()) {
@@ -93,7 +157,7 @@ const PullPage = () => {
             console.log('VALUES', values);
             const smvPlatformCode = await goshRoot.getSmvPlatformCode();
             // console.debug('SMV platform code', smvPlatformCode);
-            const smvClientCode = await goshRoot.getSmvClientCode();
+            const smvClientCode = await goshDao.getSmvClientCode();
             // console.debug('SMV client code', smvClientCode);
             const choice = values.approve === 'true';
             console.debug('SMV choice', choice);
@@ -105,7 +169,7 @@ const PullPage = () => {
                 values.amount
             );
 
-            await onProposalCheck(prop.prop);
+            await onProposalCheck(prop.prop, goshWallet);
         } catch (e: any) {
             console.error(e.message);
             alert(e.message);
@@ -115,11 +179,12 @@ const PullPage = () => {
     const onTokensRelease = async () => {
         try {
             if (!prop) throw Error('Proposal is undefined');
+            if (!goshWallet) throw Error('GoshWallet is undefined');
 
             setRelease(true);
             await goshWallet.updateHead();
             await locker?.load();
-            await _setProp(prop.prop);
+            await _setProp(prop.prop, goshWallet);
         } catch (e: any) {
             console.error(e.message);
             alert(e.message);
@@ -133,27 +198,20 @@ const PullPage = () => {
             // Get GoshProposal object
             const prop = new GoshSmvProposal(goshWallet.account.client, address);
             await prop.load();
+            if (!prop.meta?.commit || !daoName || !goshRoot) {
+                alert('Error loading proposal');
+                return;
+            }
 
-            const tree = await prop.getBlob1Params();
-            console.debug('Tree', tree);
-            const blob = await prop.getBlob2Params();
-            console.debug('Blob', blob);
-
-            const filesList = tree.fullBlob.split('\n');
-            const commitTree = getCommitTree(filesList);
-            console.debug('Commit tree', commitTree);
-
-            // Update blobs names (path) from tree
-            Object.values(commitTree).forEach((items) => {
-                items.forEach((item) => {
-                    if (blob.blobName === `${item.type} ${item.sha}`) {
-                        blob.name = item.name;
-                    }
-                })
-            });
-            console.debug('Ready to render blobs', blob);
-            await _setProp(prop);
-            setBlob(blob);
+            const repoAddr = await goshRoot.getRepoAddr(
+                prop.meta.commit.repoName,
+                daoName
+            );
+            const goshRepo = new GoshRepository(goshRoot.account.client, repoAddr);
+            const [commit, blobs] = await getCommit(goshRepo, prop.meta.commit.commitName);
+            await _setProp(prop, goshWallet);
+            setCommit({ commit, blobs });
+            setGoshRepo(goshRepo);
         }
 
         if (goshWallet && pullAddress) getGoshPull(goshWallet, pullAddress);
@@ -185,7 +243,7 @@ const PullPage = () => {
                 </div>
             )}
 
-            {prop && blob && (
+            {prop && monaco && (
                 <div>
                     <div className="mb-5 flex items-center gap-x-6 bg-gray-100 rounded px-4 py-3">
                         <div>
@@ -214,7 +272,7 @@ const PullPage = () => {
                     <div className="flex items-center gap-x-5 py-2">
                         <div className="basis-2/5">
                             <h3 className="text-xl font-semibold">
-                                {prop.prop.meta?.commit.fullCommit.title}
+                                {commit?.commit.meta?.content.title}
                             </h3>
 
                             <div className="text-gray-606060 text-sm">
@@ -273,7 +331,7 @@ const PullPage = () => {
                             Commit proposal
                             <Link
                                 className="mx-1 underline text-green-900"
-                                to={`/${daoName}/${repoName}/commits/${prop.prop.meta.commit.branchName}/${prop.prop.meta.commit.commitName}`}
+                                to={`/${daoName}/${prop.prop.meta.commit.repoName}/commits/${prop.prop.meta.commit.branchName}/${prop.prop.meta.commit.commitName}`}
                             >
                                 {shortString(prop.prop.meta.commit.commitName)}
                             </Link>
@@ -328,12 +386,21 @@ const PullPage = () => {
                     )}
 
                     <h3 className="mt-10 mb-4 text-xl font-semibold">Proposal diff</h3>
-                    <div className="border rounded overflow-hidden">
-                        <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
-                            {blob.name}
-                        </div>
-                        <BlobDiffPreview modified={blob.fullBlob} />
-                    </div>
+                    {commit?.blobs?.map((item, index) => {
+                        const language = getCodeLanguageFromFilename(monaco, item.name);
+                        return (
+                            <div key={index} className="my-5 border rounded overflow-hidden">
+                                <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
+                                    {item.name}
+                                </div>
+                                <BlobDiffPreview
+                                    original={item.prev?.meta?.content}
+                                    modified={item.curr.meta?.content}
+                                    modifiedLanguage={language}
+                                />
+                            </div>
+                        );
+                    })}
                 </div>
             )}
         </div>

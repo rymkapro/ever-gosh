@@ -30,6 +30,14 @@
 			]
 		},
 		{
+			"name": "getMoney",
+			"inputs": [
+				{"name":"creator","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployWallet",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"}
@@ -48,6 +56,22 @@
 		},
 		{
 			"name": "getWalletCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getProposalCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getClientCode",
 			"inputs": [
 			],
 			"outputs": [

@@ -51,8 +51,6 @@ export interface IGoshDaoCreator extends IContract {
     address: string;
 
     deployDao(name: string, rootPubkey: string): Promise<void>;
-    sendMoneyDao(name: string, value: number): Promise<void>;
-    sendMoney(rootPubkey: string, pubkey: string, daoAddr: string, value: number): Promise<void>;
 }
 export interface IGoshRoot extends IContract {
     address: string;
@@ -64,9 +62,7 @@ export interface IGoshRoot extends IContract {
     getDaoWalletCode(pubkey: string): Promise<string>;
     getRepoAddr(name: string, daoName: string): Promise<string>;
     getDaoRepoCode(daoAddress: string): Promise<string>;
-    getSmvProposalCode(): Promise<string>;
     getSmvPlatformCode(): Promise<string>;
-    getSmvClientCode(): Promise<string>;
 }
 
 export interface IGoshDao extends IContract {
@@ -77,12 +73,15 @@ export interface IGoshDao extends IContract {
     };
 
     load(): Promise<void>;
+    getMoney(keys: KeyPair): Promise<void>;
     deployWallet(rootPubkey: string, pubkey: string, keys: KeyPair): Promise<string>;
     getWalletAddr(rootPubkey: string, pubkey: string): Promise<string>;
     getWallets(): Promise<string[]>;
     getName(): Promise<string>;
     getRootPubkey(): Promise<string>;
     getSmvRootTokenAddr(): Promise<string>;
+    getSmvProposalCode(): Promise<string>;
+    getSmvClientCode(): Promise<string>;
     mint(
         rootTokenAddr: string,
         amount: number,
@@ -100,6 +99,7 @@ export interface IGoshWallet extends IContract {
 
     getDao(): Promise<IGoshDao>;
     getRoot(): Promise<IGoshRoot>;
+    getSmvLocker(): Promise<IGoshSmvLocker>;
     createCommit(
         repo: IGoshRepository,
         branch: TGoshBranch,
@@ -109,6 +109,7 @@ export interface IGoshWallet extends IContract {
         parent2?: TGoshBranch
     ): Promise<void>;
 
+    getMoney(): Promise<void>;
     getDaoAddr(): Promise<string>;
     getRootAddr(): Promise<string>;
     getPubkey(): Promise<string>;
@@ -120,8 +121,7 @@ export interface IGoshWallet extends IContract {
         branchName: string,
         commitName: string,
         commitData: string,
-        parent1: string,
-        parent2: string
+        parents: string[]
     ): Promise<void>;
     deployBlob(
         repoName: string,
@@ -129,6 +129,7 @@ export interface IGoshWallet extends IContract {
         commitName: string,
         blobName: string,
         blobContent: string,
+        blobIpfs: string,
         blobPrevSha: string
     ): Promise<void>;
     setCommit(
@@ -166,7 +167,7 @@ export interface IGoshRepository extends IContract {
     getName(): Promise<string>;
     getBranches(): Promise<TGoshBranch[]>;
     getBranch(name: string): Promise<TGoshBranch>;
-    getCommitAddr(branchName: string, commitSha: string): Promise<string>;
+    getCommitAddr(commitSha: string): Promise<string>;
     getBlobAddr(blobName: string): Promise<string>;
 }
 
@@ -177,14 +178,13 @@ export interface IGoshCommit extends IContract {
         branchName: string;
         sha: string;
         content: TGoshCommitContent;
-        parent1Addr: string;
-        parent2Addr: string;
+        parents: string[];
     }
 
     load(): Promise<void>;
     getCommit(): Promise<any>;
     getName(): Promise<string>;
-    getParent(): Promise<string[]>;
+    getParents(): Promise<string[]>;
     getBlobs(): Promise<string[]>;
 }
 
@@ -193,6 +193,7 @@ export interface IGoshBlob extends IContract {
     meta?: {
         name: string;
         content: string;
+        ipfs: string;
         commitAddr: string;
         prevSha: string;
     }
@@ -205,18 +206,16 @@ export interface IGoshBlob extends IContract {
 export interface IGoshSmvProposal extends IContract {
     address: string;
     meta?: {
-        kind: number;
         id: string;
         votes: { yes: number; no: number; }
         time: { start: Date; finish: Date; }
         isCompleted: boolean;
         commit: {
+            kind: string;
             repoName: string;
             branchName: string;
             commitName: string;
-            fullCommit: TGoshCommitContent;
-            parent1: string;
-            parent2: string;
+            number: number;
         }
 
     };
@@ -225,12 +224,9 @@ export interface IGoshSmvProposal extends IContract {
     getId(): Promise<string>;
     getVotes(): Promise<{ yes: number; no: number; }>;
     getTime(): Promise<{ start: Date; finish: Date; }>;
-    getProposalParams(): Promise<any>;
+    getGoshSetCommitProposalParams(): Promise<any>;
     getLockerAddr(): Promise<string>;
     isCompleted(): Promise<boolean>;
-
-    getBlob1Params(): Promise<any>;
-    getBlob2Params(): Promise<any>;
 }
 
 export interface IGoshSmvLocker extends IContract {

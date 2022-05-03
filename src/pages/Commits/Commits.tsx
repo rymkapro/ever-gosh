@@ -40,7 +40,7 @@ const CommitsPage = () => {
             while (commitAddr) {
                 const commit = new GoshCommit(repo.account.client, commitAddr);
                 await commit.load();
-                commitAddr = commit.meta?.parent1Addr || '';
+                commitAddr = commit.meta?.parents[0] || '';
                 commits.push(commit);
             }
             setCommits(commits);

@@ -16,6 +16,7 @@ const DaoLayout = () => {
     const tabs = [
         { to: `/${daoName}`, title: 'Overview' },
         { to: `/${daoName}/repos`, title: 'Repositories' },
+        { to: `/${daoName}/events`, title: 'Events' },
         { to: `/${daoName}/settings`, title: 'Settings' }
     ];
 

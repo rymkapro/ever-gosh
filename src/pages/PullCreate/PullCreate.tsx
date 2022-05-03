@@ -140,7 +140,13 @@ const PullCreatePage = () => {
             });
             console.debug('Blobs', blobs);
 
-            // if (branchTo.name === 'main') await goshWallet.lockVoting(0);
+            if (branchTo.name === 'main') {
+                const smvLocker = await goshWallet.getSmvLocker();
+                const smvBalance = smvLocker.meta?.votesTotal || 0;
+                console.debug('[Blob create] - SMV balance:', smvBalance);
+                if (smvBalance < 20) throw Error('Not enough tokens. Send at least 20 tokens to SMV.');
+            };
+
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
             await goshWallet.createCommit(
                 goshRepo,
@@ -154,12 +160,11 @@ const PullCreatePage = () => {
             // Delete branch after merge (if selected), update branches, redirect
             if (values.deleteBranch) await goshWallet.deleteBranch(goshRepo, branchFrom.name);
             await updateBranches();
-            // navigate(
-            //     branchTo.name === 'main'
-            //         ? `/${daoName}/${repoName}/pulls`
-            //         : `/${daoName}/${repoName}/tree/${branchTo.name}`, { replace: true }
-            // );
-            navigate(`/${daoName}/${repoName}/tree/${branchTo.name}`, { replace: true });
+            navigate(
+                branchTo.name === 'main'
+                    ? `/${daoName}/${repoName}/pulls`
+                    : `/${daoName}/${repoName}/tree/${branchTo.name}`, { replace: true }
+            );
         } catch (e: any) {
             console.error(e.message);
             alert(e.message);

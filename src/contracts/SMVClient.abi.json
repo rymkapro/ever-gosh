@@ -65,8 +65,10 @@
 		{
 			"name": "isCompletedCallback",
 			"inputs": [
+				{"name":"value0","type":"uint256"},
+				{"name":"value1","type":"address"},
 				{"name":"completed","type":"optional(bool)"},
-				{"name":"value1","type":"cell"}
+				{"name":"value3","type":"cell"}
 			],
 			"outputs": [
 			]

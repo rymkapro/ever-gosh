@@ -48,7 +48,12 @@ const BlobCreatePage = () => {
             if (!repoName) throw Error('Repository is undefined');
             if (!branch) throw Error('Branch is undefined');
 
-            // if (branch.name === 'main') await goshWallet.lockVoting(0);
+            if (branch.name === 'main') {
+                const smvLocker = await goshWallet.getSmvLocker();
+                const smvBalance = smvLocker.meta?.votesTotal || 0;
+                console.debug('[Blob create] - SMV balance:', smvBalance);
+                if (smvBalance < 20) throw Error('Not enough tokens. Send at least 20 tokens to SMV.');
+            };
 
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
             await goshWallet.createCommit(
@@ -64,8 +69,7 @@ const BlobCreatePage = () => {
             );
 
             await updateBranch(branch.name);
-            // navigate(branch.name === 'main' ? `/${daoName}/${repoName}/pulls` : urlBack);
-            navigate(urlBack);
+            navigate(branch.name === 'main' ? `/${daoName}/events` : urlBack);
         } catch (e: any) {
             console.error(e.message);
             alert(e.message);

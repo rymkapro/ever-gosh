@@ -66,6 +66,8 @@ const App = () => {
                         <Route element={<DaoLayout />}>
                             <Route index element={<DaoPage />} />
                             <Route path="repos" element={<ReposPage />} />
+                            <Route path="events" element={<PullsPage />} />
+                            <Route path="events/:pullAddress" element={<PullPage />} />
                             <Route path="settings" element={<DaoSettingsLayout />}>
                                 <Route path="wallet" element={<DaoWalletPage />} />
                                 <Route path="participants" element={<DaoParticipantsPage />} />

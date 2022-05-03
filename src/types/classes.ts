@@ -1,6 +1,6 @@
 import { Account, AccountRunOptions, AccountType } from "@eversdk/appkit";
 import { KeyPair, signerKeys, signerNone, TonClient } from "@eversdk/core";
-import GoshDaoCreatorABI from "../contracts/daocreater.abi.json";
+import GoshDaoCreatorABI from "../contracts/daocreator.abi.json";
 import GoshABI from "../contracts/gosh.abi.json";
 import GoshDaoABI from "../contracts/goshdao.abi.json";
 import GoshWalletABI from "../contracts/goshwallet.abi.json";
@@ -51,22 +51,6 @@ export class GoshDaoCreator implements IGoshDaoCreator {
 
     async deployDao(name: string, rootPubkey: string): Promise<void> {
         await this.account.run('deployDao', { name, root_pubkey: rootPubkey });
-    }
-
-    async sendMoneyDao(name: string, value: number): Promise<void> {
-        await this.account.run('sendMoneyDao', { name, value });
-    }
-
-    async sendMoney(rootPubkey: string, pubkey: string, daoAddr: string, value: number): Promise<void> {
-        await this.account.run(
-            'sendMoney',
-            {
-                pubkeyroot: rootPubkey,
-                pubkey,
-                goshdao: daoAddr,
-                value
-            }
-        );
     }
 }
 export class GoshRoot implements IGoshRoot {
@@ -129,18 +113,8 @@ export class GoshRoot implements IGoshRoot {
         return result.decoded?.output.value0;
     }
 
-    async getSmvProposalCode(): Promise<string> {
-        const result = await this.account.runLocal('getSMVProposalCode', {});
-        return result.decoded?.output.value0;
-    }
-
     async getSmvPlatformCode(): Promise<string> {
         const result = await this.account.runLocal('getSMVPlatformCode', {});
-        return result.decoded?.output.value0;
-    }
-
-    async getSmvClientCode(): Promise<string> {
-        const result = await this.account.runLocal('getSMVClientCode', {});
         return result.decoded?.output.value0;
     }
 }
@@ -166,6 +140,14 @@ export class GoshDao implements IGoshDao {
         }
     }
 
+    async getMoney(keys: KeyPair): Promise<void> {
+        await this.account.run(
+            'getMoney',
+            { creator: this.daoCreator.address },
+            { signer: signerKeys(keys) }
+        );
+    }
+
     async deployWallet(rootPubkey: string, pubkey: string, keys: KeyPair): Promise<string> {
         if (!this.meta?.name) await this.load();
         if (!this.meta) throw Error('Can not read DAO name');
@@ -176,9 +158,9 @@ export class GoshDao implements IGoshDao {
         const wallet = new GoshWallet(this.account.client, walletAddr);
         const acc = await wallet.account.getAccount();
         if (acc.acc_type !== AccountType.active) {
-            await this.daoCreator.sendMoneyDao(this.meta.name, fromEvers(60));
+            const daoBalance = await this.account.getBalance();
+            if (+daoBalance <= fromEvers(10000)) await this.getMoney(keys);
             await this.account.run('deployWallet', { pubkey });
-            await this.daoCreator.sendMoney(rootPubkey, pubkey, this.address, fromEvers(500));
         }
 
         // Check wallet SMV token balance and mint if needed
@@ -219,6 +201,16 @@ export class GoshDao implements IGoshDao {
     async getSmvRootTokenAddr(): Promise<string> {
         const result = await this.account.runLocal('_rootTokenRoot', {});
         return result.decoded?.output._rootTokenRoot;
+    }
+
+    async getSmvProposalCode(): Promise<string> {
+        const result = await this.account.runLocal('getProposalCode', {});
+        return result.decoded?.output.value0;
+    }
+
+    async getSmvClientCode(): Promise<string> {
+        const result = await this.account.runLocal('getClientCode', {});
+        return result.decoded?.output.value0;
     }
 
     async mint(
@@ -278,13 +270,20 @@ export class GoshWallet implements IGoshWallet {
         return new GoshRoot(this.account.client, rootAddr);
     }
 
+    async getSmvLocker(): Promise<IGoshSmvLocker> {
+        const addr = await this.getSmvLockerAddr();
+        const locker = new GoshSmvLocker(this.account.client, addr);
+        await locker.load()
+        return locker;
+    }
+
     async createCommit(
         repo: IGoshRepository,
         branch: TGoshBranch,
         pubkey: string,
         blobs: { name: string; modified: string; original: string; }[],
         message: string,
-        parent2?: TGoshBranch
+        parentBranch?: TGoshBranch
     ): Promise<void> {
         if (!repo.meta) await repo.load();
         if (!repo.meta?.name) throw Error('Repository name is undefined');
@@ -335,15 +334,15 @@ export class GoshWallet implements IGoshWallet {
             const commit = new GoshCommit(this.account.client, branch.commitAddr);
             parentCommitName = await commit.getName();
         }
-        let parent2CommitName = '';
-        if (parent2?.commitAddr) {
-            const commit = new GoshCommit(this.account.client, parent2.commitAddr);
-            parent2CommitName = await commit.getName();
+        let parentBranchCommitName = '';
+        if (parentBranch?.commitAddr) {
+            const commit = new GoshCommit(this.account.client, parentBranch.commitAddr);
+            parentBranchCommitName = await commit.getName();
         }
         const fullCommit = [
             `tree ${updatedTreeHash}`,
             parentCommitName ? `parent ${parentCommitName}` : null,
-            parent2CommitName ? `parent ${parent2CommitName}` : null,
+            parentBranchCommitName ? `parent ${parentBranchCommitName}` : null,
             `author ${pubkey} <${pubkey}@gosh.sh> ${unixtimeWithTz()}`,
             `committer ${pubkey} <${pubkey}@gosh.sh> ${unixtimeWithTz()}`,
             '',
@@ -370,27 +369,26 @@ export class GoshWallet implements IGoshWallet {
 
             blobsToDeploy.name.push(`tree ${subtreeHash}`);
             blobsToDeploy.fn.push(() => (
-                this.deployBlob(repoName, branch.name, commitName, `tree ${subtreeHash}`, blobContent, '')
+                this.deployBlob(repoName, branch.name, commitName, `tree ${subtreeHash}`, blobContent, '', '')
             ));
         })
 
         _blobs.forEach((blob) => {
             blobsToDeploy.name.push(`blob ${blob.sha}`);
             blobsToDeploy.fn.push(() => (
-                this.deployBlob(repoName, branch.name, commitName, `blob ${blob.sha}`, blob.modified, blob.prevSha)
+                this.deployBlob(repoName, branch.name, commitName, `blob ${blob.sha}`, blob.modified, '', blob.prevSha)
             ));
         });
         console.debug('Blobs to deploy', blobsToDeploy);
 
         // Deploy commit and blobs
-        await this.deployCommit(
-            repoName,
-            branch.name,
-            commitName,
-            commitData,
-            branch.commitAddr,
-            parent2?.commitAddr || ''
-        );
+        const parents = [branch.commitAddr, parentBranch?.commitAddr]
+            .reduce((filtered: string[], item) => {
+                if (item !== undefined) filtered.push(item);
+                return filtered;
+            }, []);
+        console.debug('[Create commit] - Parents:', parents);
+        await this.deployCommit(repoName, branch.name, commitName, commitData, parents);
         await Promise.all(blobsToDeploy.fn.map(async (fn) => await fn()));
 
         // Set blobs for commit
@@ -403,20 +401,25 @@ export class GoshWallet implements IGoshWallet {
 
         // Set repo commit (wait if is not a proposal)
         // Formula: 0.3 + 0.3 * numCommits (* 2 if parent2)
-        const value = fromEvers(0.3 + 0.3 * 1) * (parent2 ? 2 : 1);
+        const value = fromEvers(0.3 + 0.3 * 1) * (parentBranch ? 2 : 1);
         await this.setCommit(repoName, branch.name, commitName, branch.commitAddr, value);
-        // if (branch.name !== 'main') {
-        await new Promise<void>((resolve) => {
-            const interval = setInterval(async () => {
-                const upd = await repo.getBranch(branch.name);
-                console.debug('[Create commit] - Branches (curr/upd):', branch, upd);
-                if (upd.commitAddr !== branch.commitAddr) {
-                    clearInterval(interval);
-                    resolve();
-                }
-            }, 1500);
-        });
-        // }
+        if (branch.name !== 'main') {
+            await new Promise<void>((resolve) => {
+                const interval = setInterval(async () => {
+                    const upd = await repo.getBranch(branch.name);
+                    console.debug('[Create commit] - Branches (curr/upd):', branch, upd);
+                    if (upd.commitAddr !== branch.commitAddr) {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, 1500);
+            });
+        }
+    }
+
+    async getMoney(): Promise<void> {
+        const dao = await this.getDao();
+        await this.account.run('getMoney', { creator: dao.daoCreator.address });
     }
 
     async getDaoAddr(): Promise<string> {
@@ -508,19 +511,11 @@ export class GoshWallet implements IGoshWallet {
         branchName: string,
         commitName: string,
         commitData: string,
-        parent1: string,
-        parent2: string
+        parents: string[]
     ): Promise<void> {
         await this.run(
             'deployCommit',
-            {
-                repoName,
-                branchName,
-                commitName,
-                fullCommit: commitData,
-                parent1,
-                parent2
-            }
+            { repoName, branchName, commitName, fullCommit: commitData, parents }
         );
     }
 
@@ -530,6 +525,7 @@ export class GoshWallet implements IGoshWallet {
         commitName: string,
         blobName: string,
         blobContent: string,
+        blobIpfs: string,
         blobPrevSha: string
     ): Promise<void> {
         await this.run(
@@ -540,6 +536,7 @@ export class GoshWallet implements IGoshWallet {
                 commit: commitName,
                 blobName,
                 fullBlob: blobContent,
+                ipfsBlob: blobIpfs,
                 prevSha: blobPrevSha
             }
         );
@@ -613,17 +610,7 @@ export class GoshWallet implements IGoshWallet {
     async run(functionName: string, input: object, options?: AccountRunOptions): Promise<void> {
         // Check wallet balance and topup if needed
         const balance = await this.account.getBalance();
-        if (+balance < fromEvers(60)) {
-            if (this.account.signer.type !== 'Keys') throw Error('Wallet pubkey is undefined');
-
-            const dao = await this.getDao();
-            await dao.daoCreator.sendMoney(
-                await dao.getRootPubkey(),
-                `0x${this.account.signer.keys.public}`,
-                dao.address,
-                fromEvers(500)
-            )
-        }
+        if (+balance <= fromEvers(10000)) await this.getMoney();
 
         // Run contract
         await this.account.run(functionName, input, options);
@@ -674,14 +661,8 @@ export class GoshRepository implements IGoshRepository {
         }
     }
 
-    async getCommitAddr(branchName: string, commitSha: string): Promise<string> {
-        const result = await this.account.runLocal(
-            'getCommitAddr',
-            {
-                nameBranch: branchName,
-                nameCommit: commitSha
-            }
-        );
+    async getCommitAddr(commitSha: string): Promise<string> {
+        const result = await this.account.runLocal('getCommitAddr', { nameCommit: commitSha });
         return result.decoded?.output.value0;
     }
 
@@ -700,8 +681,7 @@ export class GoshCommit implements IGoshCommit {
         branchName: string;
         sha: string;
         content: TGoshCommitContent;
-        parent1Addr: string;
-        parent2Addr: string;
+        parents: string[];
     }
 
     constructor(client: TonClient, address: string) {
@@ -716,8 +696,7 @@ export class GoshCommit implements IGoshCommit {
             branchName: meta.branch,
             sha: meta.sha,
             content: GoshCommit.parseContent(meta.content),
-            parent1Addr: meta.parent1,
-            parent2Addr: meta.parent2
+            parents: meta.parents
         }
     }
 
@@ -731,8 +710,8 @@ export class GoshCommit implements IGoshCommit {
         return result.decoded?.output.value0;
     }
 
-    async getParent(): Promise<string[]> {
-        const result = await this.account.runLocal('getParent', {});
+    async getParents(): Promise<string[]> {
+        const result = await this.account.runLocal('getParents', {});
         return result.decoded?.output.value0;
     }
 
@@ -779,6 +758,7 @@ export class GoshBlob implements IGoshBlob {
         this.meta = {
             name: meta.sha,
             content: meta.content,
+            ipfs: '',
             commitAddr: meta.commit,
             prevSha: await this.getPrevSha()
         }
@@ -800,18 +780,16 @@ export class GoshSmvProposal implements IGoshSmvProposal {
     address: string;
     account: Account;
     meta?: {
-        kind: number;
         id: string;
         votes: { yes: number; no: number; };
         time: { start: Date; finish: Date; };
         isCompleted: boolean;
         commit: {
+            kind: string;
             repoName: string;
             branchName: string;
             commitName: string;
-            fullCommit: TGoshCommitContent;
-            parent1: string;
-            parent2: string;
+            number: number;
         }
     };
 
@@ -822,23 +800,21 @@ export class GoshSmvProposal implements IGoshSmvProposal {
 
     async load(): Promise<void> {
         const id = await this.getId();
-        const params = await this.getProposalParams();
+        const params = await this.getGoshSetCommitProposalParams();
         const votes = await this.getVotes();
         const time = await this.getTime();
         const isCompleted = await this.isCompleted();
         this.meta = {
-            kind: params.proposalKind,
             id,
             votes,
             time,
             isCompleted,
             commit: {
+                kind: params.proposalKind,
                 repoName: params.repoName,
                 branchName: params.branchName,
-                commitName: params.commitName,
-                fullCommit: GoshCommit.parseContent(params.fullCommit),
-                parent1: params.parent1,
-                parent2: params.parent2
+                commitName: params.commit,
+                number: params.number
             }
         }
     }
@@ -848,8 +824,8 @@ export class GoshSmvProposal implements IGoshSmvProposal {
         return result.decoded?.output.propId;
     }
 
-    async getProposalParams(): Promise<any> {
-        const result = await this.account.runLocal('getProposalParams', {});
+    async getGoshSetCommitProposalParams(): Promise<any> {
+        const result = await this.account.runLocal('getGoshSetCommitProposalParams', {});
         return result.decoded?.output;
     }
 
@@ -879,16 +855,6 @@ export class GoshSmvProposal implements IGoshSmvProposal {
     async getLockerAddr(): Promise<string> {
         const result = await this.account.runLocal('tokenLocker', {});
         return result.decoded?.output.tokenLocker;
-    }
-
-    async getBlob1Params(): Promise<any> {
-        const result = await this.account.runLocal('getBlob1Params', {});
-        return result.decoded?.output;
-    }
-
-    async getBlob2Params(): Promise<any> {
-        const result = await this.account.runLocal('getBlob2Params', {});
-        return result.decoded?.output;
     }
 }
 

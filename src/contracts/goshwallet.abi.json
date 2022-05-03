@@ -26,6 +26,14 @@
 			]
 		},
 		{
+			"name": "getMoney",
+			"inputs": [
+				{"name":"creator","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployRepository",
 			"inputs": [
 				{"name":"nameRepo","type":"string"}
@@ -40,8 +48,7 @@
 				{"name":"branchName","type":"string"},
 				{"name":"commitName","type":"string"},
 				{"name":"fullCommit","type":"string"},
-				{"name":"parent1","type":"address"},
-				{"name":"parent2","type":"address"}
+				{"name":"parents","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -66,6 +73,7 @@
 				{"name":"branch","type":"string"},
 				{"name":"blobName","type":"string"},
 				{"name":"fullBlob","type":"string"},
+				{"name":"ipfsBlob","type":"string"},
 				{"name":"prevSha","type":"string"}
 			],
 			"outputs": [
@@ -101,6 +109,8 @@
 		{
 			"name": "isCompletedCallback",
 			"inputs": [
+				{"name":"_platform_id","type":"uint256"},
+				{"name":"_tokenLocker","type":"address"},
 				{"name":"res","type":"optional(bool)"},
 				{"name":"propData","type":"cell"}
 			],

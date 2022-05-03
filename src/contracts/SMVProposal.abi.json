@@ -98,46 +98,15 @@
 			]
 		},
 		{
-			"name": "getProposalParams",
+			"name": "getGoshSetCommitProposalParams",
 			"inputs": [
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
-				{"name":"commitName","type":"string"},
-				{"name":"fullCommit","type":"string"},
-				{"name":"parent1","type":"address"},
-				{"name":"parent2","type":"address"}
-			]
-		},
-		{
-			"name": "getBlob1Params",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"blobName","type":"string"},
-				{"name":"fullBlob","type":"string"},
-				{"name":"prevSha","type":"string"}
-			]
-		},
-		{
-			"name": "getBlob2Params",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"blobName","type":"string"},
-				{"name":"fullBlob","type":"string"},
-				{"name":"prevSha","type":"string"}
-			]
-		},
-		{
-			"name": "getDiffParams",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"diffName","type":"string"},
-				{"name":"diff","type":"string"}
+				{"name":"commit","type":"string"},
+				{"name":"number","type":"uint128"}
 			]
 		},
 		{
@@ -151,8 +120,10 @@
 		{
 			"name": "isCompletedCallback",
 			"inputs": [
+				{"name":"value0","type":"uint256"},
+				{"name":"value1","type":"address"},
 				{"name":"completed","type":"optional(bool)"},
-				{"name":"value1","type":"cell"}
+				{"name":"value3","type":"cell"}
 			],
 			"outputs": [
 			]
