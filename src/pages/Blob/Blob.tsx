@@ -31,6 +31,7 @@ const BlobPage = () => {
 
     useEffect(() => {
         const getBlob = async (repo: IGoshRepository, treeItem: TGoshTreeItem) => {
+            setBlob(undefined);
             const blobAddr = await repo.getBlobAddr(`blob ${treeItem.sha}`);
             const blob = new GoshBlob(repo.account.client, blobAddr);
             const { acc_type } = await blob.account.getAccount();
@@ -83,7 +84,7 @@ const BlobPage = () => {
                     Loading file...
                 </div>
             )}
-            {blob && !blob.meta && (<div className="text-gray-606060 text-sm">File not found</div>)}
+            {!treeItem && (<div className="text-gray-606060 text-sm">File not found</div>)}
             {monaco && treeItem && blob?.meta && (
                 <div className="border rounded overflow-hidden">
                     <div className="flex bg-gray-100 px-3 py-1 border-b justify-end">
