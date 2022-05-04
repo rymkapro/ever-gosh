@@ -5,6 +5,8 @@ import { useRecoilValue } from "recoil";
 import { userStatePersistAtom } from "../../store/user.state";
 import logoBlack from "../../assets/images/logo-black.svg";
 import DropdownMenu from "./DropdownMenu";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPaperPlane } from "@fortawesome/free-regular-svg-icons";
 
 
 const Header = () => {
@@ -24,6 +26,10 @@ const Header = () => {
                         </Link>
 
                         <div className="flex items-center gap-x-4 sm:gap-x-34px">
+                            <a href="https://t.me/gosh_sh" target="_blank" className="text-gray-53596d hover:underline">
+                                <FontAwesomeIcon icon={faPaperPlane} className="mr-3" size="lg" />
+                                Our telegram
+                            </a>
                             {location.pathname.search('/signin') >= 0 && (
                                 <>
                                     <div className="text-lg text-gray-53596d hidden sm:block">
