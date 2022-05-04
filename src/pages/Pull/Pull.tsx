@@ -8,7 +8,7 @@ import { IGoshBlob, IGoshCommit, IGoshRepository, IGoshSmvLocker, IGoshSmvPropos
 import * as Yup from "yup";
 import CopyClipboard from "../../components/CopyClipboard";
 import { classNames, shortString } from "../../utils";
-import { getCodeLanguageFromFilename, getCommitTree } from "../../helpers";
+import { getBlobContent, getCodeLanguageFromFilename, getCommitTree } from "../../helpers";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 import { useGoshDao, useGoshRepoBranches, useGoshRoot, useGoshWallet } from "../../hooks/gosh.hooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -29,7 +29,12 @@ const PullPage = () => {
     const [prop, setProp] = useState<{ prop: IGoshSmvProposal; locked: number; }>();
     const [commit, setCommit] = useState<{
         commit: IGoshCommit;
-        blobs: { name: '', curr: IGoshBlob, prev?: IGoshBlob }[];
+        blobs: {
+            name: string;
+            curr: IGoshBlob;
+            currContent: string;
+            prevContent?: string;
+        }[];
     }>();
     const monaco = useMonaco();
     const [locker, setLocker] = useState<IGoshSmvLocker>();
@@ -61,7 +66,12 @@ const PullPage = () => {
         // Get commit blobs
         const blobAddrs = await commit.getBlobs();
         const blobTrees: IGoshBlob[] = [];
-        const blobs: { name: string; curr: IGoshBlob; prev?: IGoshBlob; }[] = [];
+        const blobs: {
+            name: string;
+            curr: IGoshBlob;
+            currContent: string;
+            prevContent?: string;
+        }[] = [];
         await Promise.all(
             blobAddrs.map(async (addr) => {
                 // Create blob and load it's data
@@ -72,14 +82,13 @@ const PullPage = () => {
                 // Extract tree blob from common blobs
                 if (blob.meta.name.indexOf('tree ') >= 0) blobTrees.push(blob);
                 else {
+                    const currFullBlob = await getBlobContent(repo, blob.meta.name);
                     // If blob has prevSha, load this prev blob
-                    let prevBlob = undefined;
+                    let prevFullBlob = undefined;
                     if (blob.meta?.prevSha) {
-                        const prevBlobAddr = await repo.getBlobAddr(`blob ${blob.meta.prevSha}`);
-                        prevBlob = new GoshBlob(repo.account.client, prevBlobAddr);
-                        await prevBlob.load();
+                        prevFullBlob = await getBlobContent(repo, blob.meta.prevSha);
                     }
-                    blobs.push({ name: '', curr: blob, prev: prevBlob });
+                    blobs.push({ name: '', curr: blob, currContent: currFullBlob, prevContent: prevFullBlob });
                 }
             })
         );
@@ -394,8 +403,8 @@ const PullPage = () => {
                                     {item.name}
                                 </div>
                                 <BlobDiffPreview
-                                    original={item.prev?.meta?.content}
-                                    modified={item.curr.meta?.content}
+                                    original={item.prevContent}
+                                    modified={item.currContent}
                                     modifiedLanguage={language}
                                 />
                             </div>

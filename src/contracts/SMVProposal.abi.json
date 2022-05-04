@@ -105,8 +105,7 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
-				{"name":"commit","type":"string"},
-				{"name":"number","type":"uint128"}
+				{"name":"commit","type":"string"}
 			]
 		},
 		{

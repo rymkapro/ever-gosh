@@ -126,9 +126,7 @@ export class GoshDao implements IGoshDao {
     account: Account;
     address: string;
     daoCreator: IGoshDaoCreator;
-    meta?: {
-        name: string;
-    };
+    meta?: IGoshDao['meta'];
 
     constructor(client: TonClient, address: string) {
         this.address = address;
@@ -654,10 +652,7 @@ export class GoshRepository implements IGoshRepository {
     abi: any = GoshRepositoryABI;
     account: Account;
     address: string;
-    meta?: {
-        name: string;
-        branchCount: number;
-    }
+    meta?: IGoshRepository['meta'];
 
     constructor(client: TonClient, address: string) {
         this.address = address;
@@ -709,13 +704,7 @@ export class GoshCommit implements IGoshCommit {
     abi: any = GoshCommitABI;
     account: Account;
     address: string;
-    meta?: {
-        repoAddr: string;
-        branchName: string;
-        sha: string;
-        content: TGoshCommitContent;
-        parents: string[];
-    }
+    meta?: IGoshCommit['meta']
 
     constructor(client: TonClient, address: string) {
         this.address = address;
@@ -817,19 +806,7 @@ export class GoshSmvProposal implements IGoshSmvProposal {
     abi: any = GoshSmvProposalABI;
     address: string;
     account: Account;
-    meta?: {
-        id: string;
-        votes: { yes: number; no: number; };
-        time: { start: Date; finish: Date; };
-        isCompleted: boolean;
-        commit: {
-            kind: string;
-            repoName: string;
-            branchName: string;
-            commitName: string;
-            number: number;
-        }
-    };
+    meta?: IGoshSmvProposal['meta'];
 
     constructor(client: TonClient, address: string) {
         this.address = address;
@@ -855,8 +832,7 @@ export class GoshSmvProposal implements IGoshSmvProposal {
                 kind: params.proposalKind,
                 repoName: params.repoName,
                 branchName: params.branchName,
-                commitName: params.commit,
-                number: params.number
+                commitName: params.commit
             }
         }
     }
@@ -904,11 +880,7 @@ export class GoshSmvLocker implements IGoshSmvLocker {
     abi: any = GoshSmvLockerABI;
     account: Account;
     address: string;
-    meta?: {
-        votesTotal: number;
-        votesLocked: number;
-        isBusy: boolean;
-    };
+    meta?: IGoshSmvLocker['meta'];
 
     constructor(client: TonClient, address: string) {
         this.address = address;

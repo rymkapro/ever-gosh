@@ -213,7 +213,6 @@ export interface IGoshSmvProposal extends IContract {
             repoName: string;
             branchName: string;
             commitName: string;
-            number: number;
         }
 
     };
