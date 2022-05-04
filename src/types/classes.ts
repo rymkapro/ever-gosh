@@ -155,6 +155,16 @@ export class GoshDao implements IGoshDao {
             // const daoBalance = await this.account.getBalance();
             // if (+daoBalance <= fromEvers(10000)) await this.getMoney(keys);
             await this.account.run('deployWallet', { pubkey }, { signer: signerKeys(keys) });
+            await new Promise<void>((resolve) => {
+                const interval = setInterval(async () => {
+                    const acc = await wallet.account.getAccount();
+                    console.debug('[Deploy wallet] - Account:', acc);
+                    if (acc.acc_type === AccountType.active) {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, 1500);
+            });
         }
 
         // Check wallet SMV token balance and mint if needed
