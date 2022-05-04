@@ -59,10 +59,6 @@ const CommitPage = () => {
 
                     // Extract tree blob from common blobs
                     if (blob.meta.name.indexOf('tree ') >= 0) {
-                        blob.meta.content = await zstd.decompress(
-                            goshRepo.account.client,
-                            blob.meta.content
-                        );
                         blobTrees.push(blob);
                     } else {
                         const currFullBlob = await getBlobContent(goshRepo, blob.meta.name);

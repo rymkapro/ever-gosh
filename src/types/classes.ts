@@ -778,6 +778,11 @@ export class GoshBlob implements IGoshBlob {
 
     async load(): Promise<void> {
         const meta = await this.getBlob();
+
+        if (meta.content) {
+            meta.content = await zstd.decompress(this.account.client, meta.content);
+        }
+
         this.meta = {
             name: meta.sha,
             content: meta.content,

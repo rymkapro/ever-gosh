@@ -155,11 +155,7 @@ export const getRepoTree = async (
             const treeBlob = new GoshBlob(repo.account.client, treeAddr);
             await treeBlob.load();
 
-            const decompressed = await zstd.decompress(
-                repo.account.client,
-                treeBlob.meta?.content || ''
-            );
-            const treeItems = getTreeItemsFromBlob(decompressed);
+            const treeItems = getTreeItemsFromBlob(treeBlob.meta?.content || '');
             treeItems.forEach((item) => item.path = `${path && `${path}/`}${tree.name}`);
             items.push(...treeItems);
             await blobTreeWalker(tree.name, treeItems);
@@ -177,11 +173,7 @@ export const getRepoTree = async (
     await rootTreeBlob.load();
 
     // Get root tree items and recursively get subtrees
-    const decompressed = await zstd.decompress(
-        repo.account.client,
-        rootTreeBlob.meta?.content || ''
-    );
-    const items = getTreeItemsFromBlob(decompressed);
+    const items = getTreeItemsFromBlob(rootTreeBlob.meta?.content || '');
     await blobTreeWalker('', items);
 
     // Build full tree
@@ -249,9 +241,7 @@ export const getBlobContent = async (repo: IGoshRepository, blobName: string): P
         if (acc_type !== AccountType.active) return;
 
         await blob.load();
-        const decompressed = await zstd.decompress(repo.account.client, blob.meta?.content || '');
-        console.debug('[getFullBlob] - Decompressed:', decompressed);
-        patches.push(decompressed);
+        patches.push(blob.meta?.content || '');
 
         if (blob.meta?.prevSha) await blobWalker(blob.meta.prevSha);
     }
