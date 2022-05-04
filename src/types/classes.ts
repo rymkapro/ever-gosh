@@ -418,7 +418,7 @@ export class GoshWallet implements IGoshWallet {
         // Deploy commit and blobs
         const parents = [branch.commitAddr, parentBranch?.commitAddr]
             .reduce((filtered: string[], item) => {
-                if (item !== undefined) filtered.push(item);
+                if (!!item) filtered.push(item);
                 return filtered;
             }, []);
         console.debug('[Create commit] - Parents:', parents);
