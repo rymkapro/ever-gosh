@@ -42,6 +42,7 @@ const PullPage = () => {
     const [goshRepo, setGoshRepo] = useState<IGoshRepository>();
     const { updateBranch } = useGoshRepoBranches(goshRepo);
     const [release, setRelease] = useState<boolean>(false);
+    const [check, setCheck] = useState<boolean>(false);
 
     const getLockerData = async (goshWallet: IGoshWallet) => {
         const lockerAddr = await goshWallet.getSmvLockerAddr();
@@ -137,6 +138,7 @@ const PullPage = () => {
 
     const onProposalCheck = async (goshProposal: IGoshSmvProposal, goshWallet: IGoshWallet) => {
         try {
+            setCheck(true);
             await goshWallet.tryProposalResult(goshProposal.address);
             await locker?.load();
             await goshProposal.load();
@@ -147,7 +149,9 @@ const PullPage = () => {
             await getTokenBalance(goshWallet);
             await _setProp(goshProposal, goshWallet);
         } catch (e: any) {
-            console.error(e.message)
+            console.error(e.message);
+        } finally {
+            setCheck(false);
         }
     }
 
@@ -235,7 +239,8 @@ const PullPage = () => {
 
     useEffect(() => {
         const interval = setInterval(async () => {
-            console.log('Reload locker')
+            console.log('Reload locker');
+            await locker?.account.refresh();
             await locker?.load();
         }, 5000);
         return () => {
@@ -330,6 +335,19 @@ const PullPage = () => {
                                 >
                                     {release && <Spinner className="mr-2" />}
                                     Release
+                                </button>
+                            </div>
+                        )}
+                        {goshWallet && !prop.prop.meta?.isCompleted && (
+                            <div>
+                                <button
+                                    type="button"
+                                    className="btn btn--body text-sm px-4 py-1.5"
+                                    onClick={() => onProposalCheck(prop.prop, goshWallet)}
+                                    disabled={check}
+                                >
+                                    {check && <Spinner className="mr-2" />}
+                                    Re-check
                                 </button>
                             </div>
                         )}
