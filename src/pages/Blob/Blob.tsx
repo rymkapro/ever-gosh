@@ -78,13 +78,13 @@ const BlobPage = () => {
                 </div>
             </div>
 
-            {!blob && (
+            {goshRepoTree.tree && !treeItem && (<div className="text-gray-606060 text-sm">File not found</div>)}
+            {(!goshRepoTree.tree || (treeItem && !blob)) && (
                 <div className="text-gray-606060 text-sm">
                     <Spinner className="mr-3" />
                     Loading file...
                 </div>
             )}
-            {!treeItem && (<div className="text-gray-606060 text-sm">File not found</div>)}
             {monaco && treeItem && blob?.meta && (
                 <div className="border rounded overflow-hidden">
                     <div className="flex bg-gray-100 px-3 py-1 border-b justify-end">
