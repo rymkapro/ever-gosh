@@ -66,32 +66,32 @@ const PullsPage = () => {
 
                     // Get commit
                     let commit = undefined;
-                    if (proposal.meta?.commit && daoName) {
-                        const repoAddr = await goshRoot.getRepoAddr(
-                            proposal.meta.commit.repoName,
-                            daoName
-                        );
-                        const goshRepo = new GoshRepository(goshDao.account.client, repoAddr);
-                        const commitAddr = await goshRepo.getCommitAddr(proposal.meta.commit.commitName);
-                        commit = new GoshCommit(goshDao.account.client, commitAddr);
-                        await commit.load();
-                    };
+                    // if (proposal.meta?.commit && daoName) {
+                    //     const repoAddr = await goshRoot.getRepoAddr(
+                    //         proposal.meta.commit.repoName,
+                    //         daoName
+                    //     );
+                    //     const goshRepo = new GoshRepository(goshDao.account.client, repoAddr);
+                    //     const commitAddr = await goshRepo.getCommitAddr(proposal.meta.commit.commitName);
+                    //     commit = new GoshCommit(goshDao.account.client, commitAddr);
+                    //     await commit.load();
+                    // };
 
                     // Get amount of user's locked tokens in proposal
                     let locked = 0;
-                    if (proposal.meta) {
-                        const propLockerAddr = await proposal.getLockerAddr();
-                        console.log('[propLockerAddr]', propLockerAddr);
-                        const smvClientAddr = await goshWallet.getSmvClientAddr(
-                            propLockerAddr,
-                            proposal.meta.id
-                        );
-                        console.log('[svmClientAddr]', smvClientAddr);
-                        try {
-                            const smvClient = new GoshSmvClient(goshWallet.account.client, smvClientAddr);
-                            locked = await smvClient.getLockedAmount();
-                        } catch { }
-                    }
+                    // if (proposal.meta) {
+                    //     const propLockerAddr = await proposal.getLockerAddr();
+                    //     console.log('[propLockerAddr]', propLockerAddr);
+                    //     const smvClientAddr = await goshWallet.getSmvClientAddr(
+                    //         propLockerAddr,
+                    //         proposal.meta.id
+                    //     );
+                    //     console.log('[svmClientAddr]', smvClientAddr);
+                    //     try {
+                    //         const smvClient = new GoshSmvClient(goshWallet.account.client, smvClientAddr);
+                    //         locked = await smvClient.getLockedAmount();
+                    //     } catch { }
+                    // }
 
                     return { prop: proposal, commit, locked };
                 })

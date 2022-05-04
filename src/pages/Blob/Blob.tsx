@@ -4,7 +4,7 @@ import BranchSelect from "../../components/BranchSelect";
 import { IGoshBlob, IGoshRepository, TGoshTreeItem } from "../../types/types";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import { useMonaco } from "@monaco-editor/react";
-import { getCodeLanguageFromFilename } from "../../helpers";
+import { getCodeLanguageFromFilename, getBlobContent } from "../../helpers";
 import BlobPreview from "../../components/Blob/Preview";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPencil } from "@fortawesome/free-solid-svg-icons";
@@ -34,7 +34,11 @@ const BlobPage = () => {
             const blobAddr = await repo.getBlobAddr(`blob ${treeItem.sha}`);
             const blob = new GoshBlob(repo.account.client, blobAddr);
             const { acc_type } = await blob.account.getAccount();
-            if (acc_type === AccountType.active) await blob.load();
+            if (acc_type === AccountType.active) {
+                await blob.load();
+                const content = await getBlobContent(repo, treeItem.sha);
+                if (blob.meta) blob.meta.content = content;
+            };
             setBlob(blob);
         }
 

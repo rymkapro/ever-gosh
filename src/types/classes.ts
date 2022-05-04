@@ -13,14 +13,15 @@ import GoshSmvClientABI from "../contracts/SMVClient.abi.json";
 import GoshSmvTokenRootABI from "../contracts/TokenRoot.abi.json";
 import {
     calculateSubtrees,
-    fromEvers,
     getGoshDaoCreator,
     getRepoTree,
     getTreeFromItems,
     getTreeItemsFromPath,
+    getBlobDiffPatch,
     sha1,
     sha1Tree,
-    unixtimeWithTz
+    unixtimeWithTz,
+    zstd
 } from "../helpers";
 import {
     IGoshBlob,
@@ -37,6 +38,7 @@ import {
     IGoshSmvClient,
     IGoshSmvTokenRoot
 } from "./types";
+import { Buffer } from "buffer";
 
 
 export class GoshDaoCreator implements IGoshDaoCreator {
@@ -140,14 +142,6 @@ export class GoshDao implements IGoshDao {
         }
     }
 
-    async getMoney(keys: KeyPair): Promise<void> {
-        await this.account.run(
-            'getMoney',
-            { creator: this.daoCreator.address },
-            { signer: signerKeys(keys) }
-        );
-    }
-
     async deployWallet(rootPubkey: string, pubkey: string, keys: KeyPair): Promise<string> {
         if (!this.meta?.name) await this.load();
         if (!this.meta) throw Error('Can not read DAO name');
@@ -158,9 +152,9 @@ export class GoshDao implements IGoshDao {
         const wallet = new GoshWallet(this.account.client, walletAddr);
         const acc = await wallet.account.getAccount();
         if (acc.acc_type !== AccountType.active) {
-            const daoBalance = await this.account.getBalance();
-            if (+daoBalance <= fromEvers(10000)) await this.getMoney(keys);
-            await this.account.run('deployWallet', { pubkey });
+            // const daoBalance = await this.account.getBalance();
+            // if (+daoBalance <= fromEvers(10000)) await this.getMoney(keys);
+            await this.account.run('deployWallet', { pubkey }, { signer: signerKeys(keys) });
         }
 
         // Check wallet SMV token balance and mint if needed
@@ -290,11 +284,17 @@ export class GoshWallet implements IGoshWallet {
         const repoName = repo.meta.name;
 
         // Prepare blobs
-        const _blobs = blobs.map((blob) => ({
-            ...blob,
-            sha: sha1(blob.modified, 'blob'),
-            prevSha: blob.original ? sha1(blob.original, 'blob') : ''
-        }));
+        const _blobs = await Promise.all(
+            blobs.map(async (blob) => {
+                const patch = await getBlobDiffPatch(blob.name, blob.modified, blob.original);
+                return {
+                    ...blob,
+                    sha: sha1(blob.modified, 'blob'),
+                    prevSha: blob.original ? sha1(blob.original, 'blob') : '',
+                    patch
+                }
+            })
+        );
         console.log('Blobs', _blobs);
 
         // Generate current branch full tree and get it's items (TGoshTreeItem[]).
@@ -357,28 +357,54 @@ export class GoshWallet implements IGoshWallet {
         //  - Promises for tree blobs deploy;
         //  - Promises for common blobs deploy
         const blobsToDeploy: { name: string[]; fn: Function[]; } = { name: [], fn: [] };
-        updatedPaths.forEach((path) => {
-            const subtree = updatedTree[path];
-            console.debug('Subtree for', path, subtree);
-            const subtreeHash = sha1Tree(subtree);
-            console.debug('Subtree hash for', path, subtreeHash);
-            const blobContent = subtree.map((item) => (
-                `${item.mode} ${item.type} ${item.sha}\t${item.name}`
-            )).join('\n');
-            console.debug('Blob content for:', path, blobContent);
+        await Promise.all(
+            updatedPaths.map(async (path) => {
+                const subtree = updatedTree[path];
+                const subtreeHash = sha1Tree(subtree);
+                const blobContent = subtree.map((item) => (
+                    `${item.mode} ${item.type} ${item.sha}\t${item.name}`
+                )).join('\n');
+                console.debug('[createCommit] - Tree blob content for:', path, blobContent);
 
-            blobsToDeploy.name.push(`tree ${subtreeHash}`);
-            blobsToDeploy.fn.push(() => (
-                this.deployBlob(repoName, branch.name, commitName, `tree ${subtreeHash}`, blobContent, '', '')
-            ));
-        })
+                console.debug('[createCommit] - Tree blob content uncompressed:', Buffer.from(blobContent).toString('base64'));
+                const compressed = await zstd.compress(this.account.client, blobContent);
+                console.debug('[createCommit] - Tree blob content compressed:', compressed);
 
-        _blobs.forEach((blob) => {
-            blobsToDeploy.name.push(`blob ${blob.sha}`);
-            blobsToDeploy.fn.push(() => (
-                this.deployBlob(repoName, branch.name, commitName, `blob ${blob.sha}`, blob.modified, '', blob.prevSha)
-            ));
-        });
+                blobsToDeploy.name.push(`tree ${subtreeHash}`);
+                blobsToDeploy.fn.push(() => (
+                    this.deployBlob(
+                        repoName,
+                        branch.name,
+                        commitName,
+                        `tree ${subtreeHash}`,
+                        compressed,
+                        '',
+                        ''
+                    )
+                ));
+            })
+        );
+
+        await Promise.all(
+            _blobs.map(async (blob) => {
+                console.debug('[createCommit] - Blob patch uncompressed:', blob.name, blob.patch);
+                const compressed = await zstd.compress(this.account.client, blob.patch);
+                console.debug('[createCommit] - Blob patch compressed:', blob.name, compressed);
+
+                blobsToDeploy.name.push(`blob ${blob.sha}`);
+                blobsToDeploy.fn.push(() => (
+                    this.deployBlob(
+                        repoName,
+                        branch.name,
+                        commitName,
+                        `blob ${blob.sha}`,
+                        compressed,
+                        '',
+                        blob.prevSha
+                    )
+                ));
+            })
+        );
         console.debug('Blobs to deploy', blobsToDeploy);
 
         // Deploy commit and blobs
@@ -388,6 +414,7 @@ export class GoshWallet implements IGoshWallet {
                 return filtered;
             }, []);
         console.debug('[Create commit] - Parents:', parents);
+        console.debug('[Create commit] - Args:', repoName, branch.name, commitName, commitData, parents);
         await this.deployCommit(repoName, branch.name, commitName, commitData, parents);
         await Promise.all(blobsToDeploy.fn.map(async (fn) => await fn()));
 
@@ -400,9 +427,7 @@ export class GoshWallet implements IGoshWallet {
         console.debug('[Create commit] - Set blobs: OK');
 
         // Set repo commit (wait if is not a proposal)
-        // Formula: 0.3 + 0.3 * numCommits (* 2 if parent2)
-        const value = fromEvers(0.3 + 0.3 * 1) * (parentBranch ? 2 : 1);
-        await this.setCommit(repoName, branch.name, commitName, branch.commitAddr, value);
+        await this.setCommit(repoName, branch.name, commitName, branch.commitAddr);
         if (branch.name !== 'main') {
             await new Promise<void>((resolve) => {
                 const interval = setInterval(async () => {
@@ -418,8 +443,7 @@ export class GoshWallet implements IGoshWallet {
     }
 
     async getMoney(): Promise<void> {
-        const dao = await this.getDao();
-        await this.account.run('getMoney', { creator: dao.daoCreator.address });
+        await this.account.run('getMoney', {});
     }
 
     async getDaoAddr(): Promise<string> {
@@ -546,13 +570,12 @@ export class GoshWallet implements IGoshWallet {
         repoName: string,
         branchName: string,
         commitName: string,
-        branchCommit: string,
-        value: number
+        branchCommit: string
     ): Promise<void> {
-        console.debug('[Set commmit]:', repoName, branchName, commitName, `"${branchCommit}"`, value);
+        console.debug('[Set commmit]:', repoName, branchName, commitName, `"${branchCommit}"`);
         await this.run(
             'setCommit',
-            { repoName, branchName, commit: commitName, branchcommit: branchCommit, value }
+            { repoName, branchName, commit: commitName, branchcommit: branchCommit }
         );
     }
 
@@ -609,8 +632,8 @@ export class GoshWallet implements IGoshWallet {
 
     async run(functionName: string, input: object, options?: AccountRunOptions): Promise<void> {
         // Check wallet balance and topup if needed
-        const balance = await this.account.getBalance();
-        if (+balance <= fromEvers(10000)) await this.getMoney();
+        // const balance = await this.account.getBalance();
+        // if (+balance <= fromEvers(10000)) await this.getMoney();
 
         // Run contract
         await this.account.run(functionName, input, options);
@@ -800,7 +823,11 @@ export class GoshSmvProposal implements IGoshSmvProposal {
 
     async load(): Promise<void> {
         const id = await this.getId();
+        console.log('Prop id', id);
+
         const params = await this.getGoshSetCommitProposalParams();
+        console.log('Prop params', params);
+
         const votes = await this.getVotes();
         const time = await this.getTime();
         const isCompleted = await this.isCompleted();

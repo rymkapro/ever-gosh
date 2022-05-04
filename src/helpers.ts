@@ -10,6 +10,8 @@ import {
     TGoshTree,
     TGoshTreeItem
 } from "./types/types";
+import { AccountType } from "@eversdk/appkit";
+import * as Diff from 'diff';
 
 
 export const getEndpoints = (): string[] => {
@@ -29,65 +31,6 @@ export const getGoshDaoCreator = (client: TonClient): IGoshDaoCreator => {
     if (!address) throw Error('No GoshDaoCreator address specified');
     return new GoshDaoCreator(client, address);
 }
-
-/**
- * Generate commit diff content
- * @param monaco Monaco object from `useMonaco` hook
- */
-// export const generateDiff = async (
-//     monaco: any,
-//     modified: string,
-//     original?: string
-// ): Promise<TDiffData[]> => {
-//     return new Promise((resolve, reject) => {
-//         if (!monaco) reject('Can not create diff (Diff editor is not initialized)');
-
-//         // Create hidden monaco diff editor and get diff
-//         const originalModel = monaco.editor.createModel(original, 'markdown');
-//         const modifiedModel = monaco.editor.createModel(modified, 'markdown');
-
-//         const diffContainer = document.createElement('div');
-//         const diffEditor = monaco.editor.createDiffEditor(diffContainer);
-//         diffEditor.setModel({ original: originalModel, modified: modifiedModel });
-//         diffEditor.onDidUpdateDiff(() => {
-//             const content = diffEditor.getOriginalEditor().getValue().split('\n');
-//             const changes = diffEditor.getLineChanges();
-//             const diff: TDiffData[] = [];
-//             changes.forEach((item: any) => {
-//                 const {
-//                     originalStartLineNumber,
-//                     originalEndLineNumber,
-//                     modifiedStartLineNumber,
-//                     modifiedEndLineNumber
-//                 } = item;
-
-//                 const lines = [];
-//                 for (let line = originalStartLineNumber - 1; line < originalEndLineNumber; line++) {
-//                     lines.push(content[line]);
-//                 }
-//                 diff.push({ modifiedStartLineNumber, modifiedEndLineNumber, originalLines: lines });
-//             });
-//             resolve(diff);
-//         });
-//     });
-// }
-
-// export const restoreFromDiff = (modified: string, diff: TDiffData[]): string => {
-//     const restored = [];
-//     const source = modified.split('\n');
-//     for (let mL = 0; mL < source.length; mL++) {
-//         const changed = diff.find((item) => item.modifiedStartLineNumber - 1 === mL);
-//         if (changed) {
-//             if (changed.modifiedEndLineNumber === 0) restored.push(source[mL]);
-//             restored.push(...changed.originalLines);
-//             if (changed.modifiedEndLineNumber > 0) mL = changed.modifiedEndLineNumber - 1;
-//         } else {
-//             restored.push(source[mL]);
-//         }
-//     }
-//     // console.log('Restored', restored);
-//     return restored.join('\n');
-// }
 
 export const getCodeLanguageFromFilename = (monaco: any, filename: string): string => {
     let splitted = filename.split('.');
@@ -212,7 +155,11 @@ export const getRepoTree = async (
             const treeBlob = new GoshBlob(repo.account.client, treeAddr);
             await treeBlob.load();
 
-            const treeItems = getTreeItemsFromBlob(treeBlob.meta?.content || '');
+            const decompressed = await zstd.decompress(
+                repo.account.client,
+                treeBlob.meta?.content || ''
+            );
+            const treeItems = getTreeItemsFromBlob(decompressed);
             treeItems.forEach((item) => item.path = `${path && `${path}/`}${tree.name}`);
             items.push(...treeItems);
             await blobTreeWalker(tree.name, treeItems);
@@ -230,7 +177,11 @@ export const getRepoTree = async (
     await rootTreeBlob.load();
 
     // Get root tree items and recursively get subtrees
-    const items = getTreeItemsFromBlob(rootTreeBlob.meta?.content || '');
+    const decompressed = await zstd.decompress(
+        repo.account.client,
+        rootTreeBlob.meta?.content || ''
+    );
+    const items = getTreeItemsFromBlob(decompressed);
     await blobTreeWalker('', items);
 
     // Build full tree
@@ -269,6 +220,50 @@ export const calculateSubtrees = (tree: TGoshTree) => {
             const found = tree[path].find((item) => item.path === path && item.name === name);
             if (found) found.sha = sha;
         });
+}
+
+export const getBlobDiffPatch = async (
+    fileName: string,
+    modified: string,
+    original: string
+) => {
+    let patch = Diff.createTwoFilesPatch(`a/${fileName}`, `b/${fileName}`, original, modified);
+    patch = patch.split('\n').slice(1).join('\n');
+
+    const shaOriginal = original ? sha1(original, 'blob') : '0000000';
+    const shaModified = modified ? sha1(modified, 'blob') : '0000000'
+    patch = `index ${shaOriginal.slice(0, 7)}..${shaModified.slice(0, 7)} 100644\n` + patch;
+
+    if (!original) patch = patch.replace(`a/${fileName}`, '/dev/null');
+    if (!modified) patch = patch.replace(`b/${fileName}`, '/dev/null');
+    // patch = patch.replace('\n\\ No newline at end of file\n', '');
+    return patch;
+}
+
+export const getBlobContent = async (repo: IGoshRepository, blobName: string): Promise<string> => {
+    const blobWalker = async (blobName: string) => {
+        const name = blobName.indexOf('blob ') < 0 ? `blob ${blobName}` : blobName;
+        const blobAddr = await repo.getBlobAddr(name);
+        const blob = new GoshBlob(repo.account.client, blobAddr);
+        const { acc_type } = await blob.account.getAccount();
+        if (acc_type !== AccountType.active) return;
+
+        await blob.load();
+        const decompressed = await zstd.decompress(repo.account.client, blob.meta?.content || '');
+        console.debug('[getFullBlob] - Decompressed:', decompressed);
+        patches.push(decompressed);
+
+        if (blob.meta?.prevSha) await blobWalker(blob.meta.prevSha);
+    }
+
+    const patches: string[] = [];
+    await blobWalker(blobName);
+    console.debug('[getFullBlob] - Patches:', patches);
+
+    let content = '';
+    patches.reverse().forEach((patch) => content = Diff.applyPatch(content, patch));
+    console.debug('[getFullBlob] - Content:', `"${content}"`);
+    return content;
 }
 
 /** Split file path to path and file name */
@@ -318,6 +313,20 @@ export const chacha20 = {
     async decrypt(client: TonClient, data: string, key: string, nonce: string): Promise<string> {
         const result = await client.crypto.chacha20({ data, key: key.padStart(64, '0'), nonce });
         return result.data;
+    }
+}
+
+export const zstd = {
+    async compress(client: TonClient, data: string): Promise<string> {
+        const result = await client.utils.compress_zstd({
+            uncompressed: Buffer.from(data).toString('base64')
+        });
+        return result.compressed;
+    },
+    async decompress(client: TonClient, data: string, uft8: boolean = true): Promise<string> {
+        const result = await client.utils.decompress_zstd({ compressed: data });
+        if (uft8) return Buffer.from(result.decompressed, 'base64').toString();
+        return result.decompressed;
     }
 }
 

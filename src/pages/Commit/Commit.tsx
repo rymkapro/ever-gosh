@@ -3,7 +3,7 @@ import { useOutletContext, useParams } from "react-router-dom";
 import { IGoshBlob, IGoshCommit, IGoshRepository } from "../../types/types";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import { useMonaco } from "@monaco-editor/react";
-import { getCommitTime, getCodeLanguageFromFilename, getCommitTree } from "../../helpers";
+import { getCommitTime, getCodeLanguageFromFilename, getCommitTree, getBlobContent, zstd } from "../../helpers";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 import { GoshBlob, GoshCommit } from "../../types/classes";
 import CopyClipboard from "../../components/CopyClipboard";
@@ -15,7 +15,12 @@ const CommitPage = () => {
     const { branchName, commitName } = useParams();
     const monaco = useMonaco();
     const [commit, setCommit] = useState<IGoshCommit>();
-    const [blobs, setBlobs] = useState<{ name: string; curr: IGoshBlob; prev?: IGoshBlob; }[]>([]);
+    const [blobs, setBlobs] = useState<{
+        name: string;
+        curr: IGoshBlob;
+        currContent: string;
+        prevContent?: string;
+    }[]>([]);
 
     const renderCommitter = (committer: string) => {
         const [pubkey] = committer.split(' ');
@@ -39,7 +44,12 @@ const CommitPage = () => {
             // Get commit blobs
             const blobAddrs = await commit.getBlobs();
             const blobTrees: IGoshBlob[] = [];
-            const blobs: { name: string; curr: IGoshBlob; prev?: IGoshBlob; }[] = [];
+            const blobs: {
+                name: string;
+                curr: IGoshBlob;
+                currContent: string;
+                prevContent?: string;
+            }[] = [];
             await Promise.all(
                 blobAddrs.map(async (addr) => {
                     // Create blob and load it's data
@@ -48,16 +58,20 @@ const CommitPage = () => {
                     if (!blob.meta) throw Error('Can not load blob meta');
 
                     // Extract tree blob from common blobs
-                    if (blob.meta.name.indexOf('tree ') >= 0) blobTrees.push(blob);
-                    else {
+                    if (blob.meta.name.indexOf('tree ') >= 0) {
+                        blob.meta.content = await zstd.decompress(
+                            goshRepo.account.client,
+                            blob.meta.content
+                        );
+                        blobTrees.push(blob);
+                    } else {
+                        const currFullBlob = await getBlobContent(goshRepo, blob.meta.name);
                         // If blob has prevSha, load this prev blob
-                        let prevBlob = undefined;
+                        let prevFullBlob = undefined;
                         if (blob.meta?.prevSha) {
-                            const prevBlobAddr = await goshRepo.getBlobAddr(`blob ${blob.meta.prevSha}`);
-                            prevBlob = new GoshBlob(repo.account.client, prevBlobAddr);
-                            await prevBlob.load();
+                            prevFullBlob = await getBlobContent(goshRepo, blob.meta.prevSha);
                         }
-                        blobs.push({ name: '', curr: blob, prev: prevBlob });
+                        blobs.push({ name: '', curr: blob, currContent: currFullBlob, prevContent: prevFullBlob });
                     }
                 })
             );
@@ -130,8 +144,8 @@ const CommitPage = () => {
                                     {item.name}
                                 </div>
                                 <BlobDiffPreview
-                                    original={item.prev?.meta?.content}
-                                    modified={item.curr.meta?.content}
+                                    original={item.prevContent}
+                                    modified={item.currContent}
                                     modifiedLanguage={language}
                                 />
                             </div>

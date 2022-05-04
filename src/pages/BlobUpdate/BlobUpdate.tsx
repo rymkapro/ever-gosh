@@ -11,15 +11,14 @@ import BlobEditor from "../../components/Blob/Editor";
 import FormCommitBlock from "../BlobCreate/FormCommitBlock";
 import { useMonaco } from "@monaco-editor/react";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
-import { IGoshBlob, IGoshRepository, TGoshTreeItem } from "../../types/types";
-import { getCodeLanguageFromFilename, splitByPath } from "../../helpers";
+import { IGoshRepository, TGoshTreeItem } from "../../types/types";
+import { getCodeLanguageFromFilename, getBlobContent, splitByPath } from "../../helpers";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useRecoilValue } from "recoil";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
 import RepoBreadcrumbs from "../../components/Repo/Breadcrumbs";
-import { GoshBlob } from "../../types/classes";
 
 
 type TFormValues = {
@@ -41,7 +40,7 @@ const BlobUpdatePage = () => {
     const monaco = useMonaco();
     const [activeTab, setActiveTab] = useState<number>(0);
     const treeItem = useRecoilValue(goshRepoTree.getTreeItem(pathName));
-    const [blob, setBlob] = useState<IGoshBlob>();
+    const [blobContent, setBlobContent] = useState<string>();
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
 
     const urlBack = `/${daoName}/${repoName}/blobs/${branchName}${pathName && `/${pathName}`}`;
@@ -52,7 +51,7 @@ const BlobUpdatePage = () => {
             if (!goshWallet) throw Error('Can not get GoshWallet');
             if (!repoName) throw Error('Repository is undefined');
             if (!branch) throw Error('Branch is undefined');
-            if (!blob?.meta) throw Error('File content is undefined');
+            if (!blobContent) throw Error('File content is undefined');
 
             if (branch.name === 'main') {
                 const smvLocker = await goshWallet.getSmvLocker();
@@ -70,7 +69,7 @@ const BlobUpdatePage = () => {
                 [{
                     name: `${path && `${path}/`}${values.name}`,
                     modified: values.content,
-                    original: blob.meta.content
+                    original: blobContent
                 }],
                 message
             );
@@ -85,10 +84,8 @@ const BlobUpdatePage = () => {
 
     useEffect(() => {
         const getBlob = async (repo: IGoshRepository, treeItem: TGoshTreeItem) => {
-            const blobAddr = await repo.getBlobAddr(`blob ${treeItem.sha}`);
-            const blob = new GoshBlob(repo.account.client, blobAddr);
-            await blob.load();
-            setBlob(blob);
+            const content = await getBlobContent(repo, treeItem.sha);
+            setBlobContent(content);
         }
 
         if (goshRepo && treeItem) getBlob(goshRepo, treeItem);
@@ -103,11 +100,11 @@ const BlobUpdatePage = () => {
 
     return (
         <div className="bordered-block px-7 py-8">
-            {monaco && pathName && blob && (
+            {monaco && pathName && blobContent !== undefined && (
                 <Formik
                     initialValues={{
                         name: splitByPath(pathName)[1],
-                        content: blob.meta?.content || '',
+                        content: blobContent,
                         title: '',
                         message: ''
                     }}
@@ -196,7 +193,7 @@ const BlobUpdatePage = () => {
                                         <Tab.Panel>
                                             <BlobDiffPreview
                                                 className="pt-[1px]"
-                                                original={blob.meta?.content}
+                                                original={blobContent}
                                                 modified={values.content}
                                                 modifiedLanguage={blobCodeLanguage}
                                             />
