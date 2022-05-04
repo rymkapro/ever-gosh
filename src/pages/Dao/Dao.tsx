@@ -18,7 +18,7 @@ const DaoPage = () => {
                 <h3 className="font-semibold text-base mb-4">Details</h3>
 
                 <p className="text-sm text-gray-606060">
-                    This is a Gosh test organization
+                    DAO address
                 </p>
 
                 <CopyClipboard

@@ -25,11 +25,11 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
             </Link>
 
             <div className="text-sm text-gray-606060">
-                Gosh test repository
+                Gosh repository
             </div>
 
             <div className="flex gap-1 mt-2">
-                {['gosh', 'vcs', 'ever', 'use', 'enjoy'].map((value, index) => (
+                {['gosh', 'vcs', 'ever'].map((value, index) => (
                     <button
                         key={index}
                         type="button"
@@ -50,10 +50,10 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                         <FontAwesomeIcon icon={faCodeFork} className="mr-1" />
                         {repository.meta?.branchCount}
                     </div>
-                    <div>
+                    {/* <div>
                         <FontAwesomeIcon icon={faStar} className="mr-1" />
                         22
-                    </div>
+                    </div> */}
                 </div>
                 <CopyClipboard
                     componentProps={{
