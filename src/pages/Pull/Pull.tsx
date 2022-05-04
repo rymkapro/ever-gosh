@@ -240,7 +240,7 @@ const PullPage = () => {
     useEffect(() => {
         const interval = setInterval(async () => {
             console.log('Reload locker');
-            await locker?.account.refresh();
+            locker?.account.refresh();
             await locker?.load();
         }, 5000);
         return () => {

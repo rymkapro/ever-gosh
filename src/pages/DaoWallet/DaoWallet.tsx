@@ -35,8 +35,8 @@ const DaoWalletPage = () => {
             if (!goshWallet) throw Error('Wallet is undefined');
 
             await goshWallet.lockVoting(values.amount);
+            await getWalletData(goshWallet);
             helpers.resetForm();
-            getWalletData(goshWallet);
         } catch (e: any) {
             console.error(e.message);
             alert(e.message);
@@ -52,8 +52,8 @@ const DaoWalletPage = () => {
             if (!goshWallet) throw Error('Wallet is undefined');
 
             await goshWallet.unlockVoting(values.amount);
+            await getWalletData(goshWallet);
             helpers.resetForm();
-            getWalletData(goshWallet);
         } catch (e: any) {
             console.error(e.message);
             alert(e.message);
@@ -65,7 +65,7 @@ const DaoWalletPage = () => {
             if (!goshWallet) throw Error('Wallet is undefined');
 
             await goshWallet.updateHead();
-            getWalletData(goshWallet);
+            await getWalletData(goshWallet);
         } catch (e: any) {
             console.error(e.message);
             alert(e.message);
