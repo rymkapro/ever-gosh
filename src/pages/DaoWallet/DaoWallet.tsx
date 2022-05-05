@@ -5,7 +5,7 @@ import TextField from "../../components/FormikForms/TextField";
 import Spinner from "../../components/Spinner";
 import { useGoshWallet } from "../../hooks/gosh.hooks";
 import { GoshSmvLocker } from "../../types/classes";
-import { IGoshWallet } from "../../types/types";
+import { IGoshSmvLocker, IGoshWallet } from "../../types/types";
 import * as Yup from "yup";
 import { useRecoilValue } from "recoil";
 import { userStateAtom } from "../../store/user.state";
@@ -20,7 +20,12 @@ const DaoWalletPage = () => {
     const { daoName } = useParams();
     const goshWallet = useGoshWallet(daoName);
     const userState = useRecoilValue(userStateAtom);
-    const [data, setData] = useState<{ balance: number; smvBalance?: number; smvLocked?: number; }>();
+    const [data, setData] = useState<{
+        locker?: IGoshSmvLocker;
+        balance?: number;
+        smvBalance?: number;
+        smvLocked?: number;
+    }>();
 
     const gitRemoteCredentials = {
         "my-wallet": {
@@ -32,42 +37,26 @@ const DaoWalletPage = () => {
         }
     }
 
-    const getWalletData = async (wallet: IGoshWallet) => {
-        const balance = await wallet.getSmvTokenBalance();
-        const lockerAddr = await wallet.getSmvLockerAddr();
-        const locker = new GoshSmvLocker(wallet.account.client, lockerAddr);
-        await locker.load();
-        setData({ balance, smvBalance: locker.meta?.votesTotal, smvLocked: locker.meta?.votesLocked });
-    }
-
-    const onMoveBalanceToSmvBalance = async (
-        values: TMoveBalanceFormValues,
-        helpers: FormikHelpers<TMoveBalanceFormValues>
-    ) => {
+    const onMoveBalanceToSmvBalance = async (values: TMoveBalanceFormValues) => {
         console.debug('[Move balance to SMV balance] - Values:', values);
         try {
             if (!goshWallet) throw Error('Wallet is undefined');
 
             await goshWallet.lockVoting(values.amount);
-            await getWalletData(goshWallet);
-            helpers.resetForm();
+            alert('Submitted. Balances will be updated soon');
         } catch (e: any) {
             console.error(e.message);
             alert(e.message);
         }
     }
 
-    const onMoveSmvBalanceToBalance = async (
-        values: TMoveBalanceFormValues,
-        helpers: FormikHelpers<TMoveBalanceFormValues>
-    ) => {
+    const onMoveSmvBalanceToBalance = async (values: TMoveBalanceFormValues) => {
         console.debug('[Move SMV balance to balance] - Values:', values);
         try {
             if (!goshWallet) throw Error('Wallet is undefined');
 
             await goshWallet.unlockVoting(values.amount);
-            await getWalletData(goshWallet);
-            helpers.resetForm();
+            alert('Submitted. Balances will be updated soon');
         } catch (e: any) {
             console.error(e.message);
             alert(e.message);
@@ -79,7 +68,7 @@ const DaoWalletPage = () => {
             if (!goshWallet) throw Error('Wallet is undefined');
 
             await goshWallet.updateHead();
-            await getWalletData(goshWallet);
+            alert('Release submitted. Available tokens will be released soon');
         } catch (e: any) {
             console.error(e.message);
             alert(e.message);
@@ -87,8 +76,39 @@ const DaoWalletPage = () => {
     }
 
     useEffect(() => {
-        if (goshWallet) getWalletData(goshWallet);
-    }, [goshWallet]);
+        const getWalletData = async (wallet: IGoshWallet) => {
+            const balance = await wallet.getSmvTokenBalance();
+            const lockerAddr = await wallet.getSmvLockerAddr();
+            const locker = new GoshSmvLocker(wallet.account.client, lockerAddr);
+            await locker.load();
+            setData({
+                locker,
+                balance,
+                smvBalance:
+                    locker.meta?.votesTotal,
+                smvLocked: locker.meta?.votesLocked
+            });
+        }
+
+        if (goshWallet && !data?.locker) getWalletData(goshWallet);
+        let interval: any;
+        if (goshWallet && data?.locker) {
+            interval = setInterval(async () => {
+                const balance = await goshWallet.getSmvTokenBalance();
+                await data.locker?.load();
+                setData((prev) => ({
+                    ...prev,
+                    balance,
+                    smvBalance: data.locker?.meta?.votesTotal,
+                    smvLocked: data.locker?.meta?.votesLocked
+                }));
+            }, 5000);
+        }
+
+        return () => {
+            clearInterval(interval);
+        }
+    }, [goshWallet, data?.locker]);
 
     if (!goshWallet) return (
         <div className="text-gray-606060">
@@ -111,7 +131,6 @@ const DaoWalletPage = () => {
                     <span className="font-semibold mr-2">Locked:</span>
                     {data?.smvLocked}
                 </div>
-
             </div>
 
             <div className="divide-y divide-gray-200">

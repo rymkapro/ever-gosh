@@ -123,9 +123,10 @@ const PullPage = () => {
             if (service?.locker?.meta?.isBusy) throw Error('Locker is busy');
             setCheck(true);
             await wallet.tryProposalResult(proposal.address);
-            await proposal.load();
+            alert('Re-check submitted. Please, wait a bit for data to be updated or check status later')
         } catch (e: any) {
             console.error(e.message);
+            alert(e.message);
         } finally {
             setCheck(false);
         }
