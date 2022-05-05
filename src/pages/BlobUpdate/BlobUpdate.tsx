@@ -12,7 +12,7 @@ import FormCommitBlock from "../BlobCreate/FormCommitBlock";
 import { useMonaco } from "@monaco-editor/react";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import { IGoshRepository, TGoshTreeItem } from "../../types/types";
-import { getCodeLanguageFromFilename, getBlobContent, splitByPath } from "../../helpers";
+import { getCodeLanguageFromFilename, getBlobContent, splitByPath, isMainBranch } from "../../helpers";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useRecoilValue } from "recoil";
@@ -47,18 +47,12 @@ const BlobUpdatePage = () => {
 
     const onCommitChanges = async (values: TFormValues) => {
         try {
-            if (!userState.keys) throw Error('Can not get user keys');
-            if (!goshWallet) throw Error('Can not get GoshWallet');
+            if (!userState.keys) throw Error('User is undefined');
+            if (!goshWallet) throw Error('GoshWallet is undefined');
             if (!repoName) throw Error('Repository is undefined');
             if (!branch) throw Error('Branch is undefined');
             if (!blobContent) throw Error('File content is undefined');
-
-            if (branch.name === 'main') {
-                const smvLocker = await goshWallet.getSmvLocker();
-                const smvBalance = smvLocker.meta?.votesTotal || 0;
-                console.debug('[Blob create] - SMV balance:', smvBalance);
-                if (smvBalance < 20) throw Error('Not enough tokens. Send at least 20 tokens to SMV.');
-            };
+            if (isMainBranch(branchName)) throw Error(`Can not push to branch '${branchName}'. Create PR`);
 
             const [path] = splitByPath(pathName || '');
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
@@ -75,7 +69,7 @@ const BlobUpdatePage = () => {
             );
 
             await updateBranch(branch.name);
-            navigate(branch.name === 'main' ? `/${daoName}/events` : urlBack);
+            navigate(urlBack);
         } catch (e: any) {
             console.error(e.message);
             alert(e.message);

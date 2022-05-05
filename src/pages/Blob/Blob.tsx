@@ -4,7 +4,7 @@ import BranchSelect from "../../components/BranchSelect";
 import { IGoshBlob, IGoshRepository, TGoshTreeItem } from "../../types/types";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import { useMonaco } from "@monaco-editor/react";
-import { getCodeLanguageFromFilename, getBlobContent } from "../../helpers";
+import { getCodeLanguageFromFilename, getBlobContent, isMainBranch } from "../../helpers";
 import BlobPreview from "../../components/Blob/Preview";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPencil } from "@fortawesome/free-solid-svg-icons";
@@ -97,11 +97,13 @@ const BlobPage = () => {
                                 size: 'sm'
                             }}
                         />
-                        <Link
-                            to={`/${daoName}/${repoName}/blobs/update/${branchName}/${pathName}`}
-                            className="text-extblack/60 hover:text-extblack p-1 ml-2">
-                            <FontAwesomeIcon icon={faPencil} size="sm" />
-                        </Link>
+                        {!isMainBranch(branchName) && (
+                            <Link
+                                to={`/${daoName}/${repoName}/blobs/update/${branchName}/${pathName}`}
+                                className="text-extblack/60 hover:text-extblack p-1 ml-2">
+                                <FontAwesomeIcon icon={faPencil} size="sm" />
+                            </Link>
+                        )}
                     </div>
                     <BlobPreview
                         language={getCodeLanguageFromFilename(monaco, treeItem.name)}

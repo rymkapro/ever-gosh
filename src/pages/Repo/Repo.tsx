@@ -8,7 +8,7 @@ import { useRecoilValue } from "recoil";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 import Spinner from "../../components/Spinner";
-import { splitByPath } from "../../helpers";
+import { isMainBranch, splitByPath } from "../../helpers";
 import { faFile } from "@fortawesome/free-regular-svg-icons";
 
 
@@ -64,12 +64,14 @@ const RepoPage = () => {
                     >
                         Go to file
                     </Link>
-                    <Link
-                        to={`/${daoName}/${repoName}/blobs/create/${branchName}${pathName && `/${pathName}`}`}
-                        className="btn btn--body px-4 py-1.5 text-sm !font-normal"
-                    >
-                        Add file
-                    </Link>
+                    {!isMainBranch(branchName) && (
+                        <Link
+                            to={`/${daoName}/${repoName}/blobs/create/${branchName}${pathName && `/${pathName}`}`}
+                            className="btn btn--body px-4 py-1.5 text-sm !font-normal"
+                        >
+                            Add file
+                        </Link>
+                    )}
                 </div>
             </div>
 

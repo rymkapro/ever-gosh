@@ -4,7 +4,7 @@ import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import TextField from "../../components/FormikForms/TextField";
 import { useMonaco } from "@monaco-editor/react";
-import { getCodeLanguageFromFilename } from "../../helpers";
+import { getCodeLanguageFromFilename, isMainBranch } from "../../helpers";
 import * as Yup from "yup";
 import { Tab } from "@headlessui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -43,17 +43,11 @@ const BlobCreatePage = () => {
 
     const onCommitChanges = async (values: TFormValues) => {
         try {
-            if (!userState.keys) throw Error('Can not get user keys');
-            if (!goshWallet) throw Error('Can not get GoshWallet');
+            if (!userState.keys) throw Error('User is undefined');
+            if (!goshWallet) throw Error('GoshWallet is undefined');
             if (!repoName) throw Error('Repository is undefined');
             if (!branch) throw Error('Branch is undefined');
-
-            if (branch.name === 'main') {
-                const smvLocker = await goshWallet.getSmvLocker();
-                const smvBalance = smvLocker.meta?.votesTotal || 0;
-                console.debug('[Blob create] - SMV balance:', smvBalance);
-                if (smvBalance < 20) throw Error('Not enough tokens. Send at least 20 tokens to SMV.');
-            };
+            if (isMainBranch(branchName)) throw Error(`Can not push to branch '${branchName}'. Create PR`);
 
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
             await goshWallet.createCommit(
@@ -69,7 +63,7 @@ const BlobCreatePage = () => {
             );
 
             await updateBranch(branch.name);
-            navigate(branch.name === 'main' ? `/${daoName}/events` : urlBack);
+            navigate(urlBack);
         } catch (e: any) {
             console.error(e.message);
             alert(e.message);

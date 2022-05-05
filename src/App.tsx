@@ -27,13 +27,14 @@ import BlobUpdatePage from "./pages/BlobUpdate";
 import BlobPage from "./pages/Blob";
 import CommitsPage from "./pages/Commits";
 import CommitPage from "./pages/Commit";
-import PullsPage from "./pages/Pulls";
 import PullCreatePage from "./pages/PullCreate";
-import PullPage from "./pages/Pull";
 import GotoPage from "./pages/Goto";
+import EventsPage from "./pages/Events";
+import EventPage from "./pages/Event";
 
 import "./assets/scss/style.scss";
 import BaseModal from "./components/Modal/BaseModal";
+
 
 
 const App = () => {
@@ -66,8 +67,8 @@ const App = () => {
                         <Route element={<DaoLayout />}>
                             <Route index element={<DaoPage />} />
                             <Route path="repos" element={<ReposPage />} />
-                            <Route path="events" element={<PullsPage />} />
-                            <Route path="events/:pullAddress" element={<PullPage />} />
+                            <Route path="events" element={<EventsPage />} />
+                            <Route path="events/:pullAddress" element={<EventPage />} />
                             <Route path="settings" element={<DaoSettingsLayout />}>
                                 <Route path="wallet" element={<DaoWalletPage />} />
                                 <Route path="participants" element={<DaoParticipantsPage />} />
@@ -83,9 +84,7 @@ const App = () => {
                             <Route path="blobs/:branchName/*" element={<BlobPage />} />
                             <Route path="commits/:branchName" element={<CommitsPage />} />
                             <Route path="commits/:branchName/:commitName" element={<CommitPage />} />
-                            <Route path="pulls" element={<PullsPage />} />
-                            <Route path="pulls/create" element={<PullCreatePage />} />
-                            <Route path="pulls/:pullAddress" element={<PullPage />} />
+                            <Route path="pull" element={<PullCreatePage />} />
                             <Route path="find/:branchName" element={<GotoPage />} />
                         </Route>
 

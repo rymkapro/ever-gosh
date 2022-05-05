@@ -13,6 +13,7 @@ import * as Yup from "yup";
 import { useRecoilValue } from "recoil";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
+import { isMainBranch } from "../../helpers";
 
 
 type TCreateBranchFormValues = {
@@ -143,7 +144,7 @@ export const BranchesPage = () => {
                             </Link>
                         </div>
                         <div>
-                            {branch.name !== 'main' && (
+                            {!isMainBranch(branch.name) && (
                                 <button
                                     type="button"
                                     className="px-2.5 py-1.5 text-white text-xs rounded bg-rose-600

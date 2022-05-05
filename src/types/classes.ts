@@ -21,7 +21,8 @@ import {
     sha1,
     sha1Tree,
     unixtimeWithTz,
-    zstd
+    zstd,
+    isMainBranch
 } from "../helpers";
 import {
     IGoshBlob,
@@ -436,9 +437,9 @@ export class GoshWallet implements IGoshWallet {
         await this.setBlobs(repoName, commitName, blobAddrs);
         console.debug('[Create commit] - Set blobs: OK');
 
-        // Set repo commit (wait if is not a proposal)
-        await this.setCommit(repoName, branch.name, commitName, branch.commitAddr);
-        if (branch.name !== 'main') {
+        // Set repo commit if not proposal or start new proposal
+        if (!isMainBranch(branch.name)) {
+            await this.setCommit(repoName, branch.name, commitName, branch.commitAddr);
             await new Promise<void>((resolve) => {
                 const interval = setInterval(async () => {
                     const upd = await repo.getBranch(branch.name);
@@ -449,6 +450,8 @@ export class GoshWallet implements IGoshWallet {
                     }
                 }, 1500);
             });
+        } else {
+            await this.startProposalForSetCommit(repoName, branch.name, commitName, branch.commitAddr);
         }
     }
 
@@ -585,6 +588,19 @@ export class GoshWallet implements IGoshWallet {
         console.debug('[Set commmit]:', repoName, branchName, commitName, `"${branchCommit}"`);
         await this.run(
             'setCommit',
+            { repoName, branchName, commit: commitName, branchcommit: branchCommit }
+        );
+    }
+
+    async startProposalForSetCommit(
+        repoName: string,
+        branchName: string,
+        commitName: string,
+        branchCommit: string
+    ): Promise<void> {
+        console.debug('[Start proposal]:', repoName, branchName, commitName, `"${branchCommit}"`);
+        await this.run(
+            'startProposalForSetCommit',
             { repoName, branchName, commit: commitName, branchcommit: branchCommit }
         );
     }

@@ -76,14 +76,14 @@ const RepoLayout = () => {
                             Code
                         </NavLink>
                         <NavLink
-                            to={`/${daoName}/${repoName}/pulls`}
+                            to={`/${daoName}/${repoName}/pull`}
                             className={({ isActive }) => classNames(
                                 'text-base text-gray-050a15/50 hover:text-gray-050a15 py-1.5 px-2',
                                 isActive ? '!text-gray-050a15 border-b border-b-gray-050a15' : null
                             )}
                         >
                             <FontAwesomeIcon icon={faCodePullRequest} size="sm" className="mr-2" />
-                            Pull requests
+                            Pull request
                         </NavLink>
                     </div>
 

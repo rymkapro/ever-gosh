@@ -35,7 +35,7 @@ type TFormValues = {
     amount: number;
 }
 
-const PullPage = () => {
+const EventPage = () => {
     const { daoName, pullAddress } = useParams();
     const goshRoot = useGoshRoot();
     const goshDao = useGoshDao(daoName);
@@ -424,4 +424,4 @@ const PullPage = () => {
     );
 }
 
-export default PullPage;
+export default EventPage;
