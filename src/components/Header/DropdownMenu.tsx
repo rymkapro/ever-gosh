@@ -11,6 +11,7 @@ const DropdownMenu = () => {
     const resetUserStatePersist = useResetRecoilState(userStatePersistAtom);
     const items = [
         { to: '/account/orgs', title: 'Organizations', className: 'text-gray-050a15' },
+        { to: '/account/settings', title: 'Settings', className: 'text-gray-050a15' },
         {
             to: '',
             title: 'Sign out',

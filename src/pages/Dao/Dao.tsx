@@ -1,5 +1,5 @@
 import React from "react";
-import { useOutletContext } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import CopyClipboard from "../../components/CopyClipboard";
 import { shortString } from "../../utils";
 import { TDaoLayoutOutletContext } from "../DaoLayout";
@@ -17,17 +17,24 @@ const DaoPage = () => {
             <div className="basis-3/12 bordered-block px-7 py-8">
                 <h3 className="font-semibold text-base mb-4">Details</h3>
 
-                <p className="text-sm text-gray-606060">
-                    DAO address
-                </p>
-
-                <CopyClipboard
-                    label={shortString(goshDao.address)}
-                    className="mt-2"
-                    componentProps={{
-                        text: goshDao.address
-                    }}
-                />
+                <div>
+                    <p className="text-sm text-gray-606060 mb-1">DAO address</p>
+                    <CopyClipboard
+                        label={shortString(goshDao.address)}
+                        componentProps={{
+                            text: goshDao.address
+                        }}
+                    />
+                </div>
+                <div className="mt-4">
+                    <p className="text-sm text-gray-606060 mb-1">Git remote</p>
+                    <Link
+                        to={`/${goshDao.meta?.name}/settings/wallet`}
+                        className="hover:underline"
+                    >
+                        Setup git remote
+                    </Link>
+                </div>
             </div>
         </div>
     );

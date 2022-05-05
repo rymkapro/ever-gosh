@@ -7,6 +7,9 @@ import { useGoshWallet } from "../../hooks/gosh.hooks";
 import { GoshSmvLocker } from "../../types/classes";
 import { IGoshWallet } from "../../types/types";
 import * as Yup from "yup";
+import { useRecoilValue } from "recoil";
+import { userStateAtom } from "../../store/user.state";
+import CopyClipboard from "../../components/CopyClipboard";
 
 
 type TMoveBalanceFormValues = {
@@ -16,7 +19,18 @@ type TMoveBalanceFormValues = {
 const DaoWalletPage = () => {
     const { daoName } = useParams();
     const goshWallet = useGoshWallet(daoName);
+    const userState = useRecoilValue(userStateAtom);
     const [data, setData] = useState<{ balance: number; smvBalance?: number; smvLocked?: number; }>();
+
+    const gitRemoteCredentials = {
+        "my-wallet": {
+            "address": goshWallet?.address,
+            "keys": {
+                "public": userState.keys?.public,
+                "secret": userState.keys?.secret
+            }
+        }
+    }
 
     const getWalletData = async (wallet: IGoshWallet) => {
         const balance = await wallet.getSmvTokenBalance();
@@ -102,6 +116,7 @@ const DaoWalletPage = () => {
 
             <div className="divide-y divide-gray-200">
                 <div className="py-5">
+                    <h3 className="text-lg font-semibold">Topup SMV balance</h3>
                     <p className="mb-3">
                         Move tokens from wallet balance to SMV balance to get an ability to create
                         new proposals and vote
@@ -144,6 +159,7 @@ const DaoWalletPage = () => {
                     </Formik>
                 </div>
                 <div className="py-5">
+                    <h3 className="text-lg font-semibold">Release tokens</h3>
                     <p className="mb-3">
                         Move tokens from SMV balance back to wallet balance
                     </p>
@@ -185,6 +201,7 @@ const DaoWalletPage = () => {
                     </Formik>
                 </div>
                 <div className="py-5">
+                    <h3 className="text-lg font-semibold">Release locked tokens</h3>
                     <p className="mb-3">
                         Release locked tokens from all completed proposals back to SMV balance
                     </p>
@@ -206,6 +223,21 @@ const DaoWalletPage = () => {
                             </Form>
                         )}
                     </Formik>
+                </div>
+                <div className="py-5">
+                    <h3 className="text-lg font-semibold">Git remote</h3>
+                    <div className="mb-3">
+                        Git remote credentials
+
+                    </div>
+                    <pre className="relative text-sm bg-gray-050a15/5 rounded-md px-4 py-3 overflow-x-auto">
+                        <CopyClipboard
+                            className="absolute right-3 top-3"
+                            componentProps={{ text: JSON.stringify(gitRemoteCredentials) }}
+                            iconProps={{ size: 'lg' }}
+                        />
+                        {JSON.stringify(gitRemoteCredentials, undefined, 2)}
+                    </pre>
                 </div>
             </div>
         </>
