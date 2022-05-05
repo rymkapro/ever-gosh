@@ -1,17 +1,30 @@
 import React, { useEffect, useState } from "react";
 import { faChevronRight, faCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import BranchSelect from "../../components/BranchSelect";
 import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
-import { IGoshCommit, IGoshDao, IGoshRoot, IGoshSmvLocker, IGoshSmvProposal, IGoshWallet, TGoshBranch } from "../../types/types";
-import { TRepoLayoutOutletContext } from "../RepoLayout";
+import {
+    IGoshCommit,
+    IGoshDao,
+    IGoshRoot,
+    IGoshSmvLocker,
+    IGoshSmvProposal,
+    IGoshWallet,
+    TGoshBranch
+} from "../../types/types";
 import { useGoshDao, useGoshRoot, useGoshWallet } from "../../hooks/gosh.hooks";
 import Spinner from "../../components/Spinner";
 import { classNames, shortString } from "../../utils";
 import CopyClipboard from "../../components/CopyClipboard";
-import { GoshCommit, GoshRepository, GoshSmvClient, GoshSmvLocker, GoshSmvProposal } from "../../types/classes";
+import {
+    GoshCommit,
+    GoshRepository,
+    GoshSmvClient,
+    GoshSmvLocker,
+    GoshSmvProposal
+} from "../../types/classes";
 
 
 const PullsPage = () => {
@@ -25,23 +38,7 @@ const PullsPage = () => {
     const [branchFrom, setBranchFrom] = useState<TGoshBranch | undefined>(defaultBranch);
     const [branchTo, setBranchTo] = useState<TGoshBranch | undefined>(defaultBranch);
     const [proposals, setProposals] = useState<{ prop: IGoshSmvProposal; commit?: IGoshCommit; locked: number; }[]>();
-    const [locker, setLocker] = useState<IGoshSmvLocker>();
-    const [balance, setBalance] = useState<number>();
-
-
-    const getLockerData = async (goshWallet: IGoshWallet) => {
-        const lockerAddr = await goshWallet.getSmvLockerAddr();
-        console.debug('Locker addr:', lockerAddr)
-        const locker = new GoshSmvLocker(goshWallet.account.client, lockerAddr);
-        await locker.load();
-        console.debug('Locker votes:', locker.meta?.votesLocked, locker.meta?.votesTotal);
-        setLocker(locker);
-    }
-
-    const getTokenBalance = async (goshWallet: IGoshWallet) => {
-        const balance = await goshWallet.getSmvTokenBalance();
-        setBalance(balance);
-    }
+    const [service, setService] = useState<{ locker?: IGoshSmvLocker; balance: number; }>({ locker: undefined, balance: 0 });
 
     const getPullList = async (goshRoot: IGoshRoot, goshDao: IGoshDao, goshWallet: IGoshWallet) => {
         // Get SMVProposal code
@@ -101,26 +98,33 @@ const PullsPage = () => {
     }
 
     useEffect(() => {
-        const interval = setInterval(async () => {
-            console.log('Reload locker')
-            locker?.account.refresh();
-            await locker?.load();
-        }, 5000);
-        return () => {
-            clearInterval(interval);
-        }
-    }, [locker]);
-
-    useEffect(() => {
         if (!repoName && goshRoot && goshDao && goshWallet) getPullList(goshRoot, goshDao, goshWallet);
     }, [repoName, goshRoot, goshDao, goshWallet]);
 
     useEffect(() => {
-        if (goshWallet) {
-            getLockerData(goshWallet);
-            getTokenBalance(goshWallet);
+        const initService = async (wallet: IGoshWallet) => {
+            const lockerAddr = await wallet.getSmvLockerAddr();
+            const locker = new GoshSmvLocker(wallet.account.client, lockerAddr);
+            const balance = await wallet.getSmvTokenBalance();
+            setService({ locker, balance });
         }
-    }, [goshWallet]);
+
+        if (goshWallet && !service.locker) initService(goshWallet);
+
+        let interval: any;
+        if (goshWallet && service?.locker) {
+            interval = setInterval(async () => {
+                await service.locker?.load();
+                const balance = await goshWallet.getSmvTokenBalance();
+                console.debug('[Locker] - Busy:', service.locker?.meta?.isBusy);
+                setService((prev) => ({ ...prev, balance }));
+            }, 5000);
+        }
+
+        return () => {
+            clearInterval(interval);
+        }
+    }, [goshWallet, service?.locker]);
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -173,22 +177,22 @@ const PullsPage = () => {
                     <div className="mt-6 mb-5 flex items-center gap-x-6 bg-gray-100 rounded px-4 py-3">
                         <div>
                             <span className="font-semibold mr-2">SMV balance:</span>
-                            {locker?.meta?.votesTotal}
+                            {service.locker?.meta?.votesTotal}
                         </div>
                         <div>
                             <span className="font-semibold mr-2">Locked:</span>
-                            {locker?.meta?.votesLocked}
+                            {service.locker?.meta?.votesLocked}
                         </div>
                         <div>
                             <span className="font-semibold mr-2">Wallet balance:</span>
-                            {balance}
+                            {service.balance}
                         </div>
                         <div className="grow text-right">
                             <FontAwesomeIcon
                                 icon={faCircle}
                                 className={classNames(
                                     'ml-2',
-                                    locker?.meta?.isBusy ? 'text-rose-600' : 'text-green-900'
+                                    service.locker?.meta?.isBusy ? 'text-rose-600' : 'text-green-900'
                                 )}
                             />
                         </div>

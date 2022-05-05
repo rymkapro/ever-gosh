@@ -26,7 +26,12 @@ const Header = () => {
                         </Link>
 
                         <div className="flex items-center gap-x-4 sm:gap-x-34px">
-                            <a href="https://t.me/gosh_sh" target="_blank" className="text-gray-53596d hover:underline">
+                            <a
+                                href="https://t.me/gosh_sh"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-gray-53596d hover:underline"
+                            >
                                 <FontAwesomeIcon icon={faPaperPlane} className="mr-3" size="lg" />
                                 Our telegram
                             </a>

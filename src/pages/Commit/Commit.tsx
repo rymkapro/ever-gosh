@@ -3,7 +3,7 @@ import { useOutletContext, useParams } from "react-router-dom";
 import { IGoshBlob, IGoshCommit, IGoshRepository } from "../../types/types";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import { useMonaco } from "@monaco-editor/react";
-import { getCommitTime, getCodeLanguageFromFilename, getCommitTree, getBlobContent, zstd } from "../../helpers";
+import { getCommitTime, getCodeLanguageFromFilename, getCommitTree, getBlobContent } from "../../helpers";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 import { GoshBlob, GoshCommit } from "../../types/classes";
 import CopyClipboard from "../../components/CopyClipboard";
@@ -43,6 +43,7 @@ const CommitPage = () => {
 
             // Get commit blobs
             const blobAddrs = await commit.getBlobs();
+            console.debug('[Commit] - Blob addrs:', blobAddrs);
             const blobTrees: IGoshBlob[] = [];
             const blobs: {
                 name: string;

@@ -38,7 +38,6 @@ import {
     IGoshSmvClient,
     IGoshSmvTokenRoot
 } from "./types";
-import { Buffer } from "buffer";
 
 
 export class GoshDaoCreator implements IGoshDaoCreator {
@@ -374,7 +373,7 @@ export class GoshWallet implements IGoshWallet {
                 )).join('\n');
                 console.debug('[createCommit] - Tree blob content for:', path, blobContent);
 
-                console.debug('[createCommit] - Tree blob content uncompressed:', Buffer.from(blobContent).toString('base64'));
+                console.debug('[createCommit] - Tree blob content uncompressed:', blobContent);
                 const compressed = await zstd.compress(this.account.client, blobContent);
                 console.debug('[createCommit] - Tree blob content compressed:', compressed);
 
@@ -395,9 +394,12 @@ export class GoshWallet implements IGoshWallet {
 
         await Promise.all(
             _blobs.map(async (blob) => {
-                console.debug('[createCommit] - Blob patch uncompressed:', blob.name, blob.patch);
-                const compressed = await zstd.compress(this.account.client, blob.patch);
-                console.debug('[createCommit] - Blob patch compressed:', blob.name, compressed);
+                // console.debug('[createCommit] - Blob patch uncompressed:', blob.name, blob.patch);
+                // const compressed = await zstd.compress(this.account.client, blob.patch);
+                // console.debug('[createCommit] - Blob patch compressed:', blob.name, compressed);
+                console.debug('[createCommit] - Blob content uncompressed:', blob.name, blob.modified);
+                const compressed = await zstd.compress(this.account.client, blob.modified);
+                console.debug('[createCommit] - Blob content compressed:', blob.name, compressed);
 
                 blobsToDeploy.name.push(`blob ${blob.sha}`);
                 blobsToDeploy.fn.push(() => (

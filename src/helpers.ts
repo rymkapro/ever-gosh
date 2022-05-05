@@ -64,6 +64,7 @@ export const fromEvers = (value: number): number => {
 export const sha1 = (data: string, type: 'blob' | 'commit'): string => {
     let content = data;
     if (type === 'commit') content += '\n';
+    if (type === 'blob' && data.slice(-1) !== '\n') content += '\n';
     const size = Buffer.from(content, 'utf-8').byteLength;
     const object = Buffer.from(`${type} ${size}\0${content}`);
     const hash = SHA1(object.toString());
@@ -178,6 +179,7 @@ export const getRepoTree = async (
 
     // Build full tree
     const tree = getTreeFromItems(items);
+    console.debug('[getRepoTree] - Tree:', tree);
     return { tree, items };
 }
 
@@ -214,11 +216,7 @@ export const calculateSubtrees = (tree: TGoshTree) => {
         });
 }
 
-export const getBlobDiffPatch = async (
-    fileName: string,
-    modified: string,
-    original: string
-) => {
+export const getBlobDiffPatch = (fileName: string, modified: string, original: string) => {
     let patch = Diff.createTwoFilesPatch(`a/${fileName}`, `b/${fileName}`, original, modified);
     patch = patch.split('\n').slice(1).join('\n');
 
@@ -233,27 +231,36 @@ export const getBlobDiffPatch = async (
 }
 
 export const getBlobContent = async (repo: IGoshRepository, blobName: string): Promise<string> => {
-    const blobWalker = async (blobName: string) => {
-        const name = blobName.indexOf('blob ') < 0 ? `blob ${blobName}` : blobName;
-        const blobAddr = await repo.getBlobAddr(name);
-        const blob = new GoshBlob(repo.account.client, blobAddr);
-        const { acc_type } = await blob.account.getAccount();
-        if (acc_type !== AccountType.active) return;
+    const name = blobName.indexOf('blob ') < 0 ? `blob ${blobName}` : blobName;
+    const blobAddr = await repo.getBlobAddr(name);
+    const blob = new GoshBlob(repo.account.client, blobAddr);
+    const { acc_type } = await blob.account.getAccount();
+    if (acc_type !== AccountType.active) return '';
 
-        await blob.load();
-        patches.push(blob.meta?.content || '');
+    await blob.load();
+    return blob.meta?.content || '';
 
-        if (blob.meta?.prevSha) await blobWalker(blob.meta.prevSha);
-    }
+    // const blobWalker = async (blobName: string) => {
+    //     const name = blobName.indexOf('blob ') < 0 ? `blob ${blobName}` : blobName;
+    //     const blobAddr = await repo.getBlobAddr(name);
+    //     const blob = new GoshBlob(repo.account.client, blobAddr);
+    //     const { acc_type } = await blob.account.getAccount();
+    //     if (acc_type !== AccountType.active) return;
 
-    const patches: string[] = [];
-    await blobWalker(blobName);
-    console.debug('[getFullBlob] - Patches:', patches);
+    //     await blob.load();
+    //     patches.push(blob.meta?.content || '');
 
-    let content = '';
-    patches.reverse().forEach((patch) => content = Diff.applyPatch(content, patch));
-    console.debug('[getFullBlob] - Content:', `"${content}"`);
-    return content;
+    //     if (blob.meta?.prevSha) await blobWalker(blob.meta.prevSha);
+    // }
+
+    // const patches: string[] = [];
+    // await blobWalker(blobName);
+    // console.debug('[getFullBlob] - Patches:', patches);
+
+    // let content = '';
+    // patches.reverse().forEach((patch) => content = Diff.applyPatch(content, patch));
+    // console.debug('[getFullBlob] - Content:', `"${content}"`);
+    // return content;
 }
 
 /** Split file path to path and file name */
