@@ -66,7 +66,7 @@ const RepoLayout = () => {
                     <div className="flex gap-x-6 mb-6">
                         <NavLink
                             to={`/${daoName}/${repoName}`}
-                            end={location.pathname.indexOf('/pulls') >= 0}
+                            end={location.pathname.indexOf('/pull') >= 0}
                             className={({ isActive }) => classNames(
                                 'text-base text-gray-050a15/50 hover:text-gray-050a15 py-1.5 px-2',
                                 isActive ? '!text-gray-050a15 border-b border-b-gray-050a15' : null
