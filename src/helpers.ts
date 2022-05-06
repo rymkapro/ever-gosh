@@ -19,7 +19,7 @@ export const getEndpoints = (): string[] => {
         case 'devnet':
             return ['https://net.ton.dev'];
         case 'mainnet':
-            return ['https://main.ton.dev'];
+            return ['https://network.gosh.sh'];
         case 'se':
         default:
             return ['http://localhost'];
