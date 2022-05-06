@@ -34,6 +34,7 @@ import EventPage from "./pages/Event";
 
 import "./assets/scss/style.scss";
 import BaseModal from "./components/Modal/BaseModal";
+import Spinner from "./components/Spinner";
 
 
 
@@ -43,10 +44,19 @@ const App = () => {
 
     useEffect(() => {
         if (!client) return;
-        setIsInitialized(true);
+        client.client.version().then(() => {
+            setIsInitialized(true);
+        });
     }, [client]);
 
-    if (!isInitialized) return <p>Loading...</p>
+    if (!isInitialized) return (
+        <div className="w-screen h-screen flex items-center justify-center">
+            <div>
+                <Spinner className="mr-3" size="lg" />
+                App is loading...
+            </div>
+        </div>
+    )
     return (
         <div className="wrapper">
             <Header />
