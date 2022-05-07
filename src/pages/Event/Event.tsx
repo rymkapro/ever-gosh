@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Field, Form, Formik } from "formik";
-import { Link, useParams } from "react-router-dom";
+import { Link, useOutletContext, useParams } from "react-router-dom";
 import TextField from "../../components/FormikForms/TextField";
 import Spinner from "../../components/Spinner";
 import {
@@ -15,6 +15,7 @@ import {
     IGoshBlob,
     IGoshCommit,
     IGoshRepository,
+    IGoshRoot,
     IGoshSmvLocker,
     IGoshSmvProposal,
     IGoshWallet
@@ -24,10 +25,11 @@ import CopyClipboard from "../../components/CopyClipboard";
 import { classNames, shortString } from "../../utils";
 import { getBlobContent, getCodeLanguageFromFilename, getCommitTree } from "../../helpers";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
-import { useGoshDao, useGoshRoot, useGoshWallet } from "../../hooks/gosh.hooks";
+import { useGoshRoot } from "../../hooks/gosh.hooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircle } from "@fortawesome/free-solid-svg-icons";
 import { useMonaco } from "@monaco-editor/react";
+import { TDaoLayoutOutletContext } from "../DaoLayout";
 
 
 type TFormValues = {
@@ -36,10 +38,9 @@ type TFormValues = {
 }
 
 const EventPage = () => {
-    const { daoName, pullAddress } = useParams();
+    const { daoName, eventAddr } = useParams();
+    const { goshDao, goshWallet } = useOutletContext<TDaoLayoutOutletContext>();
     const goshRoot = useGoshRoot();
-    const goshDao = useGoshDao(daoName);
-    const goshWallet = useGoshWallet(daoName);
     const monaco = useMonaco();
     const [release, setRelease] = useState<boolean>(false);
     const [check, setCheck] = useState<boolean>(false);
@@ -177,9 +178,9 @@ const EventPage = () => {
     }
 
     useEffect(() => {
-        const getGoshPull = async (wallet: IGoshWallet, address: string) => {
+        const getGoshPull = async (root: IGoshRoot, eventAddr: string, wallet?: IGoshWallet) => {
             // Get GoshProposal object
-            const prop = new GoshSmvProposal(wallet.account.client, address);
+            const prop = new GoshSmvProposal(root.account.client, eventAddr);
             await prop.load();
             if (!prop.meta || !daoName || !goshRoot) {
                 alert('Error loading proposal');
@@ -187,19 +188,20 @@ const EventPage = () => {
             }
 
             // Get repository and commit with blobs
-            const repoAddr = await goshRoot.getRepoAddr(
+            const repoAddr = await root.getRepoAddr(
                 prop.meta.commit.repoName,
                 daoName
             );
-            const repo = new GoshRepository(goshRoot.account.client, repoAddr);
+            const repo = new GoshRepository(root.account.client, repoAddr);
             const [commit, blobs] = await getCommit(repo, prop.meta.commit.commitName);
 
             // Get SMVLocker
             let locker: IGoshSmvLocker | undefined;
             let balance = 0;
-            if (wallet.isDaoParticipant) {
+            if (wallet?.isDaoParticipant) {
                 const lockerAddr = await wallet.getSmvLockerAddr();
                 locker = new GoshSmvLocker(wallet.account.client, lockerAddr);
+                await locker.load();
                 balance = await wallet.getSmvTokenBalance();
             }
 
@@ -214,7 +216,9 @@ const EventPage = () => {
             });
         }
 
-        if (goshWallet && pullAddress && !service?.locker && !service?.proposal) getGoshPull(goshWallet, pullAddress);
+        if (goshRoot && eventAddr && !service?.locker && !service?.proposal) {
+            getGoshPull(goshRoot, eventAddr, goshWallet);
+        }
         let interval: any;
         if (goshWallet && service?.locker && service?.proposal) {
             interval = setInterval(async () => {
@@ -240,7 +244,7 @@ const EventPage = () => {
         return () => {
             clearInterval(interval);
         }
-    }, [pullAddress, goshWallet, daoName, goshRoot, service?.locker, service?.proposal]);
+    }, [eventAddr, goshWallet, daoName, goshRoot, service?.locker, service?.proposal]);
 
 
     return (

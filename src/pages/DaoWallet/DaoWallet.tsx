@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Field, Form, Formik } from "formik";
-import { useParams } from "react-router-dom";
+import { useOutletContext } from "react-router-dom";
 import TextField from "../../components/FormikForms/TextField";
 import Spinner from "../../components/Spinner";
-import { useGoshWallet } from "../../hooks/gosh.hooks";
 import { GoshSmvLocker } from "../../types/classes";
 import { IGoshSmvLocker, IGoshWallet } from "../../types/types";
 import * as Yup from "yup";
 import { useRecoilValue } from "recoil";
 import { userStateAtom } from "../../store/user.state";
 import CopyClipboard from "../../components/CopyClipboard";
+import { TDaoLayoutOutletContext } from "../DaoLayout";
 
 
 type TMoveBalanceFormValues = {
@@ -17,9 +17,9 @@ type TMoveBalanceFormValues = {
 }
 
 const DaoWalletPage = () => {
-    const { daoName } = useParams();
-    const goshWallet = useGoshWallet(daoName);
     const userState = useRecoilValue(userStateAtom);
+    const { goshWallet } = useOutletContext<TDaoLayoutOutletContext>();
+
     const [data, setData] = useState<{
         locker?: IGoshSmvLocker;
         balance?: number;

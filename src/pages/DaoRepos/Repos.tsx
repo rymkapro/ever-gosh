@@ -10,10 +10,11 @@ import Spinner from "../../components/Spinner";
 
 
 const DaoRepositoriesPage = () => {
-    const [search, setSearch] = useState<string>();
     const goshRoot = useGoshRoot();
-    const { goshDao, goshWallet } = useOutletContext<TDaoLayoutOutletContext>();
     const { daoName } = useParams();
+    const { goshDao, goshWallet } = useOutletContext<TDaoLayoutOutletContext>();
+    const [search, setSearch] = useState<string>();
+
     const repoListQuery = useQuery(
         ['repositoryList'],
         async (): Promise<IGoshRepository[]> => {

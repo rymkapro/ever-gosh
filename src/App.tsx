@@ -75,18 +75,18 @@ const App = () => {
                             <Route path="settings" element={<SettingsPage />} />
                         </Route>
                     </Route>
-                    <Route path="/:daoName" element={<ProtectedLayout />}>
+                    <Route path="/:daoName" element={<ProtectedLayout redirect={false} />}>
                         <Route element={<DaoLayout />}>
                             <Route index element={<DaoPage />} />
                             <Route path="repos" element={<DaoReposPage />} />
+                            <Route path="repos/create" element={<RepoCreatePage />} />
                             <Route path="events" element={<EventsPage />} />
-                            <Route path="events/:pullAddress" element={<EventPage />} />
+                            <Route path="events/:eventAddr" element={<EventPage />} />
                             <Route path="settings" element={<DaoSettingsLayout />}>
                                 <Route path="wallet" element={<DaoWalletPage />} />
                                 <Route path="participants" element={<DaoParticipantsPage />} />
                             </Route>
                         </Route>
-                        <Route path="repos/create" element={<RepoCreatePage />} />
                         <Route path=":repoName" element={<RepoLayout />}>
                             <Route index element={<RepoPage />} />
                             <Route path="tree/:branchName/*" element={<RepoPage />} />
@@ -99,7 +99,6 @@ const App = () => {
                             <Route path="pull" element={<PullCreatePage />} />
                             <Route path="find/:branchName" element={<GotoPage />} />
                         </Route>
-
                     </Route>
                     <Route path="*" element={<p>No match (404)</p>} />
                 </Routes>

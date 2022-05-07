@@ -12,14 +12,13 @@ import { useEverClient } from "./ever.hooks";
 /** Create GoshRoot object */
 export const useGoshRoot = () => {
     const client = useEverClient();
-    const userState = useRecoilValue(userStateAtom);
 
     return useMemo<IGoshRoot | undefined>(() => {
         const address = process.env.REACT_APP_GOSH_ADDR;
-        if (client && userState.keys?.public && address) {
+        if (client && address) {
             return new GoshRoot(client, address);
         }
-    }, [client, userState.keys]);
+    }, [client]);
 }
 
 export const useGoshDao = (name?: string) => {

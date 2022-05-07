@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Field, Form, Formik } from "formik";
-import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import TextField from "../../components/FormikForms/TextField";
 import { useMonaco } from "@monaco-editor/react";
@@ -28,17 +28,17 @@ type TFormValues = {
 }
 
 const BlobCreatePage = () => {
+    const pathName = useParams()['*'];
     const { daoName, repoName, branchName = 'main' } = useParams();
+    const navigate = useNavigate();
     const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
+    const monaco = useMonaco();
     const userState = useRecoilValue(userStateAtom);
     const { updateBranch } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
-    const navigate = useNavigate();
-    const monaco = useMonaco();
-    const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
     const [activeTab, setActiveTab] = useState<number>(0);
+    const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
 
-    const pathName = useParams()['*'];
     const urlBack = `/${daoName}/${repoName}/tree/${branchName}${pathName && `/${pathName}`}`;
 
     const onCommitChanges = async (values: TFormValues) => {
@@ -71,7 +71,7 @@ const BlobCreatePage = () => {
         }
     }
 
-    if (!goshWallet.isDaoParticipant) navigate(urlBack);
+    if (!goshWallet?.isDaoParticipant) return <Navigate to={urlBack} />;
     return (
         <div className="bordered-block px-7 py-8">
             <Formik

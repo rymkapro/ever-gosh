@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Field, Form, Formik } from "formik";
-import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import * as Yup from "yup";
 import TextField from "../../components/FormikForms/TextField";
 import { Tab } from "@headlessui/react";
@@ -30,16 +30,15 @@ type TFormValues = {
 
 const BlobUpdatePage = () => {
     const pathName = useParams()['*'];
-
     const { daoName, repoName, branchName = 'main' } = useParams();
+    const navigate = useNavigate();
     const { goshRepo, goshRepoTree, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
+    const monaco = useMonaco();
     const userState = useRecoilValue(userStateAtom);
     const { updateBranch } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
-    const navigate = useNavigate();
-    const monaco = useMonaco();
-    const [activeTab, setActiveTab] = useState<number>(0);
     const treeItem = useRecoilValue(goshRepoTree.getTreeItem(pathName));
+    const [activeTab, setActiveTab] = useState<number>(0);
     const [blobContent, setBlobContent] = useState<string>();
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
 
@@ -93,7 +92,7 @@ const BlobUpdatePage = () => {
         }
     }, [monaco, pathName])
 
-    if (!goshWallet.isDaoParticipant) navigate(urlBack);
+    if (!goshWallet?.isDaoParticipant) return <Navigate to={urlBack} />;
     return (
         <div className="bordered-block px-7 py-8">
             {monaco && pathName && blobContent !== undefined && (

@@ -3,7 +3,7 @@ import { faArrowRight, faChevronRight } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useMonaco } from "@monaco-editor/react";
 import { Field, Form, Formik } from "formik";
-import { useNavigate, useOutletContext, useParams, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useOutletContext, useParams, useSearchParams } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 import { getCodeLanguageFromFilename, getRepoTree, isMainBranch } from "../../helpers";
@@ -27,12 +27,13 @@ type TCommitFormValues = {
 }
 
 const PullCreatePage = () => {
-    const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
+    const userState = useRecoilValue(userStateAtom);
+    const branches = useRecoilValue(goshBranchesAtom);
     const { daoName, repoName } = useParams();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const userState = useRecoilValue(userStateAtom);
-    const branches = useRecoilValue(goshBranchesAtom);
+    const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
+    const monaco = useMonaco();
     const { updateBranches } = useGoshRepoBranches(goshRepo);
     const branchFrom = useRecoilValue(
         goshCurrBranchSelector(searchParams.get('from') || 'main')
@@ -41,7 +42,6 @@ const PullCreatePage = () => {
         goshCurrBranchSelector(searchParams.get('to') || 'main')
     );
     const [compare, setCompare] = useState<{ to?: any, from?: any }[]>();
-    const monaco = useMonaco();
 
     useEffect(() => {
         const getBlob = async (hash: string): Promise<IGoshBlob> => {
@@ -124,12 +124,13 @@ const PullCreatePage = () => {
 
     const onCommitMerge = async (values: TCommitFormValues) => {
         try {
+            if (!goshWallet) throw Error('GoshWallet is undefined');
             if (!userState.keys) throw Error('Can not get user keys');
-            if (!repoName) throw Error('[Merge]: Repository is undefined');
-            if (!branchFrom) throw Error('[Merge]: From branch is undefined');
-            if (!branchTo) throw Error('[Merge]: To branch in undefined');
-            if (branchFrom.name === branchTo.name) throw Error('[Merge]: Banches are equal');
-            if (!compare?.length) throw Error('[Merge]: There are no changes to merge');
+            if (!repoName) throw Error('Repository is undefined');
+            if (!branchFrom) throw Error('From branch is undefined');
+            if (!branchTo) throw Error('To branch in undefined');
+            if (branchFrom.name === branchTo.name) throw Error('Banches are equal');
+            if (!compare?.length) throw Error('There are no changes to merge');
 
             // Prepare blobs
             const blobs = compare.map(({ from, to }) => {
@@ -174,111 +175,104 @@ const PullCreatePage = () => {
         }
     }
 
+    if (!goshWallet) return <Navigate to={`/${daoName}/${repoName}`} />
     return (
         <div className="bordered-block px-7 py-8">
-            {!goshWallet.isDaoParticipant && (
-                <p className="text-sm text-rose-400">You are not a DAO participant</p>
-            )}
+            <div className="flex items-center gap-x-4">
+                <BranchSelect
+                    branch={branchFrom}
+                    branches={branches}
+                    onChange={(selected) => {
+                        navigate(`/${daoName}/${repoName}/pull?from=${selected?.name}&to=${branchTo?.name}`);
+                    }}
+                />
+                <span>
+                    <FontAwesomeIcon icon={faChevronRight} size="sm" />
+                </span>
+                <BranchSelect
+                    branch={branchTo}
+                    branches={branches}
+                    onChange={(selected) => {
+                        navigate(`/${daoName}/${repoName}/pull?from=${branchFrom?.name}&to=${selected?.name}`);
+                    }}
+                />
+            </div>
 
-            {goshWallet.isDaoParticipant && (
-                <>
-                    <div className="flex items-center gap-x-4">
-                        <BranchSelect
-                            branch={branchFrom}
-                            branches={branches}
-                            onChange={(selected) => {
-                                navigate(`/${daoName}/${repoName}/pull?from=${selected?.name}&to=${branchTo?.name}`);
-                            }}
-                        />
-                        <span>
-                            <FontAwesomeIcon icon={faChevronRight} size="sm" />
-                        </span>
-                        <BranchSelect
-                            branch={branchTo}
-                            branches={branches}
-                            onChange={(selected) => {
-                                navigate(`/${daoName}/${repoName}/pull?from=${branchFrom?.name}&to=${selected?.name}`);
-                            }}
-                        />
+            <div className="mt-5">
+                {compare === undefined && (
+                    <div className="text-sm text-gray-606060">
+                        <Spinner className="mr-3" />
+                        Loading diff...
                     </div>
+                )}
 
-                    <div className="mt-5">
-                        {compare === undefined && (
-                            <div className="text-sm text-gray-606060">
-                                <Spinner className="mr-3" />
-                                Loading diff...
-                            </div>
-                        )}
+                {compare && !compare.length && (
+                    <div className="text-sm text-gray-606060 text-center">
+                        There is nothing to merge
+                    </div>
+                )}
 
-                        {compare && !compare.length && (
-                            <div className="text-sm text-gray-606060 text-center">
-                                There is nothing to merge
-                            </div>
-                        )}
+                {!!compare?.length && (
+                    <>
+                        <div className="text-lg">
+                            Merge branch
+                            <span className="font-semibold mx-2">{branchFrom?.name}</span>
+                            <FontAwesomeIcon icon={faArrowRight} size="sm" />
+                            <span className="font-semibold ml-2">{branchTo?.name}</span>
+                        </div>
 
-                        {!!compare?.length && (
-                            <>
-                                <div className="text-lg">
-                                    Merge branch
-                                    <span className="font-semibold mx-2">{branchFrom?.name}</span>
-                                    <FontAwesomeIcon icon={faArrowRight} size="sm" />
-                                    <span className="font-semibold ml-2">{branchTo?.name}</span>
+                        {compare.map(({ to, from }, index) => {
+                            const item = to?.item || from?.item;
+                            const fileName = `${item.path && `${item.path}/`}${item.name}`;
+                            if (!fileName) return null;
+
+                            const language = getCodeLanguageFromFilename(monaco, fileName);
+                            return (
+                                <div key={index} className="my-5 border rounded overflow-hidden">
+                                    <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
+                                        {fileName}
+                                    </div>
+                                    <BlobDiffPreview
+                                        original={to?.blob.meta?.content}
+                                        modified={from?.blob.meta?.content}
+                                        modifiedLanguage={language}
+                                    />
                                 </div>
+                            );
+                        })}
 
-                                {compare.map(({ to, from }, index) => {
-                                    const item = to?.item || from?.item;
-                                    const fileName = `${item.path && `${item.path}/`}${item.name}`;
-                                    if (!fileName) return null;
-
-                                    const language = getCodeLanguageFromFilename(monaco, fileName);
-                                    return (
-                                        <div key={index} className="my-5 border rounded overflow-hidden">
-                                            <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
-                                                {fileName}
-                                            </div>
-                                            <BlobDiffPreview
-                                                original={to?.blob.meta?.content}
-                                                modified={from?.blob.meta?.content}
-                                                modifiedLanguage={language}
-                                            />
-                                        </div>
-                                    );
+                        <div className="mt-5">
+                            <Formik
+                                initialValues={{
+                                    title: `Merge branch '${branchFrom?.name}' into '${branchTo?.name}'`
+                                }}
+                                onSubmit={onCommitMerge}
+                                validationSchema={Yup.object().shape({
+                                    title: Yup.string().required('Field is required')
                                 })}
-
-                                <div className="mt-5">
-                                    <Formik
-                                        initialValues={{
-                                            title: `Merge branch '${branchFrom?.name}' into '${branchTo?.name}'`
-                                        }}
-                                        onSubmit={onCommitMerge}
-                                        validationSchema={Yup.object().shape({
-                                            title: Yup.string().required('Field is required')
-                                        })}
-                                    >
-                                        {({ isSubmitting }) => (
-                                            <Form>
-                                                <FormCommitBlock
-                                                    isDisabled={!monaco || isSubmitting}
-                                                    isSubmitting={isSubmitting}
-                                                    extraButtons={!isMainBranch(branchFrom?.name) && (
-                                                        <Field
-                                                            name="deleteBranch"
-                                                            component={SwitchField}
-                                                            className="ml-4"
-                                                            label="Delete branch after merge"
-                                                            labelClassName="text-sm text-gray-505050"
-                                                        />
-                                                    )}
+                            >
+                                {({ isSubmitting }) => (
+                                    <Form>
+                                        <FormCommitBlock
+                                            isDisabled={!monaco || isSubmitting}
+                                            isSubmitting={isSubmitting}
+                                            extraButtons={!isMainBranch(branchFrom?.name) && (
+                                                <Field
+                                                    name="deleteBranch"
+                                                    component={SwitchField}
+                                                    className="ml-4"
+                                                    label="Delete branch after merge"
+                                                    labelClassName="text-sm text-gray-505050"
                                                 />
-                                            </Form>
-                                        )}
-                                    </Formik>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </>
-            )}
+                                            )}
+                                        />
+                                    </Form>
+                                )}
+                            </Formik>
+                        </div>
+                    </>
+                )}
+            </div>
         </div>
     );
 }

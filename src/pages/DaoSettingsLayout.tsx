@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink, Outlet, useOutletContext, useParams } from "react-router-dom";
+import { Navigate, NavLink, Outlet, useOutletContext, useParams } from "react-router-dom";
 import { classNames } from "../utils";
 import { TDaoLayoutOutletContext } from "./DaoLayout";
 
@@ -13,6 +13,7 @@ const DaoSettingsLayout = () => {
         { to: `/${daoName}/settings/participants`, title: 'Participants' }
     ];
 
+    if (!daoContext.goshWallet) return <Navigate to={`/${daoName}`} />;
     return (
         <div className="container mt-12 mb-5">
             <div className="bordered-block px-7 py-8">

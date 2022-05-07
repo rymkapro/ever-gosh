@@ -28,7 +28,7 @@ const DaoPage = () => {
                 </div>
                 <div className="mt-4">
                     <p className="text-sm text-gray-606060 mb-1">Git remote</p>
-                    {goshWallet.isDaoParticipant
+                    {goshWallet?.isDaoParticipant
                         ? (
                             <Link
                                 to={`/${goshDao.meta?.name}/settings/wallet`}

@@ -2,9 +2,9 @@ import React from "react";
 import { Field, Form, Formik } from "formik";
 import * as Yup from "yup";
 import TextField from "../../components/FormikForms/TextField";
-import { useGoshWallet } from "../../hooks/gosh.hooks";
-import { useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import Spinner from "../../components/Spinner";
+import { TDaoLayoutOutletContext } from "../DaoLayout";
 
 
 type TFormValues = {
@@ -13,12 +13,14 @@ type TFormValues = {
 
 const RepoCreatePage = () => {
     const { daoName } = useParams();
-    const goshWallet = useGoshWallet(daoName);
     const navigate = useNavigate();
+    const { goshWallet } = useOutletContext<TDaoLayoutOutletContext>();
 
     const onRepoCreate = async (values: TFormValues) => {
         try {
-            await goshWallet?.deployRepo(values.name);
+            if (!goshWallet) throw Error('GoshWallet is undefined');
+
+            await goshWallet.deployRepo(values.name);
             navigate(`/${daoName}/${values.name}`, { replace: true });
         } catch (e: any) {
             console.error(e.message);
@@ -26,6 +28,7 @@ const RepoCreatePage = () => {
         }
     }
 
+    if (!goshWallet) return <Navigate to={`/${daoName}`} />
     return (
         <div className="container mt-12 mb-5">
             <div className="bordered-block max-w-lg px-7 py-8 mx-auto">

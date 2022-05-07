@@ -763,7 +763,6 @@ export class GoshCommit implements IGoshCommit {
     }
 
     static parseContent(content: string): TGoshCommitContent {
-        console.debug('[GoshCommit] Commit content', content);
         const splitted = content.split('\n');
 
         const commentIndex = splitted.findIndex((v) => v === '');
@@ -835,11 +834,7 @@ export class GoshSmvProposal implements IGoshSmvProposal {
 
     async load(): Promise<void> {
         const id = await this.getId();
-        console.log('Prop id', id);
-
         const params = await this.getGoshSetCommitProposalParams();
-        console.log('Prop params', params);
-
         const votes = await this.getVotes();
         const time = await this.getTime();
         const isCompleted = await this.isCompleted();

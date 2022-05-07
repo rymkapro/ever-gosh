@@ -35,6 +35,26 @@ const Header = () => {
                                 <FontAwesomeIcon icon={faPaperPlane} className="mr-3" size="lg" />
                                 Our telegram
                             </a>
+                            {
+                                !userStatePersist.phrase &&
+                                location.pathname.search(/signin|signup/) < 0 &&
+                                location.pathname !== '/'
+                                && (
+                                    <>
+                                        <Link
+                                            to={`/account/signup`}
+                                            className="btn btn--header icon-arrow"
+                                        >
+                                            Sign up
+                                        </Link>
+                                        <Link
+                                            to={`/account/signin`}
+                                            className="btn btn--header icon-arrow"
+                                        >
+                                            Sign in
+                                        </Link>
+                                    </>
+                                )}
                             {location.pathname.search('/signin') >= 0 && (
                                 <>
                                     <div className="text-lg text-gray-53596d hidden sm:block">

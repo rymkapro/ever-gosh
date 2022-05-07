@@ -1,100 +1,95 @@
 import React, { useEffect, useState } from "react";
 import { faCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Link, useParams } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import CopyClipboard from "../../components/CopyClipboard";
 import Spinner from "../../components/Spinner";
-import { useGoshDao, useGoshRoot, useGoshWallet } from "../../hooks/gosh.hooks";
+import { useGoshRoot } from "../../hooks/gosh.hooks";
 import { GoshCommit, GoshRepository, GoshSmvClient, GoshSmvLocker, GoshSmvProposal } from "../../types/classes";
 import { IGoshCommit, IGoshDao, IGoshRoot, IGoshSmvLocker, IGoshSmvProposal, IGoshWallet } from "../../types/types";
 import { classNames, shortString } from "../../utils";
+import { TDaoLayoutOutletContext } from "../DaoLayout";
 
 
 const EventsPage = () => {
-    const { daoName, repoName } = useParams();
     const goshRoot = useGoshRoot();
-    const goshDao = useGoshDao(daoName);
-    const goshWallet = useGoshWallet(daoName);
+    const { goshDao, goshWallet } = useOutletContext<TDaoLayoutOutletContext>();
     const [proposals, setProposals] = useState<{ prop: IGoshSmvProposal; commit?: IGoshCommit; locked: number; }[]>();
-    const [service, setService] = useState<{ locker?: IGoshSmvLocker; balance: number; }>({ locker: undefined, balance: 0 });
-
-    const getPullList = async (goshRoot: IGoshRoot, goshDao: IGoshDao, goshWallet: IGoshWallet) => {
-        // Get SMVProposal code
-        const proposalCode = await goshDao.getSmvProposalCode();
-        // console.debug('SMVProposal code:', proposalCode);
-        const proposalssAddrs = await goshDao.account.client.net.query_collection({
-            collection: 'accounts',
-            filter: {
-                code: { eq: proposalCode }
-            },
-            result: 'id'
-        });
-        console.debug('[Pulls] - SMVProposal addreses:', proposalssAddrs?.result || []);
-
-        const proposals = await Promise.all(
-            (proposalssAddrs?.result || [])
-                .map(async (item: any) => {
-                    // Get GoshProposal object
-                    console.debug('[Pulls] - Prop addr:', item.id)
-                    const proposal = new GoshSmvProposal(goshDao.account.client, item.id);
-                    await proposal.load();
-
-                    // Get commit
-                    let commit = undefined;
-                    if (proposal.meta?.commit && daoName) {
-                        const repoAddr = await goshRoot.getRepoAddr(
-                            proposal.meta.commit.repoName,
-                            daoName
-                        );
-                        const goshRepo = new GoshRepository(goshDao.account.client, repoAddr);
-                        const commitAddr = await goshRepo.getCommitAddr(proposal.meta.commit.commitName);
-                        commit = new GoshCommit(goshDao.account.client, commitAddr);
-                        await commit.load();
-                    };
-
-                    // Get amount of user's locked tokens in proposal
-                    let locked = 0;
-                    if (proposal.meta && goshWallet.isDaoParticipant) {
-                        const propLockerAddr = await proposal.getLockerAddr();
-                        console.log('[propLockerAddr]', propLockerAddr);
-                        const smvClientAddr = await goshWallet.getSmvClientAddr(
-                            propLockerAddr,
-                            proposal.meta.id
-                        );
-                        console.log('[svmClientAddr]', smvClientAddr);
-                        try {
-                            const smvClient = new GoshSmvClient(goshWallet.account.client, smvClientAddr);
-                            locked = await smvClient.getLockedAmount();
-                        } catch { }
-                    }
-
-                    return { prop: proposal, commit, locked };
-                })
-        );
-        console.debug('SMVProposals:', proposals);
-        setProposals(proposals);
-    }
+    const [service, setService] = useState<{ locker?: IGoshSmvLocker; balance?: number; }>();
 
     useEffect(() => {
-        if (!repoName && goshRoot && goshDao && goshWallet) getPullList(goshRoot, goshDao, goshWallet);
-    }, [repoName, goshRoot, goshDao, goshWallet]);
+        const getPullList = async (root: IGoshRoot, dao: IGoshDao, wallet?: IGoshWallet) => {
+            // Get SMVProposal code
+            const proposalCode = await dao.getSmvProposalCode();
+            const proposalssAddrs = await dao.account.client.net.query_collection({
+                collection: 'accounts',
+                filter: {
+                    code: { eq: proposalCode }
+                },
+                result: 'id'
+            });
+
+            const proposals = await Promise.all(
+                (proposalssAddrs?.result || [])
+                    .map(async (item: any) => {
+                        // Get GoshProposal object
+                        const proposal = new GoshSmvProposal(dao.account.client, item.id);
+                        await proposal.load();
+
+                        // Get commit
+                        let commit = undefined;
+                        if (proposal.meta?.commit && dao.meta) {
+                            const repoAddr = await root.getRepoAddr(
+                                proposal.meta.commit.repoName,
+                                dao.meta.name
+                            );
+                            const repo = new GoshRepository(dao.account.client, repoAddr);
+                            const commitAddr = await repo.getCommitAddr(proposal.meta.commit.commitName);
+                            commit = new GoshCommit(dao.account.client, commitAddr);
+                            await commit.load();
+                        };
+
+                        // Get amount of user's locked tokens in proposal
+                        let locked = 0;
+                        if (proposal.meta && wallet && wallet.isDaoParticipant) {
+                            const propLockerAddr = await proposal.getLockerAddr();
+                            const smvClientAddr = await wallet.getSmvClientAddr(
+                                propLockerAddr,
+                                proposal.meta.id
+                            );
+                            try {
+                                const smvClient = new GoshSmvClient(wallet.account.client, smvClientAddr);
+                                locked = await smvClient.getLockedAmount();
+                            } catch { }
+                        }
+
+                        return { prop: proposal, commit, locked };
+                    })
+            );
+            console.debug('[Events] - Proposals:', proposals);
+            setProposals(proposals);
+        }
+
+        if (goshRoot && goshDao) getPullList(goshRoot, goshDao, goshWallet);
+    }, [goshRoot, goshDao, goshWallet]);
 
     useEffect(() => {
         const initService = async (wallet: IGoshWallet) => {
             const lockerAddr = await wallet.getSmvLockerAddr();
             const locker = new GoshSmvLocker(wallet.account.client, lockerAddr);
+            await locker.load();
             const balance = await wallet.getSmvTokenBalance();
             setService({ locker, balance });
         }
 
-        if (goshWallet && goshWallet.isDaoParticipant && !service.locker) initService(goshWallet);
+        if (goshWallet && goshWallet.isDaoParticipant && !service?.locker) initService(goshWallet);
 
         let interval: any;
         if (goshWallet && goshWallet.isDaoParticipant && service?.locker) {
             interval = setInterval(async () => {
                 await service.locker?.load();
                 const balance = await goshWallet.getSmvTokenBalance();
-                console.debug('[Locker] - Busy:', service.locker?.meta?.isBusy);
+                console.debug('[Events] - Locker busy:', service.locker?.meta?.isBusy);
                 setService((prev) => ({ ...prev, balance }));
             }, 5000);
         }
@@ -111,22 +106,22 @@ const EventsPage = () => {
                     <div className="mt-6 mb-5 flex items-center gap-x-6 bg-gray-100 rounded px-4 py-3">
                         <div>
                             <span className="font-semibold mr-2">SMV balance:</span>
-                            {service.locker?.meta?.votesTotal}
+                            {service?.locker?.meta?.votesTotal}
                         </div>
                         <div>
                             <span className="font-semibold mr-2">Locked:</span>
-                            {service.locker?.meta?.votesLocked}
+                            {service?.locker?.meta?.votesLocked}
                         </div>
                         <div>
                             <span className="font-semibold mr-2">Wallet balance:</span>
-                            {service.balance}
+                            {service?.balance}
                         </div>
                         <div className="grow text-right">
                             <FontAwesomeIcon
                                 icon={faCircle}
                                 className={classNames(
                                     'ml-2',
-                                    service.locker?.meta?.isBusy ? 'text-rose-600' : 'text-green-900'
+                                    service?.locker?.meta?.isBusy ? 'text-rose-600' : 'text-green-900'
                                 )}
                             />
                         </div>
@@ -148,7 +143,7 @@ const EventsPage = () => {
                         <div key={index} className="flex items-center gap-x-5 py-3">
                             <div className="basis-2/5">
                                 <Link
-                                    to={`/${daoName}/events/${item.prop.address}`}
+                                    to={`/${goshDao.meta?.name}/events/${item.prop.address}`}
                                     className="text-lg font-semibold hover:underline"
                                 >
                                     {item.commit?.meta?.content.title}

@@ -19,10 +19,9 @@ import { GoshBlob } from "../../types/classes";
 
 const BlobPage = () => {
     const pathName = useParams()['*'];
-
     const { daoName, repoName, branchName = 'main' } = useParams();
-    const { goshWallet, goshRepo, goshRepoTree } = useOutletContext<TRepoLayoutOutletContext>();
     const navigate = useNavigate();
+    const { goshWallet, goshRepo, goshRepoTree } = useOutletContext<TRepoLayoutOutletContext>();
     const monaco = useMonaco();
     const branches = useRecoilValue(goshBranchesAtom);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
@@ -97,7 +96,7 @@ const BlobPage = () => {
                                 size: 'sm'
                             }}
                         />
-                        {!isMainBranch(branchName) && goshWallet.isDaoParticipant && (
+                        {!isMainBranch(branchName) && goshWallet?.isDaoParticipant && (
                             <Link
                                 to={`/${daoName}/${repoName}/blobs/update/${branchName}/${pathName}`}
                                 className="text-extblack/60 hover:text-extblack p-1 ml-2">

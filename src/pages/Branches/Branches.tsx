@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { faChevronRight, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Field, Form, Formik, FormikHelpers } from "formik";
@@ -27,10 +27,13 @@ export const BranchesPage = () => {
     const [branchName, setBranchName] = useState<string>('main');
     const { branches, updateBranches } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
-    const [search, setSearch] = useState<string>();
+    const [search, setSearch] = useState<string>('');
+    const [filtered, setFiltered] = useState<TGoshBranch[]>(branches);
     const [branchesOnMutation, setBranchesOnMutation] = useState<string[]>([]);
+
     const branchDeleteMutation = useMutation(
         (name: string) => {
+            if (!goshWallet) throw Error('GoshWallet is undefined');
             return goshWallet.deleteBranch(goshRepo, name);
         },
         {
@@ -54,6 +57,7 @@ export const BranchesPage = () => {
     ) => {
         try {
             if (!values.from) throw Error('From branch is undefined');
+            if (!goshWallet) throw Error('GoshWallet is undefined');
 
             await goshWallet.deployBranch(goshRepo, values.newName, values.from.name);
             await updateBranches();
@@ -70,10 +74,19 @@ export const BranchesPage = () => {
         }
     }
 
+    useEffect(() => {
+        if (search) {
+            const pattern = new RegExp(search, 'i');
+            setFiltered(branches.filter((item) => item.name.search(pattern) >= 0));
+        } else {
+            setFiltered(branches);
+        }
+    }, [branches, search]);
+
     return (
         <div className="bordered-block px-7 py-8">
             <div className="flex justify-between gap-4">
-                {goshWallet.isDaoParticipant && (
+                {goshWallet?.isDaoParticipant && (
                     <Formik
                         initialValues={{ newName: '', from: branch }}
                         onSubmit={onBranchCreate}
@@ -127,15 +140,14 @@ export const BranchesPage = () => {
                     <input
                         type="text"
                         className="element !text-sm !py-1.5"
-                        placeholder="Search branch (disabled)"
-                        disabled={true}
+                        placeholder="Search branch"
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
             </div>
 
             <div className="mt-5 divide-y divide-gray-c4c4c4">
-                {branches.map((branch, index) => (
+                {filtered.map((branch, index) => (
                     <div key={index} className="flex gap-4 items-center px-3 py-2 text-sm">
                         <div className="grow">
                             <Link
@@ -146,7 +158,7 @@ export const BranchesPage = () => {
                             </Link>
                         </div>
                         <div>
-                            {!isMainBranch(branch.name) && goshWallet.isDaoParticipant && (
+                            {!isMainBranch(branch.name) && goshWallet?.isDaoParticipant && (
                                 <button
                                     type="button"
                                     className="px-2.5 py-1.5 text-white text-xs rounded bg-rose-600

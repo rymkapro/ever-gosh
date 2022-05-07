@@ -8,6 +8,7 @@ import BlobDiffPreview from "../../components/Blob/DiffPreview";
 import { GoshBlob, GoshCommit } from "../../types/classes";
 import CopyClipboard from "../../components/CopyClipboard";
 import { shortString } from "../../utils";
+import Spinner from "../../components/Spinner";
 
 
 const CommitPage = () => {
@@ -103,7 +104,12 @@ const CommitPage = () => {
 
     return (
         <div className="bordered-block px-7 py-8">
-            {(!monaco || !commit) && (<p>Loading commit...</p>)}
+            {(!monaco || !commit) && (
+                <div className="text-gray-606060 text-sm">
+                    <Spinner className="mr-3" />
+                    Loading commit...
+                </div>
+            )}
             {monaco && commit && (
                 <>
                     <div>

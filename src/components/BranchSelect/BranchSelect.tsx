@@ -20,10 +20,6 @@ const BranchSelect = (props: TBranchSelectProps) => {
     const [filtered, setFiltered] = useState<TGoshBranch[]>(branches);
 
     useEffect(() => {
-        setFiltered(branches);
-    }, [branches]);
-
-    useEffect(() => {
         if (search) {
             const pattern = new RegExp(search, 'i');
             setFiltered(branches.filter((item) => item.name.search(pattern) >= 0));
