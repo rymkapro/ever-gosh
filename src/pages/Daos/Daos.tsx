@@ -1,23 +1,26 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useQuery } from "react-query";
 import { Link } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import Spinner from "../../components/Spinner";
 import { useGoshRoot } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
 import { GoshDao, GoshSmvTokenRoot, GoshWallet } from "../../types/classes";
-import { IGoshDao, IGoshRoot } from "../../types/types";
+import { IGoshDao } from "../../types/types";
 
 
 const DaosPage = () => {
     const userState = useRecoilValue(userStateAtom);
     const goshRoot = useGoshRoot();
-    const [goshDaos, setGoshDaos] = useState<{ dao: IGoshDao; supply: number; }[]>();
+    const [search, setSearch] = useState<string>('');
 
-    useEffect(() => {
-        const getDaoList = async (goshRoot: IGoshRoot, pubkey: string) => {
+    const daoListQuery = useQuery(
+        ['daoList'],
+        async (): Promise<{ dao: IGoshDao; supply: number; }[]> => {
+            if (!goshRoot || !userState.keys) return [];
+
             // Get GoshWallet code by user's pubkey and get all user's wallets
-            const walletCode = await goshRoot.getDaoWalletCode(`0x${pubkey}`);
-            // console.debug('GoshWallet code:', walletCode);
+            const walletCode = await goshRoot.getDaoWalletCode(`0x${userState.keys.public}`);
             const walletsAddrs = await goshRoot.account.client.net.query_collection({
                 collection: 'accounts',
                 filter: {
@@ -25,10 +28,9 @@ const DaosPage = () => {
                 },
                 result: 'id'
             });
-            console.debug('GoshWallets addreses:', walletsAddrs?.result || []);
 
             // Get GoshDaos from user's GoshWallets
-            const daos = await Promise.all(
+            return await Promise.all(
                 (walletsAddrs?.result || []).map(async (item: any) => {
                     // Get GoshDao object
                     const goshWallet = new GoshWallet(goshRoot.account.client, item.id);
@@ -44,12 +46,16 @@ const DaosPage = () => {
                     return { dao, supply: totalSupply };
                 })
             );
-            console.debug('GoshDaos:', daos);
-            setGoshDaos(daos);
+        },
+        {
+            enabled: !!goshRoot && !!userState.keys,
+            select: (data) => {
+                if (!search) return data;
+                const pattern = new RegExp(search, 'i');
+                return data.filter(({ dao }) => dao.meta && dao.meta.name.search(pattern) >= 0);
+            }
         }
-
-        if (goshRoot && userState.keys) getDaoList(goshRoot, userState.keys.public);
-    }, [userState.keys, goshRoot]);
+    );
 
     return (
         <>
@@ -58,8 +64,10 @@ const DaosPage = () => {
                     <input
                         className="element !py-1.5"
                         type="text"
-                        placeholder="Search orgranizations (Disabled for now)"
-                        disabled
+                        placeholder="Search orgranization..."
+                        autoComplete="off"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
                 <Link
@@ -71,18 +79,18 @@ const DaosPage = () => {
             </div>
 
             <div className="mt-8">
-                {goshDaos === undefined && (
+                {(daoListQuery.isIdle || daoListQuery.isLoading) && (
                     <div className="text-gray-606060">
                         <Spinner className="mr-3" />
                         Loading organizations...
                     </div>
                 )}
-                {!goshDaos?.length && (
+                {daoListQuery.isFetched && !daoListQuery.data?.length && (
                     <div className="text-gray-606060 text-center">You have no organizations yet</div>
                 )}
 
                 <div className="divide-y divide-gray-c4c4c4">
-                    {goshDaos?.map((item, index) => (
+                    {daoListQuery.data?.map((item, index) => (
                         <div key={index} className="py-2 flex items-center justify-between">
                             <div>
                                 <Link

@@ -27,7 +27,6 @@ const RepositoriesPage = () => {
                 },
                 result: 'id'
             });
-            // console.debug('GoshWallets addreses:', walletAddrs?.result || []);
 
             // Get GoshDaos from user's GoshWallets
             const daos = await Promise.all(
@@ -38,7 +37,6 @@ const RepositoriesPage = () => {
                     return new GoshDao(goshRoot.account.client, daoAddr);
                 })
             );
-            // console.debug('GoshDaos:', daoAddrs);
 
             // Get repos for each DAO
             const repos = await Promise.all(
@@ -51,7 +49,6 @@ const RepositoriesPage = () => {
                         },
                         result: 'id'
                     });
-                    console.debug('GoshRepos addreses:', repoAddrs?.result || []);
 
                     await dao.load();
                     const repos = await Promise.all(
@@ -64,7 +61,7 @@ const RepositoriesPage = () => {
                     return repos.map((repo) => ({ repo, daoName: dao.meta?.name }));
                 })
             );
-            console.debug('GoshRepos:', repos);
+
             return repos.reduce((items: any[], item) => {
                 items.push(...item);
                 return items;
@@ -88,9 +85,9 @@ const RepositoriesPage = () => {
             <div className="flex flex-wrap gap-4 justify-between">
                 <div className="input grow">
                     <input
-                        type={'text'}
-                        autoComplete={'off'}
-                        placeholder={'Find repository...'}
+                        type="text"
+                        autoComplete="off"
+                        placeholder="Search repository..."
                         className="element !py-1.5 !text-sm"
                         onChange={(event) => setSearch(event.target.value)}
                     />

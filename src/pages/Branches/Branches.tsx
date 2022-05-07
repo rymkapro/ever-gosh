@@ -140,7 +140,8 @@ export const BranchesPage = () => {
                     <input
                         type="text"
                         className="element !text-sm !py-1.5"
-                        placeholder="Search branch"
+                        placeholder="Search branch..."
+                        value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>

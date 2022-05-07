@@ -13,7 +13,7 @@ const DaoRepositoriesPage = () => {
     const goshRoot = useGoshRoot();
     const { daoName } = useParams();
     const { goshDao, goshWallet } = useOutletContext<TDaoLayoutOutletContext>();
-    const [search, setSearch] = useState<string>();
+    const [search, setSearch] = useState<string>('');
 
     const repoListQuery = useQuery(
         ['repositoryList'],
@@ -59,10 +59,11 @@ const DaoRepositoriesPage = () => {
             <div className="flex flex-wrap gap-4 justify-between">
                 <div className="input grow">
                     <input
-                        type={'text'}
-                        autoComplete={'off'}
-                        placeholder={'Find repository...'}
+                        type="text"
+                        autoComplete="off"
+                        placeholder="Search repository..."
                         className="element !py-1.5 !text-sm"
+                        value={search}
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
