@@ -31,7 +31,7 @@ const BlobCreatePage = () => {
     const pathName = useParams()['*'];
     const { daoName, repoName, branchName = 'main' } = useParams();
     const navigate = useNavigate();
-    const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
+    const { goshRepo, goshWallet, goshRepoTree } = useOutletContext<TRepoLayoutOutletContext>();
     const monaco = useMonaco();
     const userState = useRecoilValue(userStateAtom);
     const { updateBranch } = useGoshRepoBranches(goshRepo);
@@ -50,16 +50,18 @@ const BlobCreatePage = () => {
             if (isMainBranch(branchName)) throw Error(`Can not push to branch '${branchName}'. Create PR`);
             if (!goshWallet.isDaoParticipant) throw Error('You are not DAO participant');
 
+            const name = `${pathName && `${pathName}/`}${values.name}`;
+            const exists = goshRepoTree.tree.items.find((item) => (
+                `${item.path && `${item.path}/`}${item.name}` === name
+            ));
+            if (exists) throw Error(`File '${name}' already exists`);
+
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
             await goshWallet.createCommit(
                 goshRepo,
                 branch,
                 userState.keys.public,
-                [{
-                    name: `${pathName && `${pathName}/`}${values.name}`,
-                    modified: values.content,
-                    original: ''
-                }],
+                [{ name, modified: values.content, original: '' }],
                 message
             );
 

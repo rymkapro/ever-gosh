@@ -79,7 +79,11 @@ export class GoshRoot implements IGoshRoot {
         console.debug('[Create DAO] - Address:', daoAddr);
         const dao = new GoshDao(this.account.client, daoAddr);
         const acc = await dao.account.getAccount();
-        if (acc.acc_type === AccountType.active) return dao;
+        if (acc.acc_type === AccountType.active) {
+            const daoRootPubkey = await dao.getRootPubkey();
+            if (daoRootPubkey !== rootPubkey) throw Error(`DAO with name '${name}' already exists`);
+            return dao;
+        }
 
         // If DAO is not active (deployed), deploy and wait for status `active`
         await this.daoCreator.deployDao(name, rootPubkey);
@@ -296,7 +300,7 @@ export class GoshWallet implements IGoshWallet {
         // Prepare blobs
         const _blobs = await Promise.all(
             blobs.map(async (blob) => {
-                const patch = await getBlobDiffPatch(blob.name, blob.modified, blob.original);
+                const patch = getBlobDiffPatch(blob.name, blob.modified, blob.original);
                 return {
                     ...blob,
                     sha: sha1(blob.modified, 'blob'),
