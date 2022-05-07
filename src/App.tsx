@@ -103,7 +103,9 @@ const App = () => {
                     <Route path="*" element={<p>No match (404)</p>} />
                 </Routes>
             </main>
-            <footer className="footer"></footer>
+            <footer className="footer">
+                <div className="text-right text-xs text-gray-400">{process.env.REACT_APP_EVER_NETWORK}</div>
+            </footer>
 
             <ToastContainer />
             <BaseModal />
