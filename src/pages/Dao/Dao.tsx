@@ -3,11 +3,11 @@ import { Link, useOutletContext } from "react-router-dom";
 import CopyClipboard from "../../components/CopyClipboard";
 import { shortString } from "../../utils";
 import { TDaoLayoutOutletContext } from "../DaoLayout";
-import ReposPage from "../Repos";
+import ReposPage from "../DaoRepos";
 
 
 const DaoPage = () => {
-    const { goshDao } = useOutletContext<TDaoLayoutOutletContext>();
+    const { goshDao, goshWallet } = useOutletContext<TDaoLayoutOutletContext>();
 
     return (
         <div className="flex gap-4">
@@ -28,12 +28,16 @@ const DaoPage = () => {
                 </div>
                 <div className="mt-4">
                     <p className="text-sm text-gray-606060 mb-1">Git remote</p>
-                    <Link
-                        to={`/${goshDao.meta?.name}/settings/wallet`}
-                        className="hover:underline"
-                    >
-                        Setup git remote
-                    </Link>
+                    {goshWallet.isDaoParticipant
+                        ? (
+                            <Link
+                                to={`/${goshDao.meta?.name}/settings/wallet`}
+                                className="hover:underline"
+                            >
+                                Setup git remote
+                            </Link>
+                        )
+                        : <p className="text-sm text-rose-400">Not a DAO participant</p>}
                 </div>
             </div>
         </div>

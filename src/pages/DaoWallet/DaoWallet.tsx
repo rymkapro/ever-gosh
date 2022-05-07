@@ -249,14 +249,20 @@ const DaoWalletPage = () => {
                         Git remote credentials
 
                     </div>
-                    <pre className="relative text-sm bg-gray-050a15/5 rounded-md px-4 py-3 overflow-x-auto">
-                        <CopyClipboard
-                            className="absolute right-3 top-3"
-                            componentProps={{ text: JSON.stringify(gitRemoteCredentials) }}
-                            iconProps={{ size: 'lg' }}
-                        />
-                        {JSON.stringify(gitRemoteCredentials, undefined, 2)}
-                    </pre>
+                    {goshWallet.isDaoParticipant
+                        ? (
+                            <pre className="relative text-sm bg-gray-050a15/5 rounded-md px-4 py-3 overflow-x-auto">
+                                <CopyClipboard
+                                    className="absolute right-3 top-3"
+                                    componentProps={{ text: JSON.stringify(gitRemoteCredentials) }}
+                                    iconProps={{ size: 'lg' }}
+                                />
+                                {JSON.stringify(gitRemoteCredentials, undefined, 2)}
+                            </pre>
+                        )
+                        : <p className="text-sm text-rose-400">You are not a DAO participant</p>
+                    }
+
                 </div>
             </div>
         </>

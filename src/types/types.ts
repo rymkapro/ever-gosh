@@ -1,5 +1,6 @@
 import { Account } from "@eversdk/appkit";
 import { ClientConfig, KeyPair } from "@eversdk/core";
+import { boolean } from "yup";
 
 
 export type TEverState = {
@@ -95,6 +96,7 @@ export interface IGoshDao extends IContract {
 
 export interface IGoshWallet extends IContract {
     address: string;
+    isDaoParticipant: boolean;
 
     getDao(): Promise<IGoshDao>;
     getRoot(): Promise<IGoshRoot>;

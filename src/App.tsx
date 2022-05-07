@@ -18,8 +18,9 @@ import DaoPage from "./pages/Dao";
 import DaoCreatePage from "./pages/DaoCreate";
 import DaoWalletPage from "./pages/DaoWallet";
 import DaoParticipantsPage from "./pages/DaoParticipants";
-import ReposPage from "./pages/Repos";
+import DaoReposPage from "./pages/DaoRepos";
 import RepoCreatePage from "./pages/RepoCreate";
+import ReposPage from "./pages/Repos";
 import RepoPage from "./pages/Repo";
 import BranchesPage from "./pages/Branches";
 import BlobCreatePage from "./pages/BlobCreate";
@@ -70,13 +71,14 @@ const App = () => {
                         <Route element={<AccountLayout />}>
                             <Route index element={null} />
                             <Route path="orgs" element={<DaosPage />} />
+                            <Route path="repos" element={<ReposPage />} />
                             <Route path="settings" element={<SettingsPage />} />
                         </Route>
                     </Route>
                     <Route path="/:daoName" element={<ProtectedLayout />}>
                         <Route element={<DaoLayout />}>
                             <Route index element={<DaoPage />} />
-                            <Route path="repos" element={<ReposPage />} />
+                            <Route path="repos" element={<DaoReposPage />} />
                             <Route path="events" element={<EventsPage />} />
                             <Route path="events/:pullAddress" element={<EventPage />} />
                             <Route path="settings" element={<DaoSettingsLayout />}>

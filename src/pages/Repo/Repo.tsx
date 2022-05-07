@@ -13,7 +13,7 @@ import { faFile } from "@fortawesome/free-regular-svg-icons";
 
 
 const RepoPage = () => {
-    const { goshRepo, goshRepoTree } = useOutletContext<TRepoLayoutOutletContext>();
+    const { goshWallet, goshRepo, goshRepoTree } = useOutletContext<TRepoLayoutOutletContext>();
     const { daoName, repoName, branchName = 'main' } = useParams();
     const pathName = useParams()['*'] || '';
     const navigate = useNavigate();
@@ -64,7 +64,7 @@ const RepoPage = () => {
                     >
                         Go to file
                     </Link>
-                    {!isMainBranch(branchName) && (
+                    {!isMainBranch(branchName) && goshWallet.isDaoParticipant && (
                         <Link
                             to={`/${daoName}/${repoName}/blobs/create/${branchName}${pathName && `/${pathName}`}`}
                             className="btn btn--body px-4 py-1.5 text-sm !font-normal"

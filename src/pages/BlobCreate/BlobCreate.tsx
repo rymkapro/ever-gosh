@@ -48,6 +48,7 @@ const BlobCreatePage = () => {
             if (!repoName) throw Error('Repository is undefined');
             if (!branch) throw Error('Branch is undefined');
             if (isMainBranch(branchName)) throw Error(`Can not push to branch '${branchName}'. Create PR`);
+            if (!goshWallet.isDaoParticipant) throw Error('You are not DAO participant');
 
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
             await goshWallet.createCommit(
@@ -70,6 +71,7 @@ const BlobCreatePage = () => {
         }
     }
 
+    if (!goshWallet.isDaoParticipant) navigate(urlBack);
     return (
         <div className="bordered-block px-7 py-8">
             <Formik

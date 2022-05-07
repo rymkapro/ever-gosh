@@ -73,53 +73,55 @@ export const BranchesPage = () => {
     return (
         <div className="bordered-block px-7 py-8">
             <div className="flex justify-between gap-4">
-                <Formik
-                    initialValues={{ newName: '', from: branch }}
-                    onSubmit={onBranchCreate}
-                    validationSchema={Yup.object().shape({
-                        newName: Yup.string()
-                            .notOneOf((branches).map((b) => b.name), 'Branch exists')
-                            .required('Branch name is required')
-                    })}
-                >
-                    {({ isSubmitting, setFieldValue }) => (
-                        <Form className="flex items-center">
-                            <BranchSelect
-                                branch={branch}
-                                branches={branches}
-                                onChange={(selected) => {
-                                    if (selected) {
-                                        setBranchName(selected?.name);
-                                        setFieldValue('from', selected);
-                                    }
-                                }}
-                            />
-                            <span className="mx-3">
-                                <FontAwesomeIcon icon={faChevronRight} size="sm" />
-                            </span>
-                            <div>
-                                <Field
-                                    name="newName"
-                                    component={TextField}
-                                    errorEnabled={false}
-                                    inputProps={{
-                                        placeholder: 'Branch name',
-                                        autoComplete: 'off',
-                                        className: '!text-sm !py-1.5'
+                {goshWallet.isDaoParticipant && (
+                    <Formik
+                        initialValues={{ newName: '', from: branch }}
+                        onSubmit={onBranchCreate}
+                        validationSchema={Yup.object().shape({
+                            newName: Yup.string()
+                                .notOneOf((branches).map((b) => b.name), 'Branch exists')
+                                .required('Branch name is required')
+                        })}
+                    >
+                        {({ isSubmitting, setFieldValue }) => (
+                            <Form className="flex items-center">
+                                <BranchSelect
+                                    branch={branch}
+                                    branches={branches}
+                                    onChange={(selected) => {
+                                        if (selected) {
+                                            setBranchName(selected?.name);
+                                            setFieldValue('from', selected);
+                                        }
                                     }}
                                 />
-                            </div>
-                            <button
-                                type="submit"
-                                className="btn btn--body px-3 py-1.5 ml-3 !text-sm"
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting && <Spinner className="mr-2" />}
-                                Create branch
-                            </button>
-                        </Form>
-                    )}
-                </Formik>
+                                <span className="mx-3">
+                                    <FontAwesomeIcon icon={faChevronRight} size="sm" />
+                                </span>
+                                <div>
+                                    <Field
+                                        name="newName"
+                                        component={TextField}
+                                        errorEnabled={false}
+                                        inputProps={{
+                                            placeholder: 'Branch name',
+                                            autoComplete: 'off',
+                                            className: '!text-sm !py-1.5'
+                                        }}
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    className="btn btn--body px-3 py-1.5 ml-3 !text-sm"
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting && <Spinner className="mr-2" />}
+                                    Create branch
+                                </button>
+                            </Form>
+                        )}
+                    </Formik>
+                )}
 
                 <div className="input basis-1/4">
                     <input
@@ -144,7 +146,7 @@ export const BranchesPage = () => {
                             </Link>
                         </div>
                         <div>
-                            {!isMainBranch(branch.name) && (
+                            {!isMainBranch(branch.name) && goshWallet.isDaoParticipant && (
                                 <button
                                     type="button"
                                     className="px-2.5 py-1.5 text-white text-xs rounded bg-rose-600

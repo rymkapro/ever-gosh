@@ -54,7 +54,7 @@ const EventsPage = () => {
 
                     // Get amount of user's locked tokens in proposal
                     let locked = 0;
-                    if (proposal.meta) {
+                    if (proposal.meta && goshWallet.isDaoParticipant) {
                         const propLockerAddr = await proposal.getLockerAddr();
                         console.log('[propLockerAddr]', propLockerAddr);
                         const smvClientAddr = await goshWallet.getSmvClientAddr(
@@ -87,10 +87,10 @@ const EventsPage = () => {
             setService({ locker, balance });
         }
 
-        if (goshWallet && !service.locker) initService(goshWallet);
+        if (goshWallet && goshWallet.isDaoParticipant && !service.locker) initService(goshWallet);
 
         let interval: any;
-        if (goshWallet && service?.locker) {
+        if (goshWallet && goshWallet.isDaoParticipant && service?.locker) {
             interval = setInterval(async () => {
                 await service.locker?.load();
                 const balance = await goshWallet.getSmvTokenBalance();
@@ -107,29 +107,31 @@ const EventsPage = () => {
     return (
         <div className="bordered-block px-7 py-8">
             <div>
-                <div className="mt-6 mb-5 flex items-center gap-x-6 bg-gray-100 rounded px-4 py-3">
-                    <div>
-                        <span className="font-semibold mr-2">SMV balance:</span>
-                        {service.locker?.meta?.votesTotal}
+                {goshWallet?.isDaoParticipant && (
+                    <div className="mt-6 mb-5 flex items-center gap-x-6 bg-gray-100 rounded px-4 py-3">
+                        <div>
+                            <span className="font-semibold mr-2">SMV balance:</span>
+                            {service.locker?.meta?.votesTotal}
+                        </div>
+                        <div>
+                            <span className="font-semibold mr-2">Locked:</span>
+                            {service.locker?.meta?.votesLocked}
+                        </div>
+                        <div>
+                            <span className="font-semibold mr-2">Wallet balance:</span>
+                            {service.balance}
+                        </div>
+                        <div className="grow text-right">
+                            <FontAwesomeIcon
+                                icon={faCircle}
+                                className={classNames(
+                                    'ml-2',
+                                    service.locker?.meta?.isBusy ? 'text-rose-600' : 'text-green-900'
+                                )}
+                            />
+                        </div>
                     </div>
-                    <div>
-                        <span className="font-semibold mr-2">Locked:</span>
-                        {service.locker?.meta?.votesLocked}
-                    </div>
-                    <div>
-                        <span className="font-semibold mr-2">Wallet balance:</span>
-                        {service.balance}
-                    </div>
-                    <div className="grow text-right">
-                        <FontAwesomeIcon
-                            icon={faCircle}
-                            className={classNames(
-                                'ml-2',
-                                service.locker?.meta?.isBusy ? 'text-rose-600' : 'text-green-900'
-                            )}
-                        />
-                    </div>
-                </div>
+                )}
 
                 {proposals === undefined && (
                     <div className="text-gray-606060">

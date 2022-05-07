@@ -21,7 +21,7 @@ const BlobPage = () => {
     const pathName = useParams()['*'];
 
     const { daoName, repoName, branchName = 'main' } = useParams();
-    const { goshRepo, goshRepoTree } = useOutletContext<TRepoLayoutOutletContext>();
+    const { goshWallet, goshRepo, goshRepoTree } = useOutletContext<TRepoLayoutOutletContext>();
     const navigate = useNavigate();
     const monaco = useMonaco();
     const branches = useRecoilValue(goshBranchesAtom);
@@ -97,7 +97,7 @@ const BlobPage = () => {
                                 size: 'sm'
                             }}
                         />
-                        {!isMainBranch(branchName) && (
+                        {!isMainBranch(branchName) && goshWallet.isDaoParticipant && (
                             <Link
                                 to={`/${daoName}/${repoName}/blobs/update/${branchName}/${pathName}`}
                                 className="text-extblack/60 hover:text-extblack p-1 ml-2">

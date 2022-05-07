@@ -1,18 +1,20 @@
 import React from "react";
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
 import Spinner from "../components/Spinner";
-import { useGoshDao } from "../hooks/gosh.hooks";
-import { IGoshDao } from "../types/types";
+import { useGoshDao, useGoshWallet } from "../hooks/gosh.hooks";
+import { IGoshDao, IGoshWallet } from "../types/types";
 import { classNames } from "../utils";
 
 
 export type TDaoLayoutOutletContext = {
     goshDao: IGoshDao;
+    goshWallet: IGoshWallet;
 }
 
 const DaoLayout = () => {
     const { daoName } = useParams();
     const goshDao = useGoshDao(daoName);
+    const goshWallet = useGoshWallet(daoName);
     const tabs = [
         { to: `/${daoName}`, title: 'Overview' },
         { to: `/${daoName}/repos`, title: 'Repositories' },
@@ -29,7 +31,7 @@ const DaoLayout = () => {
                 </div>
             )}
 
-            {goshDao && (
+            {goshDao && goshWallet && (
                 <>
                     <h1 className="mb-6">
                         <Link to={`/${goshDao.meta?.name}`} className="font-semibold text-2xl">
@@ -53,7 +55,7 @@ const DaoLayout = () => {
                         ))}
                     </div>
 
-                    <Outlet context={{ goshDao }} />
+                    <Outlet context={{ goshDao, goshWallet }} />
                 </>
             )}
         </div>

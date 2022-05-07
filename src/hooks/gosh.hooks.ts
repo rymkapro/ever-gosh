@@ -50,6 +50,10 @@ export const useGoshWallet = (daoName?: string) => {
             const rootPubkey = await goshDao.getRootPubkey();
             const goshWalletAddr = await goshDao.getWalletAddr(rootPubkey, `0x${keys.public}`);
             const goshWallet = new GoshWallet(goshDao.account.client, goshWalletAddr, keys);
+
+            const daoParticipants = await goshDao.getWallets();
+            goshWallet.isDaoParticipant = daoParticipants.indexOf(goshWallet.address) >= 0;
+
             setGoshWallet(goshWallet);
         }
 

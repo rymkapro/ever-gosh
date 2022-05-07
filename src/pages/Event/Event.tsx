@@ -195,14 +195,19 @@ const EventPage = () => {
             const [commit, blobs] = await getCommit(repo, prop.meta.commit.commitName);
 
             // Get SMVLocker
-            const lockerAddr = await wallet.getSmvLockerAddr();
-            const locker = new GoshSmvLocker(wallet.account.client, lockerAddr);
+            let locker: IGoshSmvLocker | undefined;
+            let balance = 0;
+            if (wallet.isDaoParticipant) {
+                const lockerAddr = await wallet.getSmvLockerAddr();
+                locker = new GoshSmvLocker(wallet.account.client, lockerAddr);
+                balance = await wallet.getSmvTokenBalance();
+            }
 
             setService({
                 proposal: prop,
                 proposalLocked: 0,
                 locker,
-                balance: await wallet.getSmvTokenBalance(),
+                balance,
                 repo,
                 commit,
                 blobs
@@ -249,29 +254,31 @@ const EventPage = () => {
 
             {service?.proposal && monaco && (
                 <div>
-                    <div className="mb-5 flex items-center gap-x-6 bg-gray-100 rounded px-4 py-3">
-                        <div>
-                            <span className="font-semibold mr-2">SMV balance:</span>
-                            {service.locker?.meta?.votesTotal}
+                    {goshWallet?.isDaoParticipant && (
+                        <div className="mb-5 flex items-center gap-x-6 bg-gray-100 rounded px-4 py-3">
+                            <div>
+                                <span className="font-semibold mr-2">SMV balance:</span>
+                                {service.locker?.meta?.votesTotal}
+                            </div>
+                            <div>
+                                <span className="font-semibold mr-2">Locked:</span>
+                                {service.locker?.meta?.votesLocked}
+                            </div>
+                            <div>
+                                <span className="font-semibold mr-2">Wallet balance:</span>
+                                {service.balance}
+                            </div>
+                            <div className="grow text-right">
+                                <FontAwesomeIcon
+                                    icon={faCircle}
+                                    className={classNames(
+                                        'ml-2',
+                                        service.locker?.meta?.isBusy ? 'text-rose-600' : 'text-green-900'
+                                    )}
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <span className="font-semibold mr-2">Locked:</span>
-                            {service.locker?.meta?.votesLocked}
-                        </div>
-                        <div>
-                            <span className="font-semibold mr-2">Wallet balance:</span>
-                            {service.balance}
-                        </div>
-                        <div className="grow text-right">
-                            <FontAwesomeIcon
-                                icon={faCircle}
-                                className={classNames(
-                                    'ml-2',
-                                    service.locker?.meta?.isBusy ? 'text-rose-600' : 'text-green-900'
-                                )}
-                            />
-                        </div>
-                    </div>
+                    )}
 
                     <div className="flex items-center gap-x-5 py-2">
                         <div className="basis-2/5">
@@ -315,20 +322,24 @@ const EventPage = () => {
                             <span className="mx-1">/</span>
                             <span className="text-rose-600 text-xl">{service.proposal.meta?.votes.no}</span>
                         </div>
-                        {!!service.proposalLocked && service.proposal.meta?.isCompleted && (
-                            <div>
-                                <button
-                                    type="button"
-                                    className="btn btn--body text-sm px-4 py-1.5"
-                                    onClick={onTokensRelease}
-                                    disabled={release}
-                                >
-                                    {release && <Spinner className="mr-2" />}
-                                    Release
-                                </button>
-                            </div>
-                        )}
-                        {goshWallet && !service.proposal.meta?.isCompleted && (
+                        {
+                            goshWallet &&
+                            goshWallet.isDaoParticipant &&
+                            !!service.proposalLocked &&
+                            service.proposal.meta?.isCompleted && (
+                                <div>
+                                    <button
+                                        type="button"
+                                        className="btn btn--body text-sm px-4 py-1.5"
+                                        onClick={onTokensRelease}
+                                        disabled={release}
+                                    >
+                                        {release && <Spinner className="mr-2" />}
+                                        Release
+                                    </button>
+                                </div>
+                            )}
+                        {goshWallet && goshWallet.isDaoParticipant && !service.proposal.meta?.isCompleted && (
                             <div>
                                 <button
                                     type="button"
@@ -356,13 +367,20 @@ const EventPage = () => {
                         </div>
                     )}
 
-                    {!service.proposal.meta?.isCompleted && (
+                    {goshWallet?.isDaoParticipant && !service.proposal.meta?.isCompleted && (
                         <Formik
-                            initialValues={{ approve: 'true', amount: 51 }}
+                            initialValues={{
+                                approve: 'true',
+                                amount: (service.locker?.meta?.votesTotal ?? 0) - (service.locker?.meta?.votesLocked ?? 0)
+                            }}
                             onSubmit={onProposalSubmit}
                             validationSchema={Yup.object().shape({
-                                amount: Yup.number().min(20, 'Should be a number >= 20').required('Field is required')
+                                amount: Yup.number()
+                                    .min(1, 'Should be a number >= 1')
+                                    .max((service.locker?.meta?.votesTotal ?? 0) - (service.locker?.meta?.votesLocked ?? 0))
+                                    .required('Field is required')
                             })}
+                            enableReinitialize
                         >
                             {({ isSubmitting }) => (
                                 <div className="mt-10">
@@ -374,7 +392,8 @@ const EventPage = () => {
                                                 component={TextField}
                                                 inputProps={{
                                                     className: '!py-1.5',
-                                                    placeholder: 'Amount of tokens'
+                                                    placeholder: 'Amount of tokens',
+                                                    autoComplete: 'off'
                                                 }}
                                             />
                                         </div>

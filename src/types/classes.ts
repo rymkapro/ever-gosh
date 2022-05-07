@@ -247,9 +247,11 @@ export class GoshWallet implements IGoshWallet {
     abi: any = GoshWalletABI;
     account: Account;
     address: string;
+    isDaoParticipant: boolean;
 
     constructor(client: TonClient, address: string, keys?: KeyPair) {
         this.address = address;
+        this.isDaoParticipant = false;
         this.account = new Account(
             { abi: this.abi },
             {

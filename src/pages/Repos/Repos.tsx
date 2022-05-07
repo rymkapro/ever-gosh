@@ -1,59 +1,89 @@
 import React, { useState } from "react";
-import { Link, useOutletContext, useParams } from "react-router-dom";
-import { useGoshRoot } from "../../hooks/gosh.hooks";
-import { GoshRepository } from "../../types/classes";
-import { IGoshRepository } from "../../types/types";
 import { useQuery } from "react-query";
-import RepoListItem from "./RepoListItem";
-import { TDaoLayoutOutletContext } from "../DaoLayout";
+import { useRecoilValue } from "recoil";
 import Spinner from "../../components/Spinner";
+import { useGoshRoot } from "../../hooks/gosh.hooks";
+import { userStateAtom } from "../../store/user.state";
+import { GoshDao, GoshRepository, GoshWallet } from "../../types/classes";
+import { IGoshDao, IGoshRepository } from "../../types/types";
+import RepoListItem from "../DaoRepos/RepoListItem";
 
 
 const RepositoriesPage = () => {
-    const [search, setSearch] = useState<string>();
+    const userState = useRecoilValue(userStateAtom);
     const goshRoot = useGoshRoot();
-    const { goshDao } = useOutletContext<TDaoLayoutOutletContext>();
-    const { daoName } = useParams();
+    const [search, setSearch] = useState<string>();
     const repoListQuery = useQuery(
-        ['repositoryList'],
-        async (): Promise<IGoshRepository[]> => {
-            if (!goshRoot) return [];
+        ['userRepositoryList'],
+        async (): Promise<{ repo: IGoshRepository; daoName?: string; }[]> => {
+            if (!goshRoot || !userState.keys) return [];
 
-            // Get GoshDaoRepoCode by GoshDao address and get all repos addreses
-            const repoCode = await goshRoot.getDaoRepoCode(goshDao.address);
-            // console.debug('Repo code', repoCode);
-            const reposAddrs = await goshRoot.account.client.net.query_collection({
+            // Get GoshWallet code by user's pubkey and get all user's wallets
+            const walletCode = await goshRoot.getDaoWalletCode(`0x${userState.keys.public}`);
+            const walletAddrs = await goshRoot.account.client.net.query_collection({
                 collection: 'accounts',
                 filter: {
-                    code: { eq: repoCode }
+                    code: { eq: walletCode }
                 },
                 result: 'id'
             });
-            console.debug('GoshRepos addreses:', reposAddrs?.result || []);
+            // console.debug('GoshWallets addreses:', walletAddrs?.result || []);
 
-            // Create GoshRepository objects
+            // Get GoshDaos from user's GoshWallets
+            const daos = await Promise.all(
+                (walletAddrs?.result || []).map(async (item: any) => {
+                    // Get GoshDao object
+                    const wallet = new GoshWallet(goshRoot.account.client, item.id);
+                    const daoAddr = await wallet.getDaoAddr();
+                    return new GoshDao(goshRoot.account.client, daoAddr);
+                })
+            );
+            // console.debug('GoshDaos:', daoAddrs);
+
+            // Get repos for each DAO
             const repos = await Promise.all(
-                (reposAddrs?.result || []).map(async (item) => {
-                    const repo = new GoshRepository(goshRoot.account.client, item.id);
-                    await repo.load();
-                    return repo;
+                daos.map(async (dao) => {
+                    const repoCode = await goshRoot.getDaoRepoCode(dao.address);
+                    const repoAddrs = await goshRoot.account.client.net.query_collection({
+                        collection: 'accounts',
+                        filter: {
+                            code: { eq: repoCode }
+                        },
+                        result: 'id'
+                    });
+                    console.debug('GoshRepos addreses:', repoAddrs?.result || []);
+
+                    await dao.load();
+                    const repos = await Promise.all(
+                        (repoAddrs?.result || []).map(async (item) => {
+                            const repo = new GoshRepository(goshRoot.account.client, item.id);
+                            await repo.load();
+                            return repo;
+                        })
+                    );
+                    return repos.map((repo) => ({ repo, daoName: dao.meta?.name }));
                 })
             );
             console.debug('GoshRepos:', repos);
-            return repos;
+            return repos.reduce((items: any[], item) => {
+                items.push(...item);
+                return items;
+            }, []);
         },
         {
-            enabled: !!goshRoot,
+            enabled: !!goshRoot && !!userState.keys?.public,
             select: (data) => {
                 if (!search) return data;
                 const pattern = new RegExp(search, 'i');
-                return data.filter((repo) => repo.meta && repo.meta.name.search(pattern) >= 0);
+                return data.filter((item) => {
+                    return (`${item.daoName}/${item.repo.meta?.name}`.search(pattern) >= 0)
+                });
             }
         }
     );
 
     return (
-        <div className="bordered-block px-7 py-8">
+        <>
             <h3 className="font-semibold text-base mb-4">Repositories</h3>
             <div className="flex flex-wrap gap-4 justify-between">
                 <div className="input grow">
@@ -65,13 +95,6 @@ const RepositoriesPage = () => {
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-
-                <Link
-                    className="btn btn--body px-4 py-1.5 text-sm !font-normal"
-                    to={`/${goshDao.meta?.name}/repos/create`}
-                >
-                    New repository
-                </Link>
             </div>
 
             <div className="mt-5 divide-y divide-gray-c4c4c4">
@@ -88,11 +111,18 @@ const RepositoriesPage = () => {
                     </div>
                 )}
 
-                {repoListQuery.data?.map((repository, index) => (
-                    daoName && <RepoListItem key={index} daoName={daoName} repository={repository} />
+                {repoListQuery.data?.map(({ daoName, repo }, index) => (
+                    daoName && (
+                        <RepoListItem
+                            key={index}
+                            daoName={daoName}
+                            repository={repo}
+                            daoLink
+                        />
+                    )
                 ))}
             </div>
-        </div>
+        </>
     );
 }
 

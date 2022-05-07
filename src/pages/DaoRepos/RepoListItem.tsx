@@ -9,20 +9,35 @@ import { shortString } from "../../utils";
 
 type TRepositoryListItemProps = {
     daoName: string;
-    repository: IGoshRepository
+    repository: IGoshRepository;
+    daoLink?: boolean;
 }
 
 const RepositoryListItem = (props: TRepositoryListItemProps) => {
-    const { daoName, repository } = props;
+    const { daoName, repository, daoLink = false } = props;
 
     return (
         <div className="py-3">
-            <Link
-                className="text-xl font-semibold hover:underline"
-                to={`/${daoName}/${repository.meta?.name}`}
-            >
-                {repository.meta?.name}
-            </Link>
+            <div className="flex">
+                {daoLink && (
+                    <>
+                        <Link
+                            className="text-xl font-semibold hover:underline"
+                            to={`/${daoName}`}
+                        >
+                            {daoName}
+                        </Link>
+                        <span className="mx-1">/</span>
+                    </>
+                )}
+                <Link
+                    className="text-xl font-semibold hover:underline"
+                    to={`/${daoName}/${repository.meta?.name}`}
+                >
+                    {repository.meta?.name}
+                </Link>
+            </div>
+
 
             <div className="text-sm text-gray-606060">
                 Gosh repository
