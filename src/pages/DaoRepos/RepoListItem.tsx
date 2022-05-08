@@ -18,7 +18,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
 
     return (
         <div className="py-3">
-            <div className="flex">
+            <div className="flex flex-wrap">
                 {daoLink && (
                     <>
                         <Link
@@ -43,7 +43,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                 Gosh repository
             </div>
 
-            <div className="flex gap-1 mt-2">
+            <div className="flex flex-wrap gap-1 mt-2">
                 {['gosh', 'vcs', 'ever'].map((value, index) => (
                     <button
                         key={index}

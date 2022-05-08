@@ -25,15 +25,15 @@ const Header = () => {
                             <img src={logoBlack} alt="Logo" className="block h-10 sm:h-12 w-auto" />
                         </Link>
 
-                        <div className="flex items-center gap-x-4 sm:gap-x-34px">
+                        <div className="flex items-center gap-x-4 sm:gap-x-34px ml-4">
                             <a
                                 href="https://t.me/gosh_sh"
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-gray-53596d hover:underline"
+                                className="text-gray-050a15 sm:text-gray-53596d hover:underline"
                             >
-                                <FontAwesomeIcon icon={faPaperPlane} className="mr-3" size="lg" />
-                                Our telegram
+                                <FontAwesomeIcon icon={faPaperPlane} size="lg" />
+                                <span className="ml-3 hidden sm:inline">Our telegram</span>
                             </a>
                             {
                                 !userStatePersist.phrase &&
@@ -57,9 +57,9 @@ const Header = () => {
                                 )}
                             {location.pathname.search('/signin') >= 0 && (
                                 <>
-                                    <div className="text-lg text-gray-53596d hidden sm:block">
+                                    {/* <div className="text-lg text-gray-53596d hidden sm:block">
                                         Don't have an account?
-                                    </div>
+                                    </div> */}
                                     <Link
                                         to={`/account/signup`}
                                         className="btn btn--header icon-arrow"
@@ -70,9 +70,9 @@ const Header = () => {
                             )}
                             {location.pathname.search('/signup') >= 0 && (
                                 <>
-                                    <div className="text-lg text-gray-53596d hidden sm:block">
+                                    {/* <div className="text-lg text-gray-53596d hidden sm:block">
                                         Already have an account?
-                                    </div>
+                                    </div> */}
                                     <Link
                                         to={`/account/signin`}
                                         className="btn btn--header icon-arrow"

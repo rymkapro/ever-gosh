@@ -88,7 +88,7 @@ const RepositoriesPage = () => {
                         type="text"
                         autoComplete="off"
                         placeholder="Search repository..."
-                        className="element !py-1.5 !text-sm"
+                        className="element !py-1.5"
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>

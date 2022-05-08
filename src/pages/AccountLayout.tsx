@@ -11,7 +11,7 @@ const AccountLayout = () => {
     ];
 
     return (
-        <div className="container mt-12 mb-5">
+        <div className="container container--full mt-12 mb-5">
             <div className="bordered-block px-7 py-8">
                 <h1 className="font-semibold text-2xl mb-5">User account</h1>
 

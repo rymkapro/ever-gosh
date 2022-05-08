@@ -8,7 +8,7 @@ const HomePage = () => {
     const userStatePersist = useRecoilValue(userStatePersistAtom);
 
     return (
-        <section className="max-w-7xl mx-auto pt-16 px-2">
+        <div className="container pt-16">
             <div className="text-center">
                 <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
                     Git Open Source Hodler
@@ -24,37 +24,31 @@ const HomePage = () => {
                 </div>
                 <div className="my-10 flex flex-wrap justify-center gap-x-8 gap-y-4">
                     {userStatePersist.phrase ? (
-                        <div>
-                            <Link
-                                to="/account/orgs"
-                                className="btn btn--body py-3 px-10 text-xl leading-normal"
-                            >
-                                Organizations
-                            </Link>
-                        </div>
+                        <Link
+                            to="/account/orgs"
+                            className="btn btn--body py-3 px-10 text-xl leading-normal w-full sm:w-auto"
+                        >
+                            Organizations
+                        </Link>
                     ) : (
                         <>
-                            <div>
-                                <Link
-                                    to="/account/signin"
-                                    className="btn btn--body py-3 px-10 text-xl leading-normal"
-                                >
-                                    Sign in
-                                </Link>
-                            </div>
-                            <div>
-                                <Link
-                                    to="/account/signup"
-                                    className="btn btn--body py-3 px-10 text-xl leading-normal"
-                                >
-                                    Create account
-                                </Link>
-                            </div>
+                            <Link
+                                to="/account/signin"
+                                className="btn btn--body py-3 px-10 text-xl leading-normal w-full sm:w-auto"
+                            >
+                                Sign in
+                            </Link>
+                            <Link
+                                to="/account/signup"
+                                className="btn btn--body py-3 px-10 text-xl leading-normal w-full sm:w-auto"
+                            >
+                                Create account
+                            </Link>
                         </>
                     )}
                 </div>
             </div>
-        </section>
+        </div>
     );
 }
 

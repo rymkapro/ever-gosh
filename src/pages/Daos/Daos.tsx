@@ -59,8 +59,8 @@ const DaosPage = () => {
 
     return (
         <>
-            <div className="flex justify-between items-center">
-                <div className="input basis-1/2">
+            <div className="flex flex-wrap justify-between items-center gap-3">
+                <div className="input basis-full sm:basis-1/2">
                     <input
                         className="element !py-1.5"
                         type="text"
@@ -72,7 +72,7 @@ const DaosPage = () => {
                 </div>
                 <Link
                     to="/account/orgs/create"
-                    className="btn btn--body py-1.5 px-3 !font-normal"
+                    className="btn btn--body py-1.5 px-3 !font-normal text-center w-full sm:w-auto"
                 >
                     New organization
                 </Link>
@@ -91,8 +91,8 @@ const DaosPage = () => {
 
                 <div className="divide-y divide-gray-c4c4c4">
                     {daoListQuery.data?.map((item, index) => (
-                        <div key={index} className="py-2 flex items-center justify-between">
-                            <div>
+                        <div key={index} className="py-2 flex flex-wrap items-center justify-between gap-2">
+                            <div className="basis-full sm:basis-0 sm:grow">
                                 <Link
                                     to={`/${item.dao.meta?.name}`}
                                     className="text-xl font-semibold hover:underline"
