@@ -131,6 +131,7 @@ export interface IGoshWallet extends IContract {
         blobName: string,
         blobContent: string,
         blobIpfs: string,
+        blobFlags: number,
         blobPrevSha: string
     ): Promise<void>;
     setCommit(
@@ -200,6 +201,7 @@ export interface IGoshBlob extends IContract {
         name: string;
         content: string;
         ipfs: string;
+        flags: number;
         commitAddr: string;
         prevSha: string;
     }

@@ -4,7 +4,7 @@ import { useRecoilValue } from "recoil";
 import BranchSelect from "../../components/BranchSelect";
 import CopyClipboard from "../../components/CopyClipboard";
 import Spinner from "../../components/Spinner";
-import { getCommitTime } from "../../helpers";
+import { getCommitTime, ZERO_COMMIT } from "../../helpers";
 import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
 import { GoshCommit } from "../../types/classes";
 import { TGoshBranch, IGoshCommit, IGoshRepository } from "../../types/types";
@@ -41,7 +41,7 @@ const CommitsPage = () => {
                 const commit = new GoshCommit(repo.account.client, commitAddr);
                 await commit.load();
                 commitAddr = commit.meta?.parents[0] || '';
-                commits.push(commit);
+                if (commit.meta?.sha !== ZERO_COMMIT) commits.push(commit);
             }
             setCommits(commits);
         }

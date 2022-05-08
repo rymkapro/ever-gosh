@@ -15,6 +15,8 @@ import * as Diff from 'diff';
 import { EGoshError, GoshError } from "./types/errors";
 
 
+export const ZERO_COMMIT = '0000000000000000000000000000000000000000';
+
 export const getEndpoints = (): string[] => {
     switch (process.env.REACT_APP_EVER_NETWORK) {
         case 'devnet':
@@ -172,12 +174,16 @@ export const getRepoTree = async (
     await commit.load();
 
     // Get root tree blob
-    const rootTreeBlobAddr = await repo.getBlobAddr(`tree ${commit.meta?.content.tree}`);
-    const rootTreeBlob = new GoshBlob(repo.account.client, rootTreeBlobAddr);
-    await rootTreeBlob.load();
+    let rootTreeBlobContent: string = '';
+    if (commit.meta?.sha !== ZERO_COMMIT) {
+        const rootTreeBlobAddr = await repo.getBlobAddr(`tree ${commit.meta?.content.tree}`);
+        const rootTreeBlob = new GoshBlob(repo.account.client, rootTreeBlobAddr);
+        await rootTreeBlob.load();
+        rootTreeBlobContent = rootTreeBlob.meta?.content || '';
+    }
 
     // Get root tree items and recursively get subtrees
-    const items = getTreeItemsFromBlob(rootTreeBlob.meta?.content || '');
+    const items = rootTreeBlobContent ? getTreeItemsFromBlob(rootTreeBlobContent) : [];
     await blobTreeWalker('', items);
 
     // Build full tree
