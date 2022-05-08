@@ -35,7 +35,7 @@ const DaoLayout = () => {
     return (
         <div className="container container--full my-10">
             {!isReady && (
-                <div className="text-gray-606060">
+                <div className="text-gray-606060 px-5">
                     <Spinner className="mr-3" />
                     Loading organization...
                 </div>
