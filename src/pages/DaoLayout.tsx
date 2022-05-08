@@ -33,7 +33,7 @@ const DaoLayout = () => {
     }, [goshDao, userStatePersist.phrase, goshWallet]);
 
     return (
-        <div className="container my-10">
+        <div className="container container--full my-10">
             {!isReady && (
                 <div className="text-gray-606060">
                     <Spinner className="mr-3" />
@@ -43,13 +43,13 @@ const DaoLayout = () => {
 
             {isReady && (
                 <>
-                    <h1 className="mb-6">
+                    <h1 className="mb-6 px-5">
                         <Link to={`/${goshDao?.meta?.name}`} className="font-semibold text-2xl">
                             {goshDao?.meta?.name}
                         </Link>
                     </h1>
 
-                    <div className="flex gap-x-6 mb-6">
+                    <div className="flex gap-x-6 mb-6 px-5 overflow-x-auto no-scrollbar">
                         {tabs
                             .filter((item) => !goshWallet ? item.public : item)
                             .map((item, index) => (

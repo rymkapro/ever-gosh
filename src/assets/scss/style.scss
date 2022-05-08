@@ -43,6 +43,16 @@ body,
     }
 }
 
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+
+    /* Chrome, Safari and Opera */
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
 /*
 This is a base ::after pseudo element class which is used only
 for those elements which require gradient border color

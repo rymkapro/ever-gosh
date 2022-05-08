@@ -56,13 +56,13 @@ const DaoRepositoriesPage = () => {
     return (
         <div className="bordered-block px-7 py-8">
             <h3 className="font-semibold text-base mb-4">Repositories</h3>
-            <div className="flex flex-wrap gap-4 justify-between">
+            <div className="flex flex-wrap gap-4 items-center justify-between">
                 <div className="input grow">
                     <input
                         type="text"
                         autoComplete="off"
                         placeholder="Search repository..."
-                        className="element !py-1.5 !text-sm"
+                        className="element !py-1.5"
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                     />
@@ -70,7 +70,7 @@ const DaoRepositoriesPage = () => {
 
                 {goshWallet?.isDaoParticipant && (
                     <Link
-                        className="btn btn--body px-4 py-1.5 text-sm !font-normal"
+                        className="btn btn--body px-4 py-1.5 !font-normal text-center w-full sm:w-auto"
                         to={`/${goshDao.meta?.name}/repos/create`}
                     >
                         New repository

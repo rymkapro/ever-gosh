@@ -10,11 +10,11 @@ const DaoPage = () => {
     const { goshDao, goshWallet } = useOutletContext<TDaoLayoutOutletContext>();
 
     return (
-        <div className="flex gap-4">
+        <div className="flex flex-wrap-reverse gap-x-4 gap-y-6">
             <div className="grow">
                 <ReposPage />
             </div>
-            <div className="basis-3/12 bordered-block px-7 py-8">
+            <div className="basis-full sm:basis-3/12 bordered-block px-7 py-8">
                 <h3 className="font-semibold text-base mb-4">Details</h3>
 
                 <div>
