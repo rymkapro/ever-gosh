@@ -395,6 +395,7 @@ export class GoshWallet implements IGoshWallet {
                         `tree ${subtreeHash}`,
                         compressed,
                         '',
+                        0,
                         ''
                     )
                 ));
@@ -419,6 +420,7 @@ export class GoshWallet implements IGoshWallet {
                         `blob ${blob.sha}`,
                         compressed,
                         '',
+                        0,
                         blob.prevSha
                     )
                 ));
@@ -574,6 +576,7 @@ export class GoshWallet implements IGoshWallet {
         blobName: string,
         blobContent: string,
         blobIpfs: string,
+        blobFlags: number,
         blobPrevSha: string
     ): Promise<void> {
         await this.run(
@@ -585,6 +588,7 @@ export class GoshWallet implements IGoshWallet {
                 blobName,
                 fullBlob: blobContent,
                 ipfsBlob: blobIpfs,
+                flags: blobFlags,
                 prevSha: blobPrevSha
             }
         );
@@ -813,7 +817,8 @@ export class GoshBlob implements IGoshBlob {
         this.meta = {
             name: meta.sha,
             content: meta.content,
-            ipfs: '',
+            ipfs: meta.ipfs,
+            flags: meta.flags,
             commitAddr: meta.commit,
             prevSha: await this.getPrevSha()
         }
