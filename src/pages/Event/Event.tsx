@@ -30,6 +30,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircle } from "@fortawesome/free-solid-svg-icons";
 import { useMonaco } from "@monaco-editor/react";
 import { TDaoLayoutOutletContext } from "../DaoLayout";
+import { EGoshError, GoshError } from "../../types/errors";
 
 
 type TFormValues = {
@@ -79,7 +80,7 @@ const EventPage = () => {
                 // Create blob and load it's data
                 const blob = new GoshBlob(repo.account.client, addr);
                 await blob.load();
-                if (!blob.meta) throw Error('Can not load blob meta');
+                if (!blob.meta) throw new GoshError(EGoshError.META_LOAD, { type: 'file', address: addr });
 
                 // Extract tree blob from common blobs
                 if (blob.meta.name.indexOf('tree ') >= 0) blobTrees.push(blob);
@@ -121,7 +122,7 @@ const EventPage = () => {
 
     const onProposalCheck = async (proposal: IGoshSmvProposal, wallet: IGoshWallet) => {
         try {
-            if (service?.locker?.meta?.isBusy) throw Error('Locker is busy');
+            if (service?.locker?.meta?.isBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
             setCheck(true);
             await wallet.tryProposalResult(proposal.address);
             alert('Re-check submitted. Please, wait a bit for data to be updated or check status later')
@@ -135,15 +136,15 @@ const EventPage = () => {
 
     const onProposalSubmit = async (values: TFormValues) => {
         try {
-            if (!goshRoot) throw Error('GoshRoot is undefined');
-            if (!goshDao) throw Error('GoshDao is undefined');
-            if (!goshWallet) throw Error('GoshWallet is undefined');
-            if (!service?.proposal) throw Error('Proposal is undefined');
+            if (!goshRoot) throw new GoshError(EGoshError.NO_ROOT);
+            if (!goshDao) throw new GoshError(EGoshError.NO_DAO);
+            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
+            if (!service?.proposal) throw new GoshError(EGoshError.SMV_NO_PROPOSAL);
 
             if (service.proposal.meta?.time.start && Date.now() < service.proposal.meta?.time.start.getTime()) {
-                throw Error('It\'s too early to vote.\nPlease, wait for the voting time');
+                throw new GoshError(EGoshError.SMV_NO_START, { start: service.proposal.meta?.time.start.getDate() });
             }
-            if (service.locker?.meta?.isBusy) throw Error('Locker is busy');
+            if (service.locker?.meta?.isBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
 
             const smvPlatformCode = await goshRoot.getSmvPlatformCode();
             const smvClientCode = await goshDao.getSmvClientCode();
@@ -164,8 +165,8 @@ const EventPage = () => {
 
     const onTokensRelease = async () => {
         try {
-            if (!service?.proposal) throw Error('Proposal is undefined');
-            if (!goshWallet) throw Error('GoshWallet is undefined');
+            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
+            if (!service?.proposal) throw new GoshError(EGoshError.SMV_NO_PROPOSAL);
 
             setRelease(true);
             await goshWallet.updateHead();

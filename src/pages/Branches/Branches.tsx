@@ -14,6 +14,7 @@ import { useRecoilValue } from "recoil";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 import { isMainBranch } from "../../helpers";
+import { EGoshError, GoshError } from "../../types/errors";
 
 
 type TCreateBranchFormValues = {
@@ -33,7 +34,7 @@ export const BranchesPage = () => {
 
     const branchDeleteMutation = useMutation(
         (name: string) => {
-            if (!goshWallet) throw Error('GoshWallet is undefined');
+            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
             return goshWallet.deleteBranch(goshRepo, name);
         },
         {
@@ -56,8 +57,8 @@ export const BranchesPage = () => {
         helpers: FormikHelpers<any>
     ) => {
         try {
-            if (!values.from) throw Error('From branch is undefined');
-            if (!goshWallet) throw Error('GoshWallet is undefined');
+            if (!values.from) throw new GoshError(EGoshError.NO_BRANCH);
+            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
 
             await goshWallet.deployBranch(goshRepo, values.newName, values.from.name);
             await updateBranches();

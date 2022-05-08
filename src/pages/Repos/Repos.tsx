@@ -5,7 +5,7 @@ import Spinner from "../../components/Spinner";
 import { useGoshRoot } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
 import { GoshDao, GoshRepository, GoshWallet } from "../../types/classes";
-import { IGoshDao, IGoshRepository } from "../../types/types";
+import { IGoshRepository } from "../../types/types";
 import RepoListItem from "../DaoRepos/RepoListItem";
 
 

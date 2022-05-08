@@ -9,6 +9,7 @@ import { userStateAtom } from "../../store/user.state";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashAlt } from "@fortawesome/free-regular-svg-icons";
 import Spinner from "../../components/Spinner";
+import { EGoshError, GoshError } from "../../types/errors";
 
 
 type TFormValues = {
@@ -23,8 +24,8 @@ const DaoCreatePage = () => {
 
     const onDaoCreate = async (values: TFormValues) => {
         try {
-            if (!userState.keys) throw Error('Empty user state');
-            if (!goshRoot?.account.client) throw Error('Client is not ready');
+            if (!userState.keys) throw new GoshError(EGoshError.NO_USER);
+            if (!goshRoot) throw new GoshError(EGoshError.NO_ROOT);
 
             // Deploy GoshDao
             const rootPubkey = `0x${userState.keys.public}`;
@@ -32,7 +33,7 @@ const DaoCreatePage = () => {
 
             // Deploy wallets
             await Promise.all(values.participants.map(async (item) => {
-                if (!userState.keys) throw Error('Empty user state');
+                if (!userState.keys) throw new GoshError(EGoshError.NO_USER);
                 const walletAddr = await goshDao.deployWallet(rootPubkey, item, userState.keys);
                 console.debug('DAOWallet address:', walletAddr);
             }));

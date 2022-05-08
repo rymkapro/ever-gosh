@@ -39,6 +39,7 @@ import {
     IGoshSmvClient,
     IGoshSmvTokenRoot
 } from "./types";
+import { EGoshError, GoshError } from "./errors";
 
 
 export class GoshDaoCreator implements IGoshDaoCreator {
@@ -81,7 +82,7 @@ export class GoshRoot implements IGoshRoot {
         const acc = await dao.account.getAccount();
         if (acc.acc_type === AccountType.active) {
             const daoRootPubkey = await dao.getRootPubkey();
-            if (daoRootPubkey !== rootPubkey) throw Error(`DAO with name '${name}' already exists`);
+            if (daoRootPubkey !== rootPubkey) throw new GoshError(EGoshError.DAO_EXISTS, { name });
             return dao;
         }
 
@@ -145,8 +146,8 @@ export class GoshDao implements IGoshDao {
     }
 
     async deployWallet(rootPubkey: string, pubkey: string, keys: KeyPair): Promise<string> {
-        if (!this.meta?.name) await this.load();
-        if (!this.meta) throw Error('Can not read DAO name');
+        if (!this.meta) await this.load();
+        if (!this.meta?.name) throw new GoshError(EGoshError.META_LOAD, { type: 'dao', address: this.address });
 
         // Topup GoshDao, deploy and topup GoshWallet
         const walletAddr = await this.getWalletAddr(rootPubkey, pubkey);
@@ -294,7 +295,8 @@ export class GoshWallet implements IGoshWallet {
         parentBranch?: TGoshBranch
     ): Promise<void> {
         if (!repo.meta) await repo.load();
-        if (!repo.meta?.name) throw Error('Repository name is undefined');
+        if (!repo.meta?.name)
+            throw new GoshError(EGoshError.META_LOAD, { type: 'repository', address: repo.address });
         const repoName = repo.meta.name;
 
         // Prepare blobs
@@ -483,7 +485,8 @@ export class GoshWallet implements IGoshWallet {
     async deployRepo(name: string): Promise<void> {
         // Get repo instance, check if it is not deployed
         const dao = await this.getDao();
-        if (!dao.meta?.name) throw Error('DAO name is undefined');
+        if (!dao.meta?.name)
+            throw new GoshError(EGoshError.META_LOAD, { type: 'dao', address: dao.address });
 
         const root = await this.getRoot();
         const repoAddr = await root.getRepoAddr(name, dao.meta.name);
@@ -507,7 +510,8 @@ export class GoshWallet implements IGoshWallet {
 
     async deployBranch(repo: IGoshRepository, newName: string, fromName: string): Promise<void> {
         if (!repo.meta) await repo.load();
-        if (!repo.meta?.name) throw Error('Repository name is undefined');
+        if (!repo.meta?.name)
+            throw new GoshError(EGoshError.META_LOAD, { type: 'repository', address: repo.address });
 
         // Check if branch already exists
         const branch = await repo.getBranch(newName);
@@ -529,7 +533,8 @@ export class GoshWallet implements IGoshWallet {
 
     async deleteBranch(repo: IGoshRepository, branchName: string): Promise<void> {
         if (!repo.meta) await repo.load();
-        if (!repo.meta?.name) throw Error('Repository name is undefined');
+        if (!repo.meta?.name)
+            throw new GoshError(EGoshError.META_LOAD, { type: 'repository', address: repo.address });
 
         // Check if branch exists
         const branch = await repo.getBranch(branchName);

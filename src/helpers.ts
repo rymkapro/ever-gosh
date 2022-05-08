@@ -12,6 +12,7 @@ import {
 } from "./types/types";
 import { AccountType } from "@eversdk/appkit";
 import * as Diff from 'diff';
+import { EGoshError, GoshError } from "./types/errors";
 
 
 export const getEndpoints = (): string[] => {
@@ -28,7 +29,7 @@ export const getEndpoints = (): string[] => {
 
 export const getGoshDaoCreator = (client: TonClient): IGoshDaoCreator => {
     const address = process.env.REACT_APP_CREATOR_ADDR;
-    if (!address) throw Error('No GoshDaoCreator address specified');
+    if (!address) throw new GoshError(EGoshError.NO_CREATOR_ADDR);
     return new GoshDaoCreator(client, address);
 }
 

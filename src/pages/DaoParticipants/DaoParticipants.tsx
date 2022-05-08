@@ -12,6 +12,7 @@ import { shortString } from "../../utils";
 import * as Yup from "yup";
 import { useOutletContext } from "react-router-dom";
 import { TDaoLayoutOutletContext } from "../DaoLayout";
+import { EGoshError, GoshError } from "../../types/errors";
 
 
 type TParticipantFormValues = {
@@ -44,11 +45,11 @@ const DaoParticipantsPage = () => {
         helpers: FormikHelpers<any>
     ) => {
         try {
-            if (!userState.keys) throw Error('Empty user state');
+            if (!userState.keys) throw new GoshError(EGoshError.NO_USER);
 
             console.debug('[DAO participants] - Create values:', values);
             await Promise.all(values.pubkey.map(async (item) => {
-                if (!userState.keys) throw Error('Empty user state');
+                if (!userState.keys) throw new GoshError(EGoshError.NO_USER);
 
                 console.debug('[DAO participants] - DAO address:', goshDao.address);
                 const rootPubkey = await goshDao.getRootPubkey();

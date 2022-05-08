@@ -18,6 +18,7 @@ import { userStateAtom } from "../../store/user.state";
 import { IGoshBlob, TGoshTreeItem } from "../../types/types";
 import { GoshBlob } from "../../types/classes";
 import BranchSelect from "../../components/BranchSelect";
+import { EGoshError, GoshError } from "../../types/errors";
 
 
 type TCommitFormValues = {
@@ -53,8 +54,7 @@ const PullCreatePage = () => {
 
         const onCompare = async () => {
             try {
-                if (!branchFrom) throw Error('[Compare]: From branch is undefined');
-                if (!branchTo) throw Error('[Compare]: To branch in undefined');
+                if (!branchFrom || !branchTo) throw new GoshError(EGoshError.NO_BRANCH);
                 if (branchFrom.name === branchTo.name) {
                     setCompare([]);
                     return;
@@ -124,17 +124,16 @@ const PullCreatePage = () => {
 
     const onCommitMerge = async (values: TCommitFormValues) => {
         try {
-            if (!goshWallet) throw Error('GoshWallet is undefined');
-            if (!userState.keys) throw Error('Can not get user keys');
-            if (!repoName) throw Error('Repository is undefined');
-            if (!branchFrom) throw Error('From branch is undefined');
-            if (!branchTo) throw Error('To branch in undefined');
-            if (branchFrom.name === branchTo.name) throw Error('Banches are equal');
-            if (!compare?.length) throw Error('There are no changes to merge');
+            if (!userState.keys) throw new GoshError(EGoshError.NO_USER);
+            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
+            if (!repoName) throw new GoshError(EGoshError.NO_REPO);
+            if (!branchFrom || !branchTo) throw new GoshError(EGoshError.NO_BRANCH);
+            if (branchFrom.name === branchTo.name || !compare?.length)
+                throw new GoshError(EGoshError.PR_NO_MERGE);
 
             // Prepare blobs
             const blobs = compare.map(({ from, to }) => {
-                if (!from.item || !from.blob.meta) throw new Error('Empty file from');
+                if (!from.item || !from.blob.meta) throw new GoshError(EGoshError.FILE_EMPTY);
                 return {
                     name: `${from.item.path && `${from.item.path}/`}${from.item.name}`,
                     modified: from.blob.meta?.content,
@@ -146,8 +145,7 @@ const PullCreatePage = () => {
             if (isMainBranch(branchTo.name)) {
                 const smvLocker = await goshWallet.getSmvLocker();
                 const smvBalance = smvLocker.meta?.votesTotal || 0;
-                console.debug('[Blob create] - SMV balance:', smvBalance);
-                if (smvBalance < 20) throw Error('Not enough tokens. Send at least 20 tokens to SMV.');
+                if (smvBalance < 20) throw new GoshError(EGoshError.SMV_NO_BALANCE, { min: 20 });
             };
 
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n');

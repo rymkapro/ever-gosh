@@ -9,6 +9,7 @@ import { GoshBlob, GoshCommit } from "../../types/classes";
 import CopyClipboard from "../../components/CopyClipboard";
 import { shortString } from "../../utils";
 import Spinner from "../../components/Spinner";
+import { EGoshError, GoshError } from "../../types/errors";
 
 
 const CommitPage = () => {
@@ -57,7 +58,7 @@ const CommitPage = () => {
                     // Create blob and load it's data
                     const blob = new GoshBlob(repo.account.client, addr);
                     await blob.load();
-                    if (!blob.meta) throw Error('Can not load blob meta');
+                    if (!blob.meta) throw new GoshError(EGoshError.META_LOAD, { type: 'file', address: addr });
 
                     // Extract tree blob from common blobs
                     if (blob.meta.name.indexOf('tree ') >= 0) {

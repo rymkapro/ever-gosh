@@ -10,6 +10,7 @@ import { useRecoilValue } from "recoil";
 import { userStateAtom } from "../../store/user.state";
 import CopyClipboard from "../../components/CopyClipboard";
 import { TDaoLayoutOutletContext } from "../DaoLayout";
+import { EGoshError, GoshError } from "../../types/errors";
 
 
 type TMoveBalanceFormValues = {
@@ -40,7 +41,7 @@ const DaoWalletPage = () => {
     const onMoveBalanceToSmvBalance = async (values: TMoveBalanceFormValues) => {
         console.debug('[Move balance to SMV balance] - Values:', values);
         try {
-            if (!goshWallet) throw Error('Wallet is undefined');
+            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
 
             await goshWallet.lockVoting(values.amount);
             alert('Submitted. Balances will be updated soon');
@@ -53,7 +54,7 @@ const DaoWalletPage = () => {
     const onMoveSmvBalanceToBalance = async (values: TMoveBalanceFormValues) => {
         console.debug('[Move SMV balance to balance] - Values:', values);
         try {
-            if (!goshWallet) throw Error('Wallet is undefined');
+            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
 
             await goshWallet.unlockVoting(values.amount);
             alert('Submitted. Balances will be updated soon');
@@ -65,7 +66,7 @@ const DaoWalletPage = () => {
 
     const onReleaseSmvTokens = async () => {
         try {
-            if (!goshWallet) throw Error('Wallet is undefined');
+            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
 
             await goshWallet.updateHead();
             alert('Release submitted. Available tokens will be released soon');

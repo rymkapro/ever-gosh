@@ -5,6 +5,7 @@ import TextField from "../../components/FormikForms/TextField";
 import { Navigate, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import Spinner from "../../components/Spinner";
 import { TDaoLayoutOutletContext } from "../DaoLayout";
+import { EGoshError, GoshError } from "../../types/errors";
 
 
 type TFormValues = {
@@ -18,7 +19,7 @@ const RepoCreatePage = () => {
 
     const onRepoCreate = async (values: TFormValues) => {
         try {
-            if (!goshWallet) throw Error('GoshWallet is undefined');
+            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
 
             await goshWallet.deployRepo(values.name);
             navigate(`/${daoName}/${values.name}`, { replace: true });

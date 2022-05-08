@@ -1,5 +1,5 @@
 import React from "react";
-import { faCode, faCodeFork, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faCode, faCodeFork } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link } from "react-router-dom";
 import CopyClipboard from "../../components/CopyClipboard";

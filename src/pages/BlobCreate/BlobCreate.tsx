@@ -18,6 +18,7 @@ import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
 import RepoBreadcrumbs from "../../components/Repo/Breadcrumbs";
+import { EGoshError, GoshError } from "../../types/errors";
 
 
 type TFormValues = {
@@ -43,18 +44,18 @@ const BlobCreatePage = () => {
 
     const onCommitChanges = async (values: TFormValues) => {
         try {
-            if (!userState.keys) throw Error('User is undefined');
-            if (!goshWallet) throw Error('GoshWallet is undefined');
-            if (!repoName) throw Error('Repository is undefined');
-            if (!branch) throw Error('Branch is undefined');
-            if (isMainBranch(branchName)) throw Error(`Can not push to branch '${branchName}'. Create PR`);
-            if (!goshWallet.isDaoParticipant) throw Error('You are not DAO participant');
+            if (!userState.keys) throw new GoshError(EGoshError.NO_USER);
+            if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
+            if (!repoName) throw new GoshError(EGoshError.NO_REPO);
+            if (!branch) throw new GoshError(EGoshError.NO_BRANCH);
+            if (isMainBranch(branchName)) throw new GoshError(EGoshError.PR_BRANCH, { branch: branchName });
+            if (!goshWallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_PARTICIPANT);
 
             const name = `${pathName && `${pathName}/`}${values.name}`;
             const exists = goshRepoTree.tree.items.find((item) => (
                 `${item.path && `${item.path}/`}${item.name}` === name
             ));
-            if (exists) throw Error(`File '${name}' already exists`);
+            if (exists) throw new GoshError(EGoshError.FILE_EXISTS, { file: name });
 
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
             await goshWallet.createCommit(
