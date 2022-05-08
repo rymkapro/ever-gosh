@@ -184,13 +184,15 @@ const DaoWalletPage = () => {
                         Move tokens from SMV balance back to wallet balance
                     </p>
                     <Formik
-                        initialValues={{ amount: data?.smvBalance || 0 }}
+                        initialValues={{
+                            amount: (data?.smvBalance ?? 0) - (data?.smvLocked ?? 0)
+                        }}
                         onSubmit={onMoveSmvBalanceToBalance}
                         validationSchema={Yup.object().shape({
                             amount: Yup
                                 .number()
                                 .min(1)
-                                .max(data?.smvBalance || 0)
+                                .max((data?.smvBalance ?? 0) - (data?.smvLocked ?? 0))
                                 .required('Field is required')
                         })}
                         enableReinitialize

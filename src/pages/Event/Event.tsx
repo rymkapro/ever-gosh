@@ -319,7 +319,7 @@ const EventPage = () => {
                         <div>
                             {service.proposal.meta?.isCompleted
                                 ? <span className="text-green-900">Completed</span>
-                                : (<><Spinner className="mr-2" size="sm" /> Running</>)
+                                : 'Running'
                             }
                         </div>
                         <div>
