@@ -46,9 +46,9 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
 
             {extraFields}
 
-            <div className="flex mt-4 items-center gap-3">
+            <div className="flex flex-wrap mt-4 items-center gap-3">
                 <button
-                    className="btn btn--body font-medium px-4 py-2"
+                    className="btn btn--body font-medium px-4 py-2 w-full sm:w-auto"
                     type="submit"
                     disabled={isDisabled}
                 >
@@ -58,7 +58,8 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                 {urlBack && (
                     <Link
                         to={urlBack}
-                        className="px-4 py-2 border rounded font-medium text-rose-500 border-rose-500 hover:bg-rose-50"
+                        className="px-4 py-2 border rounded font-medium text-center
+                        text-rose-500 border-rose-500 hover:bg-rose-50 w-full sm:w-auto"
                     >
                         Cancel
                     </Link>

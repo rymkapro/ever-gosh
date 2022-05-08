@@ -7,7 +7,7 @@ import { useMonaco } from "@monaco-editor/react";
 import { getCodeLanguageFromFilename, getBlobContent, isMainBranch } from "../../helpers";
 import BlobPreview from "../../components/Blob/Preview";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPencil } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass, faPencil } from "@fortawesome/free-solid-svg-icons";
 import CopyClipboard from "../../components/CopyClipboard";
 import Spinner from "../../components/Spinner";
 import { useRecoilValue } from "recoil";
@@ -47,32 +47,31 @@ const BlobPage = () => {
 
     return (
         <div className="bordered-block px-7 py-8">
-            <div className="flex items-center justify-between gap-3 mb-5">
+            <div className="flex flex-wrap items-center gap-3 mb-5">
+                <BranchSelect
+                    branch={branch}
+                    branches={branches}
+                    onChange={(selected) => {
+                        if (selected) {
+                            navigate(`/${daoName}/${repoName}/blobs/${selected.name}/${pathName}`);
+                        }
+                    }}
+                />
                 <div>
-                    <BranchSelect
-                        branch={branch}
-                        branches={branches}
-                        onChange={(selected) => {
-                            if (selected) {
-                                navigate(`/${daoName}/${repoName}/blobs/${selected.name}/${pathName}`);
-                            }
-                        }}
+                    <RepoBreadcrumbs
+                        daoName={daoName}
+                        repoName={repoName}
+                        branchName={branchName}
+                        pathName={pathName}
                     />
-                    <div className="inline-block ml-4">
-                        <RepoBreadcrumbs
-                            daoName={daoName}
-                            repoName={repoName}
-                            branchName={branchName}
-                            pathName={pathName}
-                        />
-                    </div>
                 </div>
-                <div>
+                <div className="grow text-right">
                     <Link
                         to={`/${daoName}/${repoName}/find/${branchName}`}
                         className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                     >
-                        Go to file
+                        <FontAwesomeIcon icon={faMagnifyingGlass} />
+                        <span className="hidden sm:inline-block ml-2">Go to file</span>
                     </Link>
                 </div>
             </div>

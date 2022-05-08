@@ -15,12 +15,12 @@ const DaoSettingsLayout = () => {
 
     if (!daoContext.goshWallet) return <Navigate to={`/${daoName}`} />;
     return (
-        <div className="container mt-12 mb-5">
+        <div className="container container--full mt-12 mb-5">
             <div className="bordered-block px-7 py-8">
                 <h1 className="font-semibold text-2xl mb-5">DAO settings</h1>
 
-                <div className="flex gap-x-14 gap-y-8 flex-wrap">
-                    <div className="w-full sm:w-1/5 flex flex-col gap-y-1">
+                <div className="flex gap-x-8 gap-y-8 flex-wrap md:flex-nowrap">
+                    <div className="basis-full md:basis-1/5 flex flex-col gap-y-1">
                         {tabs.map((item, index) => (
                             <NavLink
                                 key={index}
@@ -34,7 +34,7 @@ const DaoSettingsLayout = () => {
                             </NavLink>
                         ))}
                     </div>
-                    <div className="grow">
+                    <div className="basis-full md:basis-4/5 overflow-hidden">
                         <Outlet context={daoContext} />
                     </div>
                 </div>

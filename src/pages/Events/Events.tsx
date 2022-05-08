@@ -103,7 +103,11 @@ const EventsPage = () => {
         <div className="bordered-block px-7 py-8">
             <div>
                 {goshWallet?.isDaoParticipant && (
-                    <div className="mt-6 mb-5 flex items-center gap-x-6 bg-gray-100 rounded px-4 py-3">
+                    <div
+                        className="relative mb-5 flex px-4 py-3 rounded gap-x-6 bg-gray-100
+                        flex-col items-start
+                        md:flex-row md:flex-wrap md:items-center"
+                    >
                         <div>
                             <span className="font-semibold mr-2">SMV balance:</span>
                             {service?.locker?.meta?.votesTotal}
@@ -116,7 +120,7 @@ const EventsPage = () => {
                             <span className="font-semibold mr-2">Wallet balance:</span>
                             {service?.balance}
                         </div>
-                        <div className="grow text-right">
+                        <div className="grow text-right absolute right-3 top-3 md:relative md:right-auto md:top-auto">
                             <FontAwesomeIcon
                                 icon={faCircle}
                                 className={classNames(
@@ -140,14 +144,16 @@ const EventsPage = () => {
 
                 <div className="divide-y divide-gray-c4c4c4">
                     {proposals?.map((item, index) => (
-                        <div key={index} className="flex items-center gap-x-5 py-3">
-                            <div className="basis-2/5">
+                        <div key={index} className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 py-3">
+                            <div className="w-full">
                                 <Link
                                     to={`/${goshDao.meta?.name}/events/${item.prop.address}`}
                                     className="text-lg font-semibold hover:underline"
                                 >
                                     {item.commit?.meta?.content.title}
                                 </Link>
+                            </div>
+                            <div>
                                 <div className="text-gray-606060 text-sm">
                                     <CopyClipboard
                                         label={`${'Proposal: '}${shortString(item.prop.meta?.id || '')}`}
@@ -162,7 +168,7 @@ const EventsPage = () => {
                                     {item.prop.meta?.time.finish.toLocaleString()}
                                 </div>
                             </div>
-                            <div className="grow">
+                            <div>
                                 {item.prop.meta?.commit.repoName}:{item.prop.meta?.commit.branchName}
                                 <div className="text-gray-606060 text-sm">
                                     <CopyClipboard
@@ -174,12 +180,12 @@ const EventsPage = () => {
                                 </div>
                             </div>
                             <div>
-                                {item.prop.meta?.isCompleted
-                                    ? <span className="text-green-900">Completed</span>
-                                    : 'Running'
-                                }
-                            </div>
-                            <div>
+                                <span className="mr-3">
+                                    {item.prop.meta?.isCompleted
+                                        ? <span className="text-green-900">Completed</span>
+                                        : 'Running'
+                                    }
+                                </span>
                                 <span className="text-green-900 text-xl">{item.prop.meta?.votes.yes}</span>
                                 <span className="mx-1">/</span>
                                 <span className="text-rose-600 text-xl">{item.prop.meta?.votes.no}</span>

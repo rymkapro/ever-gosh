@@ -7,6 +7,7 @@ import { classNames } from "../../utils";
 
 
 type TBranchSelectProps = {
+    className?: string;
     branch?: TGoshBranch;
     branches: TGoshBranch[];
     disabled?: boolean;
@@ -14,7 +15,7 @@ type TBranchSelectProps = {
 }
 
 const BranchSelect = (props: TBranchSelectProps) => {
-    const { branch, branches, disabled, onChange } = props;
+    const { className, branch, branches, disabled, onChange } = props;
     const searchRef = useRef<HTMLInputElement>(null);
     const [search, setSearch] = useState<string>('');
     const [filtered, setFiltered] = useState<TGoshBranch[]>(branches);
@@ -33,7 +34,8 @@ const BranchSelect = (props: TBranchSelectProps) => {
             as="div"
             className={() => classNames(
                 'relative inline-block min-w-[7rem] max-w-[12rem] border rounded',
-                disabled ? 'bg-gray-100' : ''
+                disabled ? 'bg-gray-100' : '',
+                className
             )}
             value={branch}
             disabled={disabled}

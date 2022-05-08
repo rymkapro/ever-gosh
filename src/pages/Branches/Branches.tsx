@@ -86,7 +86,7 @@ export const BranchesPage = () => {
 
     return (
         <div className="bordered-block px-7 py-8">
-            <div className="flex justify-between gap-4">
+            <div className="flex flex-wrap justify-between gap-4">
                 {goshWallet?.isDaoParticipant && (
                     <Formik
                         initialValues={{ newName: '', from: branch }}
@@ -98,35 +98,38 @@ export const BranchesPage = () => {
                         })}
                     >
                         {({ isSubmitting, setFieldValue }) => (
-                            <Form className="flex items-center">
-                                <BranchSelect
-                                    branch={branch}
-                                    branches={branches}
-                                    onChange={(selected) => {
-                                        if (selected) {
-                                            setBranchName(selected?.name);
-                                            setFieldValue('from', selected);
-                                        }
-                                    }}
-                                />
-                                <span className="mx-3">
-                                    <FontAwesomeIcon icon={faChevronRight} size="sm" />
-                                </span>
-                                <div>
-                                    <Field
-                                        name="newName"
-                                        component={TextField}
-                                        errorEnabled={false}
-                                        inputProps={{
-                                            placeholder: 'Branch name',
-                                            autoComplete: 'off',
-                                            className: '!text-sm !py-1.5'
+                            <Form className="grow flex flex-wrap items-center gap-3">
+                                <div className="grow flex items-center">
+                                    <BranchSelect
+                                        branch={branch}
+                                        branches={branches}
+                                        onChange={(selected) => {
+                                            if (selected) {
+                                                setBranchName(selected?.name);
+                                                setFieldValue('from', selected);
+                                            }
                                         }}
                                     />
+                                    <span className="mx-3">
+                                        <FontAwesomeIcon icon={faChevronRight} size="sm" />
+                                    </span>
+                                    <div className="grow">
+                                        <Field
+                                            className="w-full"
+                                            name="newName"
+                                            component={TextField}
+                                            errorEnabled={false}
+                                            inputProps={{
+                                                placeholder: 'Branch name',
+                                                autoComplete: 'off',
+                                                className: '!text-sm !py-1.5'
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                                 <button
                                     type="submit"
-                                    className="btn btn--body px-3 py-1.5 ml-3 !text-sm"
+                                    className="btn btn--body px-3 py-1.5 !text-sm w-full sm:w-auto"
                                     disabled={isSubmitting}
                                 >
                                     {isSubmitting && <Spinner className="mr-2" />}
@@ -137,7 +140,7 @@ export const BranchesPage = () => {
                     </Formik>
                 )}
 
-                <div className="input basis-1/4">
+                <div className="input basis-full md:basis-1/4">
                     <input
                         type="text"
                         className="element !text-sm !py-1.5"

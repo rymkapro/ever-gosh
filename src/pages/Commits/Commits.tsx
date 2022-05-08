@@ -78,7 +78,7 @@ const CommitsPage = () => {
                 {Boolean(commits?.length) && commits?.map((commit, index) => (
                     <div
                         key={index}
-                        className="flex py-3 justify-between items-center"
+                        className="flex flex-wrap py-3 justify-between items-center gap-y-3"
                     >
                         <div>
                             <Link
@@ -87,7 +87,7 @@ const CommitsPage = () => {
                             >
                                 {commit.meta?.content.title}
                             </Link>
-                            <div className="mt-2 flex gap-x-4 text-gray-050a15/75 text-xs">
+                            <div className="mt-2 flex flex-wrap gap-x-4 text-gray-050a15/75 text-xs">
                                 <div className="flex items-center">
                                     <span className="mr-2 text-gray-050a15/65">Commit by</span>
                                     {renderCommitter(commit.meta?.content.committer || '')}

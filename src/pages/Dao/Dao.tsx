@@ -14,7 +14,7 @@ const DaoPage = () => {
             <div className="grow">
                 <ReposPage />
             </div>
-            <div className="basis-full sm:basis-3/12 bordered-block px-7 py-8">
+            <div className="basis-full md:basis-4/12 lg:basis-3/12 bordered-block px-7 py-8">
                 <h3 className="font-semibold text-base mb-4">Details</h3>
 
                 <div>

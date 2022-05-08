@@ -46,7 +46,7 @@ const DaoCreatePage = () => {
     }
 
     return (
-        <div className="container mt-12 mb-5">
+        <div className="container container--full mt-12 mb-5">
             <div className="bordered-block max-w-lg px-7 py-8 mx-auto">
                 <h1 className="font-semibold text-2xl text-center mb-8">Create new organization</h1>
 

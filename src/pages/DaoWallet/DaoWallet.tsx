@@ -119,7 +119,11 @@ const DaoWalletPage = () => {
     )
     return (
         <>
-            <div className="flex items-center gap-x-6 mb-4">
+            <div
+                className="flex gap-x-6 mb-4
+                flex-col items-start
+                md:flex-row md:flex-wrap md:items-center"
+            >
                 <div>
                     <span className="font-semibold mr-2">Wallet balance:</span>
                     {data?.balance}
@@ -154,8 +158,8 @@ const DaoWalletPage = () => {
                         enableReinitialize
                     >
                         {({ isSubmitting }) => (
-                            <Form className="flex items-baseline gap-x-3">
-                                <div>
+                            <Form className="flex flex-wrap items-baseline gap-3">
+                                <div className="grow">
                                     <Field
                                         name="amount"
                                         component={TextField}
@@ -167,7 +171,7 @@ const DaoWalletPage = () => {
                                     />
                                 </div>
                                 <button
-                                    className="btn btn--body !font-normal px-4 py-2"
+                                    className="btn btn--body !font-normal px-4 py-2 w-full sm:w-auto"
                                     type="submit"
                                     disabled={isSubmitting}
                                 >
@@ -198,8 +202,8 @@ const DaoWalletPage = () => {
                         enableReinitialize
                     >
                         {({ isSubmitting }) => (
-                            <Form className="flex items-baseline gap-x-3">
-                                <div>
+                            <Form className="flex flex-wrap items-baseline gap-3">
+                                <div className="grow">
                                     <Field
                                         name="amount"
                                         component={TextField}
@@ -211,12 +215,12 @@ const DaoWalletPage = () => {
                                     />
                                 </div>
                                 <button
-                                    className="btn btn--body !font-normal px-4 py-2"
+                                    className="btn btn--body !font-normal px-4 py-2 w-full sm:w-auto"
                                     type="submit"
                                     disabled={isSubmitting}
                                 >
                                     {isSubmitting && <Spinner className="mr-2" />}
-                                    Move tokens to wallet balance
+                                    Move tokens to wallet
                                 </button>
                             </Form>
                         )}
@@ -250,18 +254,19 @@ const DaoWalletPage = () => {
                     <h3 className="text-lg font-semibold">Git remote</h3>
                     <div className="mb-3">
                         Git remote credentials
-
                     </div>
                     {goshWallet.isDaoParticipant
                         ? (
-                            <pre className="relative text-sm bg-gray-050a15/5 rounded-md px-4 py-3 overflow-x-auto">
+                            <div className="relative text-sm rounded-md">
                                 <CopyClipboard
                                     className="absolute right-3 top-3"
                                     componentProps={{ text: JSON.stringify(gitRemoteCredentials) }}
                                     iconProps={{ size: 'lg' }}
                                 />
-                                {JSON.stringify(gitRemoteCredentials, undefined, 2)}
-                            </pre>
+                                <pre className="bg-gray-050a15/5 px-4 py-3 overflow-x-auto">
+                                    {JSON.stringify(gitRemoteCredentials, undefined, 2)}
+                                </pre>
+                            </div>
                         )
                         : <p className="text-sm text-rose-400">You are not a DAO participant</p>
                     }

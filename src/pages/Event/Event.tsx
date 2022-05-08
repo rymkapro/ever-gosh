@@ -260,7 +260,11 @@ const EventPage = () => {
             {service?.proposal && monaco && (
                 <div>
                     {goshWallet?.isDaoParticipant && (
-                        <div className="mb-5 flex items-center gap-x-6 bg-gray-100 rounded px-4 py-3">
+                        <div
+                            className="relative mb-5 flex px-4 py-3 rounded gap-x-6 bg-gray-100
+                            flex-col items-start
+                            md:flex-row md:flex-wrap md:items-center"
+                        >
                             <div>
                                 <span className="font-semibold mr-2">SMV balance:</span>
                                 {service.locker?.meta?.votesTotal}
@@ -273,7 +277,7 @@ const EventPage = () => {
                                 <span className="font-semibold mr-2">Wallet balance:</span>
                                 {service.balance}
                             </div>
-                            <div className="grow text-right">
+                            <div className="grow text-right absolute right-3 top-3 md:relative md:right-auto md:top-auto">
                                 <FontAwesomeIcon
                                     icon={faCircle}
                                     className={classNames(
@@ -285,12 +289,11 @@ const EventPage = () => {
                         </div>
                     )}
 
-                    <div className="flex items-center gap-x-5 py-2">
-                        <div className="basis-2/5">
-                            <h3 className="text-xl font-semibold">
-                                {service.commit?.meta?.content.title}
-                            </h3>
-
+                    <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 py-2">
+                        <h3 className="basis-full text-xl font-semibold">
+                            {service.commit?.meta?.content.title}
+                        </h3>
+                        <div>
                             <div className="text-gray-606060 text-sm">
                                 <CopyClipboard
                                     label={`${'Proposal: '}${shortString(service.proposal.meta?.id || '')}`}
@@ -305,7 +308,7 @@ const EventPage = () => {
                                 {service.proposal.meta?.time.finish.toLocaleString()}
                             </div>
                         </div>
-                        <div className="grow">
+                        <div>
                             {service.proposal.meta?.commit.repoName}:{service.proposal.meta?.commit.branchName}
                             <div className="text-gray-606060 text-sm">
                                 <CopyClipboard
@@ -317,12 +320,12 @@ const EventPage = () => {
                             </div>
                         </div>
                         <div>
-                            {service.proposal.meta?.isCompleted
-                                ? <span className="text-green-900">Completed</span>
-                                : 'Running'
-                            }
-                        </div>
-                        <div>
+                            <span className="mr-3">
+                                {service.proposal.meta?.isCompleted
+                                    ? <span className="text-green-900">Completed</span>
+                                    : 'Running'
+                                }
+                            </span>
                             <span className="text-green-900 text-xl">{service.proposal.meta?.votes.yes}</span>
                             <span className="mx-1">/</span>
                             <span className="text-rose-600 text-xl">{service.proposal.meta?.votes.no}</span>
@@ -390,8 +393,8 @@ const EventPage = () => {
                             {({ isSubmitting }) => (
                                 <div className="mt-10">
                                     <h3 className="text-xl font-semibold">Vote for proposal</h3>
-                                    <Form className="flex items-baseline my-4 gap-x-6">
-                                        <div>
+                                    <Form className="flex flex-wrap items-baseline my-4 gap-x-6 gap-y-3">
+                                        <div className="grow sm:grow-0">
                                             <Field
                                                 name="amount"
                                                 component={TextField}
@@ -413,7 +416,7 @@ const EventPage = () => {
                                             </label>
                                         </div>
                                         <button
-                                            className="btn btn--body font-medium px-4 py-1.5"
+                                            className="btn btn--body font-medium px-4 py-1.5 w-full sm:w-auto"
                                             type="submit"
                                             disabled={isSubmitting}
                                         >

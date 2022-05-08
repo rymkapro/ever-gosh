@@ -124,7 +124,7 @@ const CommitPage = () => {
                             </pre>
                         )}
 
-                        <div className="flex border-t gap-x-6 py-1 text-gray-050a15/75 text-xs">
+                        <div className="flex flex-wrap border-t gap-x-6 py-1 text-gray-050a15/75 text-xs">
                             <div className="flex items-center">
                                 <span className="mr-2 text-gray-050a15/65">Commit by</span>
                                 {renderCommitter(commit.meta?.content.committer || '')}
@@ -133,9 +133,12 @@ const CommitPage = () => {
                                 <span className="mr-2 text-gray-050a15/65">at</span>
                                 {getCommitTime(commit.meta?.content.committer || '').toLocaleString()}
                             </div>
-                            <div className="grow text-right">
+                            <div className="grow flex items-center justify-start sm:justify-end">
                                 <span className="mr-2 text-gray-050a15/65">commit</span>
-                                {commit.meta?.sha}
+                                <CopyClipboard
+                                    label={shortString(commit.meta?.sha ?? '', 10, 10)}
+                                    componentProps={{ text: commit.meta?.sha ?? '' }}
+                                />
                             </div>
                         </div>
                     </div>

@@ -48,8 +48,8 @@ const RepoLayout = () => {
     }, [goshRepo, goshWallet, userStatePersist.phrase, updateBranches]);
 
     return (
-        <div className="container my-10">
-            <h1 className="flex items-center mb-6">
+        <div className="container container--full my-10">
+            <h1 className="flex items-center mb-6 px-5 sm:px-0">
                 <Link to={`/${daoName}`} className="font-semibold text-xl hover:underline">
                     {daoName}
                 </Link>
@@ -60,7 +60,7 @@ const RepoLayout = () => {
             </h1>
 
             {!isFetched && (
-                <div className="text-gray-606060">
+                <div className="text-gray-606060 px-5 sm:px-0">
                     <Spinner className="mr-3" />
                     Loading repository...
                 </div>
@@ -68,7 +68,7 @@ const RepoLayout = () => {
 
             {isFetched && (
                 <>
-                    <div className="flex gap-x-6 mb-6">
+                    <div className="flex gap-x-6 mb-6 px-5 sm:px-0">
                         {tabs
                             .filter((item) => !goshWallet ? item.public : item)
                             .map((item, index) => (

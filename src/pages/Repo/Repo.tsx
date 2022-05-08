@@ -3,7 +3,13 @@ import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import BranchSelect from "../../components/BranchSelect";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClockRotateLeft, faCodeBranch, faFolder } from "@fortawesome/free-solid-svg-icons";
+import {
+    faClockRotateLeft,
+    faCodeBranch,
+    faFolder,
+    faMagnifyingGlass,
+    faFileCirclePlus
+} from "@fortawesome/free-solid-svg-icons";
 import { useRecoilValue } from "recoil";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
@@ -25,8 +31,8 @@ const RepoPage = () => {
 
     return (
         <div className="bordered-block px-7 py-8">
-            <div className="flex items-center justify-between gap-3">
-                <div>
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-4">
+                <div className="grow flex items-center gap-y-2 gap-x-5">
                     <BranchSelect
                         branch={branch}
                         branches={branches}
@@ -39,21 +45,21 @@ const RepoPage = () => {
 
                     <Link
                         to={`/${daoName}/${repoName}/branches`}
-                        className="ml-4 text-sm text-gray-050a15/65 hover:text-gray-050a15"
+                        className="block text-sm text-gray-050a15/65 hover:text-gray-050a15"
                     >
-                        <span className="mr-1 font-semibold">
+                        <span className="font-semibold">
                             <FontAwesomeIcon icon={faCodeBranch} className="mr-1" />
                             {branches.length}
                         </span>
-                        branches
+                        <span className="hidden sm:inline-block ml-1">branches</span>
                     </Link>
 
                     <Link
                         to={`/${daoName}/${repoName}/commits/${branchName}`}
-                        className="ml-4 text-sm text-gray-050a15/65 hover:text-gray-050a15"
+                        className="block text-sm text-gray-050a15/65 hover:text-gray-050a15"
                     >
-                        <FontAwesomeIcon icon={faClockRotateLeft} className="mr-1" />
-                        History
+                        <FontAwesomeIcon icon={faClockRotateLeft} />
+                        <span className="hidden sm:inline-block ml-1">History</span>
                     </Link>
                 </div>
 
@@ -62,14 +68,16 @@ const RepoPage = () => {
                         to={`/${daoName}/${repoName}/find/${branchName}`}
                         className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                     >
-                        Go to file
+                        <FontAwesomeIcon icon={faMagnifyingGlass} />
+                        <span className="hidden sm:inline-block ml-2">Go to file</span>
                     </Link>
                     {!isMainBranch(branchName) && goshWallet?.isDaoParticipant && (
                         <Link
                             to={`/${daoName}/${repoName}/blobs/create/${branchName}${pathName && `/${pathName}`}`}
                             className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                         >
-                            Add file
+                            <FontAwesomeIcon icon={faFileCirclePlus} />
+                            <span className="hidden sm:inline-block ml-2">Add file</span>
                         </Link>
                     )}
                 </div>
@@ -97,16 +105,13 @@ const RepoPage = () => {
                         ..
                     </Link>
                 )}
-                {!!subtree && subtree?.map((item: any, index: number) => {
-                    const path = [item.path, item.name].filter((part) => part !== '').join('/');
-                    const type = item.type === 'tree' ? 'tree' : 'blobs';
+                <div className="divide-y divide-gray-c4c4c4">
+                    {!!subtree && subtree?.map((item: any, index: number) => {
+                        const path = [item.path, item.name].filter((part) => part !== '').join('/');
+                        const type = item.type === 'tree' ? 'tree' : 'blobs';
 
-                    return (
-                        <div
-                            key={index}
-                            className="flex gap-x-4 py-3 border-b border-gray-300 last:border-b-0"
-                        >
-                            <div className="basis-1/4 text-sm font-medium">
+                        return (
+                            <div key={index} className="py-3">
                                 <Link
                                     className="hover:underline"
                                     to={`/${daoName}/${repoName}/${type}/${branchName}/${path}`}
@@ -119,17 +124,9 @@ const RepoPage = () => {
                                     {item.name}
                                 </Link>
                             </div>
-                            <div className="text-gray-500 text-sm">
-                                {/* <Link
-                                className="hover:underline"
-                                to={``}
-                            >
-                                Last file commit name
-                            </Link> */}
-                            </div>
-                        </div>
-                    )
-                })}
+                        )
+                    })}
+                </div>
             </div>
         </div>
     );

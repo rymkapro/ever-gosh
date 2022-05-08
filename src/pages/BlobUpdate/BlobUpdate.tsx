@@ -95,7 +95,7 @@ const BlobUpdatePage = () => {
 
     if (!goshWallet?.isDaoParticipant) return <Navigate to={urlBack} />;
     return (
-        <div className="bordered-block px-7 py-8">
+        <div className="bordered-block py-8">
             {monaco && pathName && blobContent !== undefined && (
                 <Formik
                     initialValues={{
@@ -111,9 +111,9 @@ const BlobUpdatePage = () => {
                     onSubmit={onCommitChanges}
                 >
                     {({ values, setFieldValue, isSubmitting }) => (
-                        <Form>
-                            <div className="flex gap-3 items-baseline justify-between ">
-                                <div className="flex items-baseline">
+                        <Form className="px-4">
+                            <div className="flex flex-wrap gap-3 items-baseline justify-between ">
+                                <div className="flex flex-wrap items-baseline gap-y-2">
                                     <RepoBreadcrumbs
                                         daoName={daoName}
                                         repoName={repoName}
@@ -140,7 +140,7 @@ const BlobUpdatePage = () => {
 
                                 <Link
                                     to={urlBack}
-                                    className="btn btn--body px-3 py-1.5 text-sm !font-normal"
+                                    className="btn btn--body px-3 py-1.5 !text-sm !font-normal text-center w-full sm:w-auto"
                                 >
                                     Discard changes
                                 </Link>

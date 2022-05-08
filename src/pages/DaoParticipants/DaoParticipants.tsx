@@ -82,7 +82,7 @@ const DaoParticipantsPage = () => {
 
                 <div className="divide-y divide-gray-c4c4c4">
                     {participants?.map(({ pubkey, smvBalance }, index) => (
-                        <div key={index} className="py-2 flex items-center justify-between">
+                        <div key={index} className="py-2 flex flex-wrap gap-x-3 items-center justify-between">
                             <CopyClipboard
                                 componentProps={{ text: pubkey }}
                                 label={shortString(pubkey, 10, 10)}
@@ -133,7 +133,8 @@ const DaoParticipantsPage = () => {
                                     ))}
 
                                     <button
-                                        className="btn btn--body w-full !font-normal text-sm px-4 py-1.5"
+                                        className="!block btn btn--body !font-normal text-sm px-4 py-1.5
+                                        w-full sm:w-auto sm:ml-auto"
                                         type="button"
                                         onClick={() => push('')}
                                     >
@@ -151,7 +152,8 @@ const DaoParticipantsPage = () => {
 
                         <button
                             type="submit"
-                            className="btn btn--body px-3 py-3 w-full mt-4"
+                            className="!block btn btn--body px-3 py-3 mt-4
+                            w-full sm:w-auto sm:mx-auto"
                             disabled={isSubmitting}
                         >
                             {isSubmitting && <Spinner className="mr-3" size={'lg'} />}
