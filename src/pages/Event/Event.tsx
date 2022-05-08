@@ -142,7 +142,10 @@ const EventPage = () => {
             if (!service?.proposal) throw new GoshError(EGoshError.SMV_NO_PROPOSAL);
 
             if (service.proposal.meta?.time.start && Date.now() < service.proposal.meta?.time.start.getTime()) {
-                throw new GoshError(EGoshError.SMV_NO_START, { start: service.proposal.meta?.time.start.getDate() });
+                throw new GoshError(
+                    EGoshError.SMV_NO_START,
+                    { start: service.proposal.meta?.time.start.getTime() }
+                );
             }
             if (service.locker?.meta?.isBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
 

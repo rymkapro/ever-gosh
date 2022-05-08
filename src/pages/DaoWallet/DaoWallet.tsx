@@ -159,7 +159,7 @@ const DaoWalletPage = () => {
                     >
                         {({ isSubmitting }) => (
                             <Form className="flex flex-wrap items-baseline gap-3">
-                                <div className="grow">
+                                <div className="grow sm:grow-0">
                                     <Field
                                         name="amount"
                                         component={TextField}
@@ -203,7 +203,7 @@ const DaoWalletPage = () => {
                     >
                         {({ isSubmitting }) => (
                             <Form className="flex flex-wrap items-baseline gap-3">
-                                <div className="grow">
+                                <div className="grow sm:grow-0">
                                     <Field
                                         name="amount"
                                         component={TextField}

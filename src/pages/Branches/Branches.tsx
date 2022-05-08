@@ -98,7 +98,7 @@ export const BranchesPage = () => {
                         })}
                     >
                         {({ isSubmitting, setFieldValue }) => (
-                            <Form className="grow flex flex-wrap items-center gap-3">
+                            <Form className="grow sm:grow-0 flex flex-wrap items-center gap-3">
                                 <div className="grow flex items-center">
                                     <BranchSelect
                                         branch={branch}
