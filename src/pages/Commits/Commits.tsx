@@ -5,7 +5,8 @@ import BranchSelect from "../../components/BranchSelect";
 import CopyClipboard from "../../components/CopyClipboard";
 import Spinner from "../../components/Spinner";
 import { getCommitTime, ZERO_COMMIT } from "../../helpers";
-import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
+import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
+import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { GoshCommit } from "../../types/classes";
 import { TGoshBranch, IGoshCommit, IGoshRepository } from "../../types/types";
 import { shortString } from "../../utils";
@@ -15,7 +16,7 @@ import { TRepoLayoutOutletContext } from "../RepoLayout";
 const CommitsPage = () => {
     const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
     const { daoName, repoName, branchName = 'main' } = useParams();
-    const branches = useRecoilValue(goshBranchesAtom);
+    const { branches, updateBranch } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const navigate = useNavigate();
     const [commits, setCommits] = useState<IGoshCommit[]>();
@@ -48,6 +49,10 @@ const CommitsPage = () => {
 
         if (goshRepo && branch) getCommits(goshRepo, branch);
     }, [goshRepo, branch]);
+
+    useEffect(() => {
+        updateBranch(branchName);
+    }, [branchName, updateBranch])
 
     return (
         <div className="bordered-block px-7 py-8">

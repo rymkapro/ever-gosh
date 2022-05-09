@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import BranchSelect from "../../components/BranchSelect";
@@ -23,11 +23,15 @@ const RepoPage = () => {
     const pathName = useParams()['*'] || '';
     const navigate = useNavigate();
     const { goshWallet, goshRepo, goshRepoTree } = useOutletContext<TRepoLayoutOutletContext>();
-    const { branches } = useGoshRepoBranches(goshRepo);
+    const { branches, updateBranch } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const subtree = useRecoilValue(goshRepoTree.getSubtree(pathName));
 
     const [dirUp] = splitByPath(pathName);
+
+    useEffect(() => {
+        updateBranch(branchName);
+    }, [branchName, updateBranch]);
 
     return (
         <div className="bordered-block px-7 py-8">
