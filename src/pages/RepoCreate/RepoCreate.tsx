@@ -6,6 +6,7 @@ import { Navigate, useNavigate, useOutletContext, useParams } from "react-router
 import Spinner from "../../components/Spinner";
 import { TDaoLayoutOutletContext } from "../DaoLayout";
 import { EGoshError, GoshError } from "../../types/errors";
+import { toast } from "react-toastify";
 
 
 type TFormValues = {
@@ -25,7 +26,7 @@ const RepoCreatePage = () => {
             navigate(`/${daoName}/${values.name}`, { replace: true });
         } catch (e: any) {
             console.error(e.message);
-            alert(e.message);
+            toast.error(e.message);
         }
     }
 

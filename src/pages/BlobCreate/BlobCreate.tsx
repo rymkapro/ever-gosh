@@ -19,6 +19,7 @@ import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
 import RepoBreadcrumbs from "../../components/Repo/Breadcrumbs";
 import { EGoshError, GoshError } from "../../types/errors";
+import { toast } from "react-toastify";
 
 
 type TFormValues = {
@@ -70,7 +71,7 @@ const BlobCreatePage = () => {
             navigate(urlBack);
         } catch (e: any) {
             console.error(e.message);
-            alert(e.message);
+            toast.error(e.message);
         }
     }
 

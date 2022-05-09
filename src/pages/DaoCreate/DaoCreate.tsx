@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashAlt } from "@fortawesome/free-regular-svg-icons";
 import Spinner from "../../components/Spinner";
 import { EGoshError, GoshError } from "../../types/errors";
+import { toast } from "react-toastify";
 
 
 type TFormValues = {
@@ -41,7 +42,7 @@ const DaoCreatePage = () => {
             navigate('/account/orgs');
         } catch (e: any) {
             console.error(e.message);
-            alert(e.message);
+            toast.error(e.message);
         }
     }
 

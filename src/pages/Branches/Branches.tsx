@@ -15,6 +15,7 @@ import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 import { isMainBranch } from "../../helpers";
 import { EGoshError, GoshError } from "../../types/errors";
+import { toast } from "react-toastify";
 
 
 type TCreateBranchFormValues = {
@@ -44,7 +45,7 @@ export const BranchesPage = () => {
             onSuccess: () => updateBranches(),
             onError: (error: any) => {
                 console.error(error);
-                alert(error.message);
+                toast.error(error.message);
             },
             onSettled: (data, error, variables) => {
                 setBranchesOnMutation((value) => value.filter((item) => item !== variables));
@@ -65,7 +66,7 @@ export const BranchesPage = () => {
             helpers.resetForm();
         } catch (e: any) {
             console.error(e);
-            alert(e.message);
+            toast.error(e.message);
         }
     }
 

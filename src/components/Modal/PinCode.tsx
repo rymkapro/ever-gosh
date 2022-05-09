@@ -8,6 +8,7 @@ import { chacha20, generateRandomBytes } from "../../helpers";
 import { useEverClient } from "../../hooks/ever.hooks";
 import { appModalStateAtom } from "../../store/app.state";
 import { TUserStatePersist } from "../../types/types";
+import { toast } from "react-toastify";
 
 
 type TPinCodeModalProps = {
@@ -48,7 +49,7 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
 
         if (tmp.phrase && tmp.nonce) {
             if (pinHash !== tmp.pin) {
-                alert('Wrong pin');
+                toast.error('Wrong PIN', { autoClose: 1500 });
                 setPin('');
                 if (!unlock) setTmp({ phrase: undefined, nonce: undefined, pin: undefined });
                 return;

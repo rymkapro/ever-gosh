@@ -31,6 +31,7 @@ import { faCircle } from "@fortawesome/free-solid-svg-icons";
 import { useMonaco } from "@monaco-editor/react";
 import { TDaoLayoutOutletContext } from "../DaoLayout";
 import { EGoshError, GoshError } from "../../types/errors";
+import { toast } from "react-toastify";
 
 
 type TFormValues = {
@@ -125,10 +126,10 @@ const EventPage = () => {
             if (service?.locker?.meta?.isBusy) throw new GoshError(EGoshError.SMV_LOCKER_BUSY);
             setCheck(true);
             await wallet.tryProposalResult(proposal.address);
-            alert('Re-check submitted. Please, wait a bit for data to be updated or check status later')
+            toast.success('Re-check submitted. Please, wait a bit for data to be updated or check status later');
         } catch (e: any) {
             console.error(e.message);
-            alert(e.message);
+            toast.error(e.message);
         } finally {
             setCheck(false);
         }
@@ -159,10 +160,10 @@ const EventPage = () => {
                 choice,
                 values.amount
             );
-            alert('Vote accepted. Please, wait a bit for data to be updated or check status later');
+            toast.success('Vote accepted. Please, wait a bit for data to be updated or check status later');
         } catch (e: any) {
             console.error(e.message);
-            alert(e.message);
+            toast.error(e.message);
         }
     }
 
@@ -175,7 +176,7 @@ const EventPage = () => {
             await goshWallet.updateHead();
         } catch (e: any) {
             console.error(e.message);
-            alert(e.message);
+            toast.error(e.message);
         } finally {
             setRelease(false);
         }
@@ -187,7 +188,7 @@ const EventPage = () => {
             const prop = new GoshSmvProposal(root.account.client, eventAddr);
             await prop.load();
             if (!prop.meta || !daoName || !goshRoot) {
-                alert('Error loading proposal');
+                toast.error('Error loading proposal');
                 return;
             }
 

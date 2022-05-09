@@ -36,6 +36,7 @@ import EventPage from "./pages/Event";
 import "./assets/scss/style.scss";
 import BaseModal from "./components/Modal/BaseModal";
 import Spinner from "./components/Spinner";
+import { ToastOptionsShortcuts } from "./helpers";
 
 
 
@@ -107,7 +108,7 @@ const App = () => {
                 <div className="text-right text-xs text-gray-400">{process.env.REACT_APP_EVER_NETWORK}</div>
             </footer>
 
-            <ToastContainer />
+            <ToastContainer {...ToastOptionsShortcuts.Default} />
             <BaseModal />
         </div>
     );

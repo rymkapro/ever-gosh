@@ -13,6 +13,7 @@ import * as Yup from "yup";
 import { useOutletContext } from "react-router-dom";
 import { TDaoLayoutOutletContext } from "../DaoLayout";
 import { EGoshError, GoshError } from "../../types/errors";
+import { toast } from "react-toastify";
 
 
 type TParticipantFormValues = {
@@ -62,7 +63,7 @@ const DaoParticipantsPage = () => {
             helpers.resetForm();
         } catch (e: any) {
             console.error(e.message);
-            alert(e.message);
+            toast.error(e.message);
         }
     }
 

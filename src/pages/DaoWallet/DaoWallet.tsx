@@ -11,6 +11,7 @@ import { userStateAtom } from "../../store/user.state";
 import CopyClipboard from "../../components/CopyClipboard";
 import { TDaoLayoutOutletContext } from "../DaoLayout";
 import { EGoshError, GoshError } from "../../types/errors";
+import { toast } from "react-toastify";
 
 
 type TMoveBalanceFormValues = {
@@ -44,10 +45,10 @@ const DaoWalletPage = () => {
             if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
 
             await goshWallet.lockVoting(values.amount);
-            alert('Submitted. Balances will be updated soon');
+            toast.success('Submitted. Balances will be updated soon');
         } catch (e: any) {
             console.error(e.message);
-            alert(e.message);
+            toast.error(e.message);
         }
     }
 
@@ -57,10 +58,10 @@ const DaoWalletPage = () => {
             if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
 
             await goshWallet.unlockVoting(values.amount);
-            alert('Submitted. Balances will be updated soon');
+            toast.success('Submitted. Balances will be updated soon');
         } catch (e: any) {
             console.error(e.message);
-            alert(e.message);
+            toast.error(e.message);
         }
     }
 
@@ -69,10 +70,10 @@ const DaoWalletPage = () => {
             if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
 
             await goshWallet.updateHead();
-            alert('Release submitted. Available tokens will be released soon');
+            toast.success('Release submitted. Available tokens will be released soon');
         } catch (e: any) {
             console.error(e.message);
-            alert(e.message);
+            toast.error(e.message);
         }
     }
 

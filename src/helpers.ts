@@ -154,7 +154,6 @@ export const getRepoTree = async (
     /** Recursive walker through tree blobs */
     const blobTreeWalker = async (path: string, subitems: TGoshTreeItem[]) => {
         const trees = subitems.filter((item) => item.type === 'tree');
-        if (!trees) return;
 
         await Promise.all(trees.map(async (tree) => {
             const treeAddr = await repo.getBlobAddr(`tree ${tree.sha}`);

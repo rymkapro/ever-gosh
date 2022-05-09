@@ -19,6 +19,7 @@ import { IGoshBlob, TGoshTreeItem } from "../../types/types";
 import { GoshBlob } from "../../types/classes";
 import BranchSelect from "../../components/BranchSelect";
 import { EGoshError, GoshError } from "../../types/errors";
+import { toast } from "react-toastify";
 
 
 type TCommitFormValues = {
@@ -113,7 +114,7 @@ const PullCreatePage = () => {
                 setCompare(compare);
             } catch (e: any) {
                 console.error(e.message);
-                alert(e.message);
+                toast.error(e.message);
             }
         }
 
@@ -169,7 +170,7 @@ const PullCreatePage = () => {
             );
         } catch (e: any) {
             console.error(e.message);
-            alert(e.message);
+            toast.error(e.message);
         }
     }
 

@@ -29,7 +29,7 @@ export class GoshError extends Error {
     data?: object;
 
     constructor(message: string, data?: object) {
-        super(`${message} (${JSON.stringify(data)})`);
+        super(message + (data ? ` (${JSON.stringify(data)})` : ''));
         this.name = 'GoshError';
         this.title = message;
         this.data = data;
