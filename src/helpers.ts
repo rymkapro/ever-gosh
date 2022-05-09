@@ -350,12 +350,10 @@ export const saveToIPFS = async (content: string, filename?: string): Promise<st
 
     const response = await fetch(
         `${process.env.REACT_APP_IPFS}/api/v0/add?pin=true&quiet=true`,
-        {
-            method: 'POST', body: form
-        }
+        { method: 'POST', body: form }
     );
 
-    if (!response.ok) throw new Error('Error while uploading');
+    if (!response.ok) throw new Error(`Error while uploading (${JSON.stringify(response)})`);
     const responseBody = await response.json();
     const { Hash: cid } = responseBody;
     return cid
@@ -373,7 +371,7 @@ export const loadFromIPFS = async (cid: string): Promise<Buffer> => {
         { method: 'GET' }
     );
 
-    if (!response.ok) throw new Error('Error while uploading');
+    if (!response.ok) throw new Error(`Error while uploading (${JSON.stringify(response)})`);
     return Buffer.from(await response.arrayBuffer());
 }
 
