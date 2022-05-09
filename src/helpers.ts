@@ -68,8 +68,6 @@ export const isMainBranch = (branch: string = 'main'): boolean => ['master', 'ma
 
 export const sha1 = (data: string, type: 'blob' | 'commit'): string => {
     let content = data;
-    if (type === 'commit') content += '\n';
-    if (type === 'blob' && data.slice(-1) !== '\n') content += '\n';
     const size = Buffer.from(content, 'utf-8').byteLength;
     const object = Buffer.from(`${type} ${size}\0${content}`);
     const hash = SHA1(object.toString());
