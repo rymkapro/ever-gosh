@@ -52,7 +52,7 @@ const CommitsPage = () => {
 
     useEffect(() => {
         updateBranch(branchName);
-    }, [branchName, updateBranch])
+    }, [branchName, updateBranch]);
 
     return (
         <div className="bordered-block px-7 py-8">
