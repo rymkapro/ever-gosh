@@ -16,6 +16,8 @@ import { EGoshError, GoshError } from "./types/errors";
 
 
 export const ZERO_COMMIT = '0000000000000000000000000000000000000000';
+export const MAX_ONCHAIN_FILE_SIZE = 15360;
+
 
 export const getEndpoints = (): string[] => {
     switch (process.env.REACT_APP_EVER_NETWORK) {
@@ -331,6 +333,48 @@ export const zstd = {
         if (uft8) return Buffer.from(result.decompressed, 'base64').toString();
         return result.decompressed;
     }
+}
+
+/**
+ * @link https://docs.ipfs.io/reference/http/api/#api-v0-add
+ * @param content
+ * @param filename
+ * @returns
+ */
+export const saveToIPFS = async (content: string, filename?: string): Promise<string> => {
+    if (!process.env.REACT_APP_IPFS) throw new Error('IPFS url undefined');
+
+    const form = new FormData();
+    const blob = new Blob([content]);
+    form.append('file', blob, filename);
+
+    const response = await fetch(
+        `${process.env.REACT_APP_IPFS}/api/v0/add?pin=true&quiet=true`,
+        {
+            method: 'POST', body: form
+        }
+    );
+
+    if (!response.ok) throw new Error('Error while uploading');
+    const responseBody = await response.json();
+    const { Hash: cid } = responseBody;
+    return cid
+}
+
+/**
+ * @param cid
+ * @returns
+ */
+export const loadFromIPFS = async (cid: string): Promise<Buffer> => {
+    if (!process.env.REACT_APP_IPFS) throw new Error('IPFS url undefined');
+
+    const response = await fetch(
+        `${process.env.REACT_APP_IPFS}/ipfs/${cid.toString()}`,
+        { method: 'GET' }
+    );
+
+    if (!response.ok) throw new Error('Error while uploading');
+    return Buffer.from(await response.arrayBuffer());
 }
 
 /**

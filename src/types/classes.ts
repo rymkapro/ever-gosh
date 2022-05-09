@@ -22,7 +22,10 @@ import {
     sha1Tree,
     unixtimeWithTz,
     zstd,
-    isMainBranch
+    isMainBranch,
+    loadFromIPFS,
+    MAX_ONCHAIN_FILE_SIZE,
+    saveToIPFS
 } from "../helpers";
 import {
     IGoshBlob,
@@ -40,6 +43,7 @@ import {
     IGoshSmvTokenRoot
 } from "./types";
 import { EGoshError, GoshError } from "./errors";
+import { Buffer } from "buffer";
 
 
 export class GoshDaoCreator implements IGoshDaoCreator {
@@ -386,6 +390,16 @@ export class GoshWallet implements IGoshWallet {
                 const compressed = await zstd.compress(this.account.client, blobContent);
                 console.debug('[createCommit] - Tree blob content compressed:', compressed);
 
+                let content = '';
+                let ipfsCID = '';
+                if (compressed.length > MAX_ONCHAIN_FILE_SIZE) {
+                    console.debug('[createCommit] - Save blob to ipfs');
+                    ipfsCID = await saveToIPFS(compressed);
+                } else {
+                    content = compressed;
+                }
+                console.debug('[createCommit] - Blob content/ipfs:', content, ipfsCID);
+
                 blobsToDeploy.name.push(`tree ${subtreeHash}`);
                 blobsToDeploy.fn.push(() => (
                     this.deployBlob(
@@ -393,8 +407,8 @@ export class GoshWallet implements IGoshWallet {
                         branch.name,
                         commitName,
                         `tree ${subtreeHash}`,
-                        compressed,
-                        '',
+                        content,
+                        ipfsCID,
                         0,
                         ''
                     )
@@ -411,6 +425,16 @@ export class GoshWallet implements IGoshWallet {
                 const compressed = await zstd.compress(this.account.client, blob.modified);
                 console.debug('[createCommit] - Blob content compressed:', blob.name, compressed);
 
+                let content = '';
+                let ipfsCID = '';
+                if (compressed.length > MAX_ONCHAIN_FILE_SIZE) {
+                    console.debug('[createCommit] - Save blob to ipfs');
+                    ipfsCID = await saveToIPFS(compressed);
+                } else {
+                    content = compressed;
+                }
+                console.debug('[createCommit] - Blob content/ipfs:', content, ipfsCID);
+
                 blobsToDeploy.name.push(`blob ${blob.sha}`);
                 blobsToDeploy.fn.push(() => (
                     this.deployBlob(
@@ -418,8 +442,8 @@ export class GoshWallet implements IGoshWallet {
                         branch.name,
                         commitName,
                         `blob ${blob.sha}`,
-                        compressed,
-                        '',
+                        content,
+                        ipfsCID,
                         0,
                         blob.prevSha
                     )
@@ -810,9 +834,13 @@ export class GoshBlob implements IGoshBlob {
     async load(): Promise<void> {
         const meta = await this.getBlob();
 
-        if (meta.content) {
-            meta.content = await zstd.decompress(this.account.client, meta.content);
+        if (meta.ipfs) {
+            const loaded = await loadFromIPFS(meta.ipfs);
+            meta.content = loaded.toString();
         }
+        meta.content = await zstd.decompress(this.account.client, meta.content, false);
+        // TODO: check for binary and set `meta.content=decompressed`
+        meta.content = Buffer.from(meta.content, 'base64').toString();
 
         this.meta = {
             name: meta.sha,
