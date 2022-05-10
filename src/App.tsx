@@ -37,6 +37,7 @@ import "./assets/scss/style.scss";
 import BaseModal from "./components/Modal/BaseModal";
 import Spinner from "./components/Spinner";
 import { ToastOptionsShortcuts } from "./helpers";
+import { shortString } from "./utils";
 
 
 
@@ -105,7 +106,11 @@ const App = () => {
                 </Routes>
             </main>
             <footer className="footer">
-                <div className="text-right text-xs text-gray-400">{process.env.REACT_APP_EVER_NETWORK}</div>
+                <div className="text-right text-xs text-gray-050a15">
+                    {process.env.REACT_APP_EVER_NETWORK}
+                    <span className="mx-2">{shortString(process.env.REACT_APP_GOSH_ADDR ?? '', 6, 4)}</span>
+                    {shortString(process.env.REACT_APP_CREATOR_ADDR ?? '', 6, 4)}
+                </div>
             </footer>
 
             <ToastContainer {...ToastOptionsShortcuts.Default} />
