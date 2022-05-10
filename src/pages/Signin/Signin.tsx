@@ -3,11 +3,12 @@ import { Form, Formik, Field, ErrorMessage, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import TextareaField from "../../components/FormikForms/TextareaField";
 import { useEverClient } from "../../hooks/ever.hooks";
-import { useSetRecoilState } from "recoil";
+import { useResetRecoilState, useSetRecoilState } from "recoil";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../../components/Spinner";
 import { appModalStateAtom } from "../../store/app.state";
 import PinCodeModal from "../../components/Modal/PinCode";
+import { userStatePersistAtom } from "../../store/user.state";
 
 
 type TFormValues = {
@@ -16,6 +17,7 @@ type TFormValues = {
 
 const SigninPage = () => {
     const navigate = useNavigate();
+    const userStatePersistReset = useResetRecoilState(userStatePersistAtom);
     const everClient = useEverClient();
     const setModal = useSetRecoilState(appModalStateAtom);
 
@@ -26,6 +28,7 @@ const SigninPage = () => {
             return;
         }
 
+        userStatePersistReset();
         setModal({
             static: true,
             isOpen: true,
