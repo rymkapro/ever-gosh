@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Field, Form, Formik } from "formik";
-import { Link, Navigate, useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import TextField from "../../components/FormikForms/TextField";
 import { useMonaco } from "@monaco-editor/react";
@@ -129,12 +129,13 @@ const BlobCreatePage = () => {
                                 <span>{branchName}</span>
                             </div>
 
-                            <Link
-                                to={urlBack}
+                            <button
                                 className="btn btn--body px-3 py-1.5 !text-sm !font-normal text-center w-full sm:w-auto"
+                                disabled={isSubmitting}
+                                onClick={() => navigate(urlBack)}
                             >
                                 Discard changes
-                            </Link>
+                            </button>
                         </div>
 
                         <div className="mt-5 border rounded overflow-hidden">

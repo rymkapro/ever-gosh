@@ -77,6 +77,7 @@ const DaoCreatePage = () => {
                                     inputProps={{
                                         placeholder: 'New organization name',
                                         autoComplete: 'off',
+                                        disabled: isSubmitting,
                                         onChange: (e: any) => setFieldValue('name', e.target.value.toLowerCase())
                                     }}
                                 />
@@ -98,7 +99,7 @@ const DaoCreatePage = () => {
                                                                 className: 'w-full',
                                                                 placeholder: 'Participant public key',
                                                                 autoComplete: 'off',
-                                                                disabled: index === 0
+                                                                disabled: index === 0 || isSubmitting
                                                             }}
                                                         />
                                                     </div>
@@ -106,6 +107,7 @@ const DaoCreatePage = () => {
                                                         <button
                                                             className="btn btn--body px-3.5 py-3"
                                                             type="button"
+                                                            disabled={isSubmitting}
                                                             onClick={() => remove(index)}
                                                         >
                                                             <FontAwesomeIcon icon={faTrashAlt} />
@@ -117,6 +119,7 @@ const DaoCreatePage = () => {
                                             <button
                                                 className="btn btn--body w-full !font-normal text-sm px-4 py-1.5"
                                                 type="button"
+                                                disabled={isSubmitting}
                                                 onClick={() => push('')}
                                             >
                                                 Add participant

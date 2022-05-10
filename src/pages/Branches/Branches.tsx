@@ -112,6 +112,7 @@ export const BranchesPage = () => {
                                                 setFieldValue('from', selected);
                                             }
                                         }}
+                                        disabled={isSubmitting}
                                     />
                                     <span className="mx-3">
                                         <FontAwesomeIcon icon={faChevronRight} size="sm" />
@@ -126,6 +127,7 @@ export const BranchesPage = () => {
                                                 placeholder: 'Branch name',
                                                 autoComplete: 'off',
                                                 className: '!text-sm !py-1.5',
+                                                disabled: isSubmitting,
                                                 onChange: (e: any) => {
                                                     setFieldValue('newName', e.target.value.toLowerCase());
                                                 }

@@ -119,13 +119,15 @@ const DaoParticipantsPage = () => {
                                                     inputProps={{
                                                         className: 'w-full',
                                                         placeholder: 'Participant public key',
-                                                        autoComplete: 'off'
+                                                        autoComplete: 'off',
+                                                        disabled: isSubmitting
                                                     }}
                                                 />
                                             </div>
                                             <button
                                                 className="btn btn--body px-3.5 py-3"
                                                 type="button"
+                                                disabled={isSubmitting}
                                                 onClick={() => remove(index)}
                                             >
                                                 <FontAwesomeIcon icon={faTrashAlt} />
@@ -137,13 +139,14 @@ const DaoParticipantsPage = () => {
                                         className="!block btn btn--body !font-normal text-sm px-4 py-1.5
                                         w-full sm:w-auto sm:ml-auto"
                                         type="button"
+                                        disabled={isSubmitting}
                                         onClick={() => push('')}
                                     >
                                         Add participant
                                     </button>
 
                                     {touched.pubkey && errors.pubkey && (
-                                        <div className="text-red-dd3a3a text-sm mt-1">
+                                        <div className="text-red-dd3a3a text-sm mt-1 text-center">
                                             There are empty participants. Either fill them or remove
                                         </div>
                                     )}

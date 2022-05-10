@@ -56,6 +56,7 @@ const RepoCreatePage = () => {
                                         className: 'w-full',
                                         autoComplete: 'off',
                                         placeholder: 'Repository name',
+                                        disabled: isSubmitting,
                                         onChange: (e: any) => setFieldValue('name', e.target.value.toLowerCase())
                                     }}
                                 />

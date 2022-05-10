@@ -167,7 +167,8 @@ const DaoWalletPage = () => {
                                         inputProps={{
                                             className: '!py-2',
                                             placeholder: 'Amount',
-                                            autoComplete: 'off'
+                                            autoComplete: 'off',
+                                            disabled: isSubmitting
                                         }}
                                     />
                                 </div>
@@ -211,7 +212,8 @@ const DaoWalletPage = () => {
                                         inputProps={{
                                             className: '!py-2',
                                             placeholder: 'Amount',
-                                            autoComplete: 'off'
+                                            autoComplete: 'off',
+                                            disabled: isSubmitting
                                         }}
                                     />
                                 </div>
