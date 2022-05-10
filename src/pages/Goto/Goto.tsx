@@ -34,7 +34,7 @@ const GotoPage = () => {
             </div>
 
             {!!treeItems && treeItems?.map((item, index) => {
-                const path = `${item.path && `${item.path}/`}${item.name}`
+                const path = `${item.path ? `${item.path}/` : ''}${item.name}`
                 return (
                     <div
                         key={index}

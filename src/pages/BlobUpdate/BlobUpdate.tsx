@@ -63,7 +63,7 @@ const BlobUpdatePage = () => {
                 branch,
                 userState.keys.public,
                 [{
-                    name: `${path && `${path}/`}${values.name}`,
+                    name: `${path ? `${path}/` : ''}${values.name}`,
                     modified: values.content,
                     original: blobContent
                 }],

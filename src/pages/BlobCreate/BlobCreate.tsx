@@ -52,9 +52,9 @@ const BlobCreatePage = () => {
             if (isMainBranch(branchName)) throw new GoshError(EGoshError.PR_BRANCH, { branch: branchName });
             if (!goshWallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_PARTICIPANT);
 
-            const name = `${pathName && `${pathName}/`}${values.name}`;
+            const name = `${pathName ? `${pathName}/` : ''}${values.name}`;
             const exists = goshRepoTree.tree.items.find((item) => (
-                `${item.path && `${item.path}/`}${item.name}` === name
+                `${item.path ? `${item.path}/` : ''}${item.name}` === name
             ));
             if (exists) throw new GoshError(EGoshError.FILE_EXISTS, { file: name });
 

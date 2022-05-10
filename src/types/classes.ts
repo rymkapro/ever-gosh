@@ -377,79 +377,86 @@ export class GoshWallet implements IGoshWallet {
         //  - Promises for tree blobs deploy;
         //  - Promises for common blobs deploy
         const blobsToDeploy: { name: string[]; fn: Function[]; } = { name: [], fn: [] };
-        await Promise.all(
-            updatedPaths.map(async (path) => {
-                const subtree = updatedTree[path];
-                const subtreeHash = sha1Tree(subtree);
-                const blobContent = subtree.map((item) => (
-                    `${item.mode} ${item.type} ${item.sha}\t${item.name}`
-                )).join('\n');
-                console.debug('[createCommit] - Tree blob content for:', path, blobContent);
+        for (let i = 0; i < updatedPaths.length; i += 30) {
+            const chunk = updatedPaths.slice(i, i + 30);
+            await new Promise((resolve) => setInterval(resolve, 1500));
+            await Promise.all(
+                chunk.map(async (path) => {
+                    const subtree = updatedTree[path];
+                    const subtreeHash = sha1Tree(subtree);
+                    const blobContent = subtree.map((item) => (
+                        `${item.mode} ${item.type} ${item.sha}\t${item.name}`
+                    )).join('\n');
 
-                console.debug('[createCommit] - Tree blob content uncompressed:', blobContent);
-                const compressed = await zstd.compress(this.account.client, blobContent);
-                console.debug('[createCommit] - Tree blob content compressed:', compressed);
+                    console.debug('[createCommit] - Tree blob content uncompressed:', blobContent);
+                    const compressed = await zstd.compress(this.account.client, blobContent);
+                    console.debug('[createCommit] - Tree blob content compressed:', compressed);
 
-                let content = '';
-                let ipfsCID = '';
-                if (compressed.length > MAX_ONCHAIN_FILE_SIZE) {
-                    console.debug('[createCommit] - Save blob to ipfs');
-                    ipfsCID = await saveToIPFS(compressed);
-                } else {
-                    content = compressed;
-                }
-                console.debug('[createCommit] - Blob content/ipfs:', content, ipfsCID);
+                    let content = '';
+                    let ipfsCID = '';
+                    if (compressed.length > MAX_ONCHAIN_FILE_SIZE) {
+                        console.debug('[createCommit] - Save blob to ipfs');
+                        ipfsCID = await saveToIPFS(compressed);
+                    } else {
+                        content = compressed;
+                    }
+                    console.debug('[createCommit] - Blob content/ipfs:', content, ipfsCID);
 
-                blobsToDeploy.name.push(`tree ${subtreeHash}`);
-                blobsToDeploy.fn.push(() => (
-                    this.deployBlob(
-                        repoName,
-                        branch.name,
-                        commitName,
-                        `tree ${subtreeHash}`,
-                        content,
-                        ipfsCID,
-                        0,
-                        ''
-                    )
-                ));
-            })
-        );
+                    blobsToDeploy.name.push(`tree ${subtreeHash}`);
+                    blobsToDeploy.fn.push(() => (
+                        this.deployBlob(
+                            repoName,
+                            branch.name,
+                            commitName,
+                            `tree ${subtreeHash}`,
+                            content,
+                            ipfsCID,
+                            0,
+                            ''
+                        )
+                    ));
+                })
+            );
+        }
 
-        await Promise.all(
-            _blobs.map(async (blob) => {
-                // console.debug('[createCommit] - Blob patch uncompressed:', blob.name, blob.patch);
-                // const compressed = await zstd.compress(this.account.client, blob.patch);
-                // console.debug('[createCommit] - Blob patch compressed:', blob.name, compressed);
-                console.debug('[createCommit] - Blob content uncompressed:', blob.name, blob.modified);
-                const compressed = await zstd.compress(this.account.client, blob.modified);
-                console.debug('[createCommit] - Blob content compressed:', blob.name, compressed);
+        for (let i = 0; i < _blobs.length; i += 30) {
+            const chunk = _blobs.slice(i, i + 30);
+            await new Promise((resolve) => setInterval(resolve, 1500));
+            await Promise.all(
+                chunk.map(async (blob) => {
+                    // console.debug('[createCommit] - Blob patch uncompressed:', blob.name, blob.patch);
+                    // const compressed = await zstd.compress(this.account.client, blob.patch);
+                    // console.debug('[createCommit] - Blob patch compressed:', blob.name, compressed);
+                    console.debug('[createCommit] - Blob content uncompressed:', blob.name, blob.modified);
+                    const compressed = await zstd.compress(this.account.client, blob.modified);
+                    console.debug('[createCommit] - Blob content compressed:', blob.name, compressed);
 
-                let content = '';
-                let ipfsCID = '';
-                if (compressed.length > MAX_ONCHAIN_FILE_SIZE) {
-                    console.debug('[createCommit] - Save blob to ipfs');
-                    ipfsCID = await saveToIPFS(compressed);
-                } else {
-                    content = compressed;
-                }
-                console.debug('[createCommit] - Blob content/ipfs:', content, ipfsCID);
+                    let content = '';
+                    let ipfsCID = '';
+                    if (compressed.length > MAX_ONCHAIN_FILE_SIZE) {
+                        console.debug('[createCommit] - Save blob to ipfs');
+                        ipfsCID = await saveToIPFS(compressed);
+                    } else {
+                        content = compressed;
+                    }
+                    console.debug('[createCommit] - Blob content/ipfs:', content, ipfsCID);
 
-                blobsToDeploy.name.push(`blob ${blob.sha}`);
-                blobsToDeploy.fn.push(() => (
-                    this.deployBlob(
-                        repoName,
-                        branch.name,
-                        commitName,
-                        `blob ${blob.sha}`,
-                        content,
-                        ipfsCID,
-                        0,
-                        blob.prevSha
-                    )
-                ));
-            })
-        );
+                    blobsToDeploy.name.push(`blob ${blob.sha}`);
+                    blobsToDeploy.fn.push(() => (
+                        this.deployBlob(
+                            repoName,
+                            branch.name,
+                            commitName,
+                            `blob ${blob.sha}`,
+                            content,
+                            ipfsCID,
+                            0,
+                            blob.prevSha
+                        )
+                    ));
+                })
+            );
+        }
         console.debug('Blobs to deploy', blobsToDeploy);
 
         // Deploy commit and blobs
@@ -461,15 +468,34 @@ export class GoshWallet implements IGoshWallet {
         console.debug('[Create commit] - Parents:', parents);
         console.debug('[Create commit] - Args:', repoName, branch.name, commitName, commitData, parents);
         await this.deployCommit(repoName, branch.name, commitName, commitData, parents);
-        await Promise.all(blobsToDeploy.fn.map(async (fn) => await fn()));
+        console.debug('[Create commit] - Commit deployed');
+
+        // Deploy blobs
+        for (let i = 0; i < blobsToDeploy.fn.length; i += 10) {
+            await new Promise((resolve) => setInterval(resolve, 2000));
+            const chunk = blobsToDeploy.fn.slice(i, i + 10);
+            await Promise.all(chunk.map(async (fn) => await fn()));
+            console.debug('[Create commit] - Blobs chunk:', i, i + 10);
+        }
+        console.debug('[Create commit] - Blobs deployed');
 
         // Set blobs for commit
-        const blobAddrs = await Promise.all(
-            blobsToDeploy.name.map(async (name) => await repo.getBlobAddr(name))
-        );
+        const blobAddrs: string[] = [];
+        for (let i = 0; i < blobsToDeploy.name.length; i += 30) {
+            const chunk = blobsToDeploy.name.slice(i, i + 30);
+            await new Promise((resolve) => setInterval(resolve, 1500));
+            await Promise.all(
+                chunk.map(async (name) => {
+                    const blobAddr = await repo.getBlobAddr(name);
+                    blobAddrs.push(blobAddr);
+                })
+            );
+        }
         console.debug('Blobs addrs:', blobAddrs);
-        for (let i = 0; i < blobAddrs.length; i += 100) {
-            const chunk = blobAddrs.slice(i, i + 100);
+
+        for (let i = 0; i < blobAddrs.length; i += 50) {
+            await new Promise((resolve) => setInterval(resolve, 1500));
+            const chunk = blobAddrs.slice(i, i + 50);
             await this.setBlobs(repoName, commitName, chunk);
         }
         console.debug('[Create commit] - Set blobs: OK');
@@ -490,6 +516,8 @@ export class GoshWallet implements IGoshWallet {
         } else {
             await this.startProposalForSetCommit(repoName, branch.name, commitName, branch.commitAddr);
         }
+        // TODO: Remove when wasm error on high load fixed
+        await new Promise((resolve) => setInterval(resolve, 2000));
     }
 
     async getMoney(): Promise<void> {

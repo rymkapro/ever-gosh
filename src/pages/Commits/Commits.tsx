@@ -8,7 +8,7 @@ import { getCommitTime, ZERO_COMMIT } from "../../helpers";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { GoshCommit } from "../../types/classes";
-import { TGoshBranch, IGoshCommit, IGoshRepository } from "../../types/types";
+import { IGoshCommit, IGoshRepository } from "../../types/types";
 import { shortString } from "../../utils";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 
@@ -34,10 +34,9 @@ const CommitsPage = () => {
     }
 
     useEffect(() => {
-        const getCommits = async (repo: IGoshRepository, branch: TGoshBranch) => {
+        const getCommits = async (repo: IGoshRepository, commitAddr: string) => {
             setCommits(undefined);
             const commits: IGoshCommit[] = [];
-            let commitAddr = branch.commitAddr;
             while (commitAddr) {
                 const commit = new GoshCommit(repo.account.client, commitAddr);
                 await commit.load();
@@ -47,8 +46,8 @@ const CommitsPage = () => {
             setCommits(commits);
         }
 
-        if (goshRepo && branch) getCommits(goshRepo, branch);
-    }, [goshRepo, branch]);
+        if (goshRepo && branch?.commitAddr) getCommits(goshRepo, branch.commitAddr);
+    }, [goshRepo, branch?.commitAddr]);
 
     useEffect(() => {
         updateBranch(branchName);

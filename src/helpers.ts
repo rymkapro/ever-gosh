@@ -161,7 +161,7 @@ export const getRepoTree = async (
             await treeBlob.load();
 
             const treeItems = getTreeItemsFromBlob(treeBlob.meta?.content || '');
-            const treePath = `${path && `${path}/`}${tree.name}`;
+            const treePath = `${path ? `${path}/` : ''}${tree.name}`;
 
             treeItems.forEach((item) => item.path = treePath);
             items.push(...treeItems);

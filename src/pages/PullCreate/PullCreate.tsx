@@ -93,23 +93,33 @@ const PullCreatePage = () => {
                     to?: { item: TGoshTreeItem; blob: IGoshBlob; },
                     from?: { item: TGoshTreeItem; blob: IGoshBlob; }
                 }[] = [];
-                await Promise.all(
-                    intersected.map(async (item) => {
-                        const from = fromTreeItems.find((fItem) => fItem.path === item.path && fItem.name === item.name);
-                        const to = toTreeItems.find((tItem) => tItem.path === item.path && tItem.name === item.name);
-                        if (from && to) {
-                            const fromBlob = await getBlob(from.sha);
-                            const toBlob = await getBlob(to.sha);
-                            compare.push({ to: { item: to, blob: toBlob }, from: { item: from, blob: fromBlob } });
-                        }
-                    })
-                );
-                await Promise.all(
-                    added.map(async (item) => {
-                        const fromBlob = await getBlob(item.sha);
-                        compare.push({ to: undefined, from: { item, blob: fromBlob } });
-                    })
-                );
+
+                for (let i = 0; i < intersected.length; i += 20) {
+                    const chunk = intersected.slice(i, i + 20);
+                    await new Promise((resolve) => setInterval(resolve, 1000));
+                    await Promise.all(
+                        chunk.map(async (item) => {
+                            const from = fromTreeItems.find((fItem) => fItem.path === item.path && fItem.name === item.name);
+                            const to = toTreeItems.find((tItem) => tItem.path === item.path && tItem.name === item.name);
+                            if (from && to) {
+                                const fromBlob = await getBlob(from.sha);
+                                const toBlob = await getBlob(to.sha);
+                                compare.push({ to: { item: to, blob: toBlob }, from: { item: from, blob: fromBlob } });
+                            }
+                        })
+                    );
+                }
+
+                for (let i = 0; i < added.length; i += 20) {
+                    const chunk = added.slice(i, i + 20);
+                    await new Promise((resolve) => setInterval(resolve, 1000));
+                    await Promise.all(
+                        chunk.map(async (item) => {
+                            const fromBlob = await getBlob(item.sha);
+                            compare.push({ to: undefined, from: { item, blob: fromBlob } });
+                        })
+                    );
+                }
                 console.debug('[Pull create] - Compare list:', compare);
                 setCompare(compare);
             } catch (e: any) {
@@ -136,7 +146,7 @@ const PullCreatePage = () => {
             const blobs = compare.map(({ from, to }) => {
                 if (!from.item || !from.blob.meta) throw new GoshError(EGoshError.FILE_EMPTY);
                 return {
-                    name: `${from.item.path && `${from.item.path}/`}${from.item.name}`,
+                    name: `${from.item.path ? `${from.item.path}/` : ''}${from.item.name}`,
                     modified: from.blob.meta?.content,
                     original: to?.blob.meta?.content || ''
                 }
@@ -222,7 +232,7 @@ const PullCreatePage = () => {
 
                         {compare.map(({ to, from }, index) => {
                             const item = to?.item || from?.item;
-                            const fileName = `${item.path && `${item.path}/`}${item.name}`;
+                            const fileName = `${item.path ? `${item.path}/` : ''}${item.name}`;
                             if (!fileName) return null;
 
                             const language = getCodeLanguageFromFilename(monaco, fileName);

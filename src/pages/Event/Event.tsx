@@ -69,6 +69,7 @@ const EventPage = () => {
 
         // Get commit blobs
         const blobAddrs = await commit.getBlobs();
+        console.debug('Blob addrs:', blobAddrs);
         const blobTrees: IGoshBlob[] = [];
         const blobs: {
             name: string;
@@ -76,26 +77,30 @@ const EventPage = () => {
             currContent: string;
             prevContent?: string;
         }[] = [];
-        await Promise.all(
-            blobAddrs.map(async (addr) => {
-                // Create blob and load it's data
-                const blob = new GoshBlob(repo.account.client, addr);
-                await blob.load();
-                if (!blob.meta) throw new GoshError(EGoshError.META_LOAD, { type: 'file', address: addr });
+        for (let i = 0; i < blobAddrs.length; i += 30) {
+            const chunk = blobAddrs.slice(i, i + 30);
+            await new Promise((resolve) => setInterval(resolve, 1500));
+            await Promise.all(
+                chunk.map(async (addr) => {
+                    // Create blob and load it's data
+                    const blob = new GoshBlob(repo.account.client, addr);
+                    await blob.load();
+                    if (!blob.meta) throw new GoshError(EGoshError.META_LOAD, { type: 'file', address: addr });
 
-                // Extract tree blob from common blobs
-                if (blob.meta.name.indexOf('tree ') >= 0) blobTrees.push(blob);
-                else {
-                    const currFullBlob = await getBlobContent(repo, blob.meta.name);
-                    // If blob has prevSha, load this prev blob
-                    let prevFullBlob = undefined;
-                    if (blob.meta?.prevSha) {
-                        prevFullBlob = await getBlobContent(repo, blob.meta.prevSha);
+                    // Extract tree blob from common blobs
+                    if (blob.meta.name.indexOf('tree ') >= 0) blobTrees.push(blob);
+                    else {
+                        const currFullBlob = await getBlobContent(repo, blob.meta.name);
+                        // If blob has prevSha, load this prev blob
+                        let prevFullBlob = undefined;
+                        if (blob.meta?.prevSha) {
+                            prevFullBlob = await getBlobContent(repo, blob.meta.prevSha);
+                        }
+                        blobs.push({ name: '', curr: blob, currContent: currFullBlob, prevContent: prevFullBlob });
                     }
-                    blobs.push({ name: '', curr: blob, currContent: currFullBlob, prevContent: prevFullBlob });
-                }
-            })
-        );
+                })
+            );
+        }
         console.debug('Trees blobs', blobTrees);
         console.debug('Common blobs', blobs);
 
