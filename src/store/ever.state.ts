@@ -10,7 +10,7 @@ export const everStateAtom = atom<TEverState>({
         config: {
             network: {
                 endpoints: getEndpoints(),
-                queries_protocol: NetworkQueriesProtocol.HTTP,
+                queries_protocol: NetworkQueriesProtocol.WS,
                 message_processing_timeout: 100000
             }
         }

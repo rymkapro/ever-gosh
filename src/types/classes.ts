@@ -468,7 +468,10 @@ export class GoshWallet implements IGoshWallet {
             blobsToDeploy.name.map(async (name) => await repo.getBlobAddr(name))
         );
         console.debug('Blobs addrs:', blobAddrs);
-        await this.setBlobs(repoName, commitName, blobAddrs);
+        for (let i = 0; i < blobAddrs.length; i += 100) {
+            const chunk = blobAddrs.slice(i, i + 100);
+            await this.setBlobs(repoName, commitName, chunk);
+        }
         console.debug('[Create commit] - Set blobs: OK');
 
         // Set repo commit if not proposal or start new proposal
