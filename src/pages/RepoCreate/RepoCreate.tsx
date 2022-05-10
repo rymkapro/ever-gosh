@@ -22,7 +22,7 @@ const RepoCreatePage = () => {
         try {
             if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
 
-            await goshWallet.deployRepo(values.name);
+            await goshWallet.deployRepo(values.name.toLowerCase());
             navigate(`/${daoName}/${values.name}`, { replace: true });
         } catch (e: any) {
             console.error(e.message);
@@ -40,10 +40,13 @@ const RepoCreatePage = () => {
                     initialValues={{ name: '' }}
                     onSubmit={onRepoCreate}
                     validationSchema={Yup.object().shape({
-                        name: Yup.string().required('Name is required')
+                        name: Yup.string()
+                            .matches(/^[\w-]+$/, 'Name has invalid characters')
+                            .max(64, 'Max length is 64 characters')
+                            .required('Name is required')
                     })}
                 >
-                    {({ isSubmitting }) => (
+                    {({ isSubmitting, setFieldValue }) => (
                         <Form>
                             <div>
                                 <Field
@@ -52,7 +55,8 @@ const RepoCreatePage = () => {
                                     inputProps={{
                                         className: 'w-full',
                                         autoComplete: 'off',
-                                        placeholder: 'Repository name'
+                                        placeholder: 'Repository name',
+                                        onChange: (e: any) => setFieldValue('name', e.target.value.toLowerCase())
                                     }}
                                 />
                             </div>

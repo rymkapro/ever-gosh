@@ -30,7 +30,7 @@ const DaoCreatePage = () => {
 
             // Deploy GoshDao
             const rootPubkey = `0x${userState.keys.public}`;
-            const goshDao = await goshRoot.createDao(values.name, rootPubkey);
+            const goshDao = await goshRoot.createDao(values.name.toLowerCase(), rootPubkey);
 
             // Deploy wallets
             await Promise.all(values.participants.map(async (item) => {
@@ -60,11 +60,15 @@ const DaoCreatePage = () => {
                     }}
                     onSubmit={onDaoCreate}
                     validationSchema={Yup.object().shape({
-                        name: Yup.string().required('Name is required'),
+                        name: Yup.string()
+                            .matches(/^[\w-]+$/, 'Name has invalid characters')
+                            .max(64, 'Max length is 64 characters')
+                            .required('Name is required'),
                         participants: Yup.array().of(Yup.string().required('Required'))
                     })}
+                    enableReinitialize
                 >
-                    {({ values, touched, errors, isSubmitting }) => (
+                    {({ values, touched, errors, isSubmitting, setFieldValue }) => (
                         <Form>
                             <div>
                                 <Field
@@ -72,7 +76,8 @@ const DaoCreatePage = () => {
                                     component={TextField}
                                     inputProps={{
                                         placeholder: 'New organization name',
-                                        autoComplete: 'off'
+                                        autoComplete: 'off',
+                                        onChange: (e: any) => setFieldValue('name', e.target.value.toLowerCase())
                                     }}
                                 />
                             </div>

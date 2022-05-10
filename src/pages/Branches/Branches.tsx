@@ -61,7 +61,7 @@ export const BranchesPage = () => {
             if (!values.from) throw new GoshError(EGoshError.NO_BRANCH);
             if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
 
-            await goshWallet.deployBranch(goshRepo, values.newName, values.from.name);
+            await goshWallet.deployBranch(goshRepo, values.newName.toLowerCase(), values.from.name);
             await updateBranches();
             helpers.resetForm();
         } catch (e: any) {
@@ -94,6 +94,8 @@ export const BranchesPage = () => {
                         onSubmit={onBranchCreate}
                         validationSchema={Yup.object().shape({
                             newName: Yup.string()
+                                .matches(/^[\w-]+$/, 'Name has invalid characters')
+                                .max(64, 'Max length is 64 characters')
                                 .notOneOf((branches).map((b) => b.name), 'Branch exists')
                                 .required('Branch name is required')
                         })}
@@ -123,7 +125,10 @@ export const BranchesPage = () => {
                                             inputProps={{
                                                 placeholder: 'Branch name',
                                                 autoComplete: 'off',
-                                                className: '!text-sm !py-1.5'
+                                                className: '!text-sm !py-1.5',
+                                                onChange: (e: any) => {
+                                                    setFieldValue('newName', e.target.value.toLowerCase());
+                                                }
                                             }}
                                         />
                                     </div>
