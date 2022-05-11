@@ -117,7 +117,7 @@ const RepoPage = () => {
                         return (
                             <div key={index} className="py-3">
                                 <Link
-                                    className="hover:underline"
+                                    className="hover:underline text-sm"
                                     to={`/${daoName}/${repoName}/${type}/${branchName}/${path}`}
                                 >
                                     <FontAwesomeIcon

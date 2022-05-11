@@ -7,7 +7,7 @@ import { Navigate, useNavigate, useOutletContext, useParams, useSearchParams } f
 import { useRecoilValue } from "recoil";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 import { getCodeLanguageFromFilename, getRepoTree, isMainBranch } from "../../helpers";
-import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state";
+import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
 import * as Yup from "yup";
 import FormCommitBlock from "../BlobCreate/FormCommitBlock";
@@ -15,7 +15,7 @@ import Spinner from "../../components/Spinner";
 import SwitchField from "../../components/FormikForms/SwitchField";
 import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
-import { IGoshBlob, TGoshTreeItem } from "../../types/types";
+import { IGoshBlob, TGoshBranch, TGoshTreeItem } from "../../types/types";
 import { GoshBlob } from "../../types/classes";
 import BranchSelect from "../../components/BranchSelect";
 import { EGoshError, GoshError } from "../../types/errors";
@@ -29,21 +29,28 @@ type TCommitFormValues = {
 }
 
 const PullCreatePage = () => {
-    const userState = useRecoilValue(userStateAtom);
-    const branches = useRecoilValue(goshBranchesAtom);
-    const { daoName, repoName } = useParams();
     const [searchParams] = useSearchParams();
+    const userState = useRecoilValue(userStateAtom);
+    const { daoName, repoName } = useParams();
     const navigate = useNavigate();
     const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
     const monaco = useMonaco();
-    const { updateBranches } = useGoshRepoBranches(goshRepo);
-    const branchFrom = useRecoilValue(
-        goshCurrBranchSelector(searchParams.get('from') || 'main')
-    );
-    const branchTo = useRecoilValue(
-        goshCurrBranchSelector(searchParams.get('to') || 'main')
-    );
-    const [compare, setCompare] = useState<{ to?: any, from?: any }[]>();
+    const { branches, updateBranches } = useGoshRepoBranches(goshRepo);
+    const [compare, setCompare] = useState<{ to?: any, from?: any; showDiff?: boolean; }[]>();
+    const [blobProgress, setBlobProgress] = useState<{ count: number; total: number }>({ count: 0, total: 0 });
+
+    const compareParam = searchParams.get('compare') || 'main...main';
+    const branchFrom = useRecoilValue(goshCurrBranchSelector(compareParam.split('...')[0]));
+    const branchTo = useRecoilValue(goshCurrBranchSelector(compareParam.split('...')[1]));
+    const [localBranches, setlocalBranches] = useState<{
+        from?: TGoshBranch;
+        to?: TGoshBranch;
+    }>({ from: branchFrom, to: branchTo });
+
+    const setShowDiff = (i: number) => setCompare((currVal) => currVal?.map((item, index) => {
+        if (i === index) return { ...item, showDiff: true };
+        return item;
+    }));
 
     useEffect(() => {
         const getBlob = async (hash: string): Promise<IGoshBlob> => {
@@ -55,17 +62,17 @@ const PullCreatePage = () => {
 
         const onCompare = async () => {
             try {
-                if (!branchFrom || !branchTo) throw new GoshError(EGoshError.NO_BRANCH);
-                if (branchFrom.name === branchTo.name) {
+                if (!branchFrom?.commitAddr || !branchTo?.commitAddr) throw new GoshError(EGoshError.NO_BRANCH);
+                if (branchFrom.commitAddr === branchTo.commitAddr) {
                     setCompare([]);
                     return;
                 };
 
                 setCompare(undefined);
-                const fromTree = await getRepoTree(goshRepo, branchFrom);
+                const fromTree = await getRepoTree(goshRepo, branchFrom.commitAddr);
                 const fromTreeItems = [...fromTree.items].filter((item) => item.type === 'blob');
                 console.debug('[Pull create] - From tree blobs:', fromTreeItems);
-                const toTree = await getRepoTree(goshRepo, branchTo);
+                const toTree = await getRepoTree(goshRepo, branchTo.commitAddr);
                 const toTreeItems = [...toTree.items].filter((item) => item.type === 'blob');
                 console.debug('[Pull create] - To tree blobs:', toTreeItems);
 
@@ -87,51 +94,54 @@ const PullCreatePage = () => {
                     ));
                 });
                 console.debug('[Pull crreate] - Added:', added);
+                setBlobProgress({ count: 0, total: intersected.length + added.length });
 
                 // Merge intersected and added and generate compare list
                 const compare: {
-                    to?: { item: TGoshTreeItem; blob: IGoshBlob; },
-                    from?: { item: TGoshTreeItem; blob: IGoshBlob; }
+                    to?: { item: TGoshTreeItem; blob: IGoshBlob; };
+                    from?: { item: TGoshTreeItem; blob: IGoshBlob; };
+                    showDiff?: boolean;
                 }[] = [];
 
-                for (let i = 0; i < intersected.length; i += 20) {
-                    const chunk = intersected.slice(i, i + 20);
-                    await new Promise((resolve) => setInterval(resolve, 1000));
-                    await Promise.all(
-                        chunk.map(async (item) => {
-                            const from = fromTreeItems.find((fItem) => fItem.path === item.path && fItem.name === item.name);
-                            const to = toTreeItems.find((tItem) => tItem.path === item.path && tItem.name === item.name);
-                            if (from && to) {
-                                const fromBlob = await getBlob(from.sha);
-                                const toBlob = await getBlob(to.sha);
-                                compare.push({ to: { item: to, blob: toBlob }, from: { item: from, blob: fromBlob } });
-                            }
-                        })
-                    );
+                for (let i = 0; i < intersected.length; i++) {
+                    const item = intersected[i];
+                    const from = fromTreeItems.find((fItem) => fItem.path === item.path && fItem.name === item.name);
+                    const to = toTreeItems.find((tItem) => tItem.path === item.path && tItem.name === item.name);
+                    if (from && to) {
+                        const fromBlob = await getBlob(from.sha);
+                        const toBlob = await getBlob(to.sha);
+                        compare.push({
+                            to: { item: to, blob: toBlob },
+                            from: { item: from, blob: fromBlob },
+                            showDiff: compare.length < 10
+                        });
+                    }
+                    setBlobProgress((currVal) => ({ ...currVal, count: currVal?.count + 1 }));
+                    await new Promise((resolve) => setInterval(resolve, 150));
                 }
 
-                for (let i = 0; i < added.length; i += 20) {
-                    const chunk = added.slice(i, i + 20);
-                    await new Promise((resolve) => setInterval(resolve, 1000));
-                    await Promise.all(
-                        chunk.map(async (item) => {
-                            const fromBlob = await getBlob(item.sha);
-                            compare.push({ to: undefined, from: { item, blob: fromBlob } });
-                        })
-                    );
+                for (let i = 0; i < added.length; i++) {
+                    const item = added[i];
+                    const fromBlob = await getBlob(item.sha);
+                    compare.push({
+                        to: undefined,
+                        from: { item, blob: fromBlob },
+                        showDiff: compare.length < 10
+                    });
+                    setBlobProgress((currVal) => ({ ...currVal, count: currVal?.count + 1 }));
+                    await new Promise((resolve) => setInterval(resolve, 150));
                 }
                 console.debug('[Pull create] - Compare list:', compare);
                 setCompare(compare);
+                setBlobProgress({ count: 0, total: 0 });
             } catch (e: any) {
                 console.error(e.message);
                 toast.error(e.message);
             }
         }
 
-        if (goshRepo && branchFrom && branchTo) onCompare();
-
-        return () => { }
-    }, [branchFrom, branchTo, goshRepo]);
+        if (goshRepo && branchFrom?.commitAddr && branchTo?.commitAddr) onCompare();
+    }, [branchFrom?.commitAddr, branchTo?.commitAddr, goshRepo]);
 
     const onCommitMerge = async (values: TCommitFormValues) => {
         try {
@@ -189,29 +199,38 @@ const PullCreatePage = () => {
         <div className="bordered-block px-7 py-8">
             <div className="flex items-center gap-x-4">
                 <BranchSelect
-                    branch={branchFrom}
+                    branch={localBranches?.from}
                     branches={branches}
-                    onChange={(selected) => {
-                        navigate(`/${daoName}/${repoName}/pull?from=${selected?.name}&to=${branchTo?.name}`);
-                    }}
+                    onChange={(selected) => (
+                        !!selected && setlocalBranches((currVal) => ({ ...currVal, from: selected }))
+                    )}
                 />
                 <span>
                     <FontAwesomeIcon icon={faChevronRight} size="sm" />
                 </span>
                 <BranchSelect
-                    branch={branchTo}
+                    branch={localBranches?.to}
                     branches={branches}
-                    onChange={(selected) => {
-                        navigate(`/${daoName}/${repoName}/pull?from=${branchFrom?.name}&to=${selected?.name}`);
-                    }}
+                    onChange={(selected) => (
+                        !!selected && setlocalBranches((currVal) => ({ ...currVal, to: selected }))
+                    )}
                 />
+                <button
+                    className="btn btn--body px-3 !py-1.5 !text-sm"
+                    disabled={compare === undefined}
+                    onClick={() => (
+                        navigate(`/${daoName}/${repoName}/pull?compare=${localBranches?.from?.name}...${localBranches?.to?.name}`)
+                    )}
+                >
+                    Compare
+                </button>
             </div>
 
             <div className="mt-5">
                 {compare === undefined && (
                     <div className="text-sm text-gray-606060">
                         <Spinner className="mr-3" />
-                        Loading diff...
+                        Loading diff... ({blobProgress.count} / {blobProgress.total})
                     </div>
                 )}
 
@@ -230,7 +249,7 @@ const PullCreatePage = () => {
                             <span className="font-semibold ml-2">{branchTo?.name}</span>
                         </div>
 
-                        {compare.map(({ to, from }, index) => {
+                        {compare.map(({ to, from, showDiff }, index) => {
                             const item = to?.item || from?.item;
                             const fileName = `${item.path ? `${item.path}/` : ''}${item.name}`;
                             if (!fileName) return null;
@@ -241,11 +260,23 @@ const PullCreatePage = () => {
                                     <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
                                         {fileName}
                                     </div>
-                                    <BlobDiffPreview
-                                        original={to?.blob.meta?.content}
-                                        modified={from?.blob.meta?.content}
-                                        modifiedLanguage={language}
-                                    />
+                                    {showDiff
+                                        ? (
+                                            <BlobDiffPreview
+                                                original={to?.blob.meta?.content}
+                                                modified={from?.blob.meta?.content}
+                                                modifiedLanguage={language}
+                                            />
+                                        )
+                                        : (
+                                            <button
+                                                className="!block btn btn--body !text-sm mx-auto px-3 py-1.5 my-2"
+                                                onClick={() => setShowDiff(index)}
+                                            >
+                                                Load diff
+                                            </button>
+                                        )}
+
                                 </div>
                             );
                         })}

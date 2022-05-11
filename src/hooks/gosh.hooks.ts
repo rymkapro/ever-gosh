@@ -102,27 +102,22 @@ export const useGoshRepoBranches = (goshRepo?: IGoshRepository) => {
 }
 
 /** Get GoshRepo tree and selectors */
-export const useGoshRepoTree = (repo?: IGoshRepository, branch?: TGoshBranch) => {
+export const useGoshRepoTree = (repo?: IGoshRepository, branch?: TGoshBranch, filterPath?: string) => {
     const [tree, setTree] = useRecoilState(goshRepoTreeAtom);
 
     const getSubtree = (path?: string) => goshRepoTreeSelector({ type: 'tree', path });
     const getTreeItems = (path?: string) => goshRepoTreeSelector({ type: 'items', path });
     const getTreeItem = (path?: string) => goshRepoBlobSelector(path);
 
-    const _branch = useMemo(() => {
-        if (!branch) return undefined;
-        return { ...branch };
-    }, [branch?.name, branch?.commitAddr]);
-
     useEffect(() => {
-        const getTree = async (repo: IGoshRepository, branch: TGoshBranch) => {
+        const getTree = async (repo: IGoshRepository, commitAddr: string) => {
             setTree(undefined);
-            const tree = await getRepoTree(repo, branch);
+            const tree = await getRepoTree(repo, commitAddr, filterPath);
             setTree(tree);
         }
 
-        if (repo && _branch) getTree(repo, _branch);
-    }, [repo, _branch, setTree]);
+        if (repo && branch?.commitAddr) getTree(repo, branch.commitAddr);
+    }, [repo, branch?.commitAddr, filterPath, setTree]);
 
     return { tree, getSubtree, getTreeItems, getTreeItem };
 }

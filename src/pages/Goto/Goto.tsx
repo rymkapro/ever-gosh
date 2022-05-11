@@ -4,13 +4,18 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link, useOutletContext, useParams } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
+import { useGoshRepoTree } from "../../hooks/gosh.hooks";
+import { goshCurrBranchSelector } from "../../store/gosh.state";
+import Spinner from "../../components/Spinner";
 
 
 const GotoPage = () => {
     const { daoName, repoName, branchName = 'main' } = useParams();
-    const { goshRepoTree } = useOutletContext<TRepoLayoutOutletContext>();
+    const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
+    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
+    const { tree, getTreeItems } = useGoshRepoTree(goshRepo, branch, undefined);
     const [search, setSearch] = useState<string>('');
-    const treeItems = useRecoilValue(goshRepoTree.getTreeItems(search));
+    const treeItems = useRecoilValue(getTreeItems(search));
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -33,6 +38,12 @@ const GotoPage = () => {
                 </div>
             </div>
 
+            {!tree && (
+                <div className="mt-5 text-gray-606060 text-sm">
+                    <Spinner className="mr-3" />
+                    Loading tree items...
+                </div>
+            )}
             {!!treeItems && treeItems?.map((item, index) => {
                 const path = `${item.path ? `${item.path}/` : ''}${item.name}`
                 return (

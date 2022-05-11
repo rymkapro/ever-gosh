@@ -23,13 +23,14 @@ export type TRepoLayoutOutletContext = {
 }
 
 const RepoLayout = () => {
+    const pathName = useParams()['*'] || '';
     const userStatePersist = useRecoilValue(userStatePersistAtom);
     const { daoName, repoName, branchName = 'main' } = useParams();
     const goshRepo = useGoshRepo(daoName, repoName);
     const goshWallet = useGoshWallet(daoName);
     const { updateBranches } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
-    const goshRepoTree = useGoshRepoTree(goshRepo, branch);
+    const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName);
     const [isFetched, setIsFetched] = useState<boolean>(false);
 
     const tabs = [

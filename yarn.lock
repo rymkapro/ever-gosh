@@ -1149,15 +1149,15 @@
   dependencies:
     "@eversdk/core" "^1"
 
-"@eversdk/core@^1", "@eversdk/core@^1.32.0":
-  version "1.32.0"
-  resolved "https://registry.yarnpkg.com/@eversdk/core/-/core-1.32.0.tgz#03cddf8a85e64a19dd9b56baf48bd4f94c6607b5"
-  integrity sha512-6MOjQ8+u4lBwgQJQXsB+D9ixSMeB4IoWiVN/Dpwmi6gXfdHINix6UFeL0ovz/VOrth/FSEwR/Q58Y/0hseDNag==
+"@eversdk/core@^1", "@eversdk/core@^1.33.1":
+  version "1.33.1"
+  resolved "https://registry.yarnpkg.com/@eversdk/core/-/core-1.33.1.tgz#7f8dd0b8a835678895abc79e4570f9ead784fe50"
+  integrity sha512-Fk03MC5VOwk/Jb/3psrAQElY1F+2po5TOlKV4So4+PxdzumL9L0AdJNb8Wqb9MX7hOYC1Y3xixhA8lbUWoOSuw==
 
-"@eversdk/lib-web@^1.32.0":
-  version "1.32.0"
-  resolved "https://registry.yarnpkg.com/@eversdk/lib-web/-/lib-web-1.32.0.tgz#46807ad538ed24ebe84499e966955e59e05d494c"
-  integrity sha512-CrzYjA2YFEIRWMrr0ZPwuN2uI/aM6AKcFb1vIwa/ETjDMIn6wmXPZLtvJVeydKIwXnn2LhDWErbzLP/4wC5tmQ==
+"@eversdk/lib-web@^1.33.1":
+  version "1.33.1"
+  resolved "https://registry.yarnpkg.com/@eversdk/lib-web/-/lib-web-1.33.1.tgz#cdfda51cd9aca648902776da9de391f3832b9201"
+  integrity sha512-OOeQ/osaiQf82QeseRaRX1p2ndFjfeGIf80qf31Miz5/Xxg62kZ4s30TlsFitj7xecl69UvzRyDV3igqaoUdZw==
 
 "@fortawesome/fontawesome-common-types@6.1.1":
   version "6.1.1"

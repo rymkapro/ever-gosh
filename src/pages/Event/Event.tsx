@@ -4,7 +4,6 @@ import { Link, useOutletContext, useParams } from "react-router-dom";
 import TextField from "../../components/FormikForms/TextField";
 import Spinner from "../../components/Spinner";
 import {
-    GoshBlob,
     GoshCommit,
     GoshRepository,
     GoshSmvClient,
@@ -12,7 +11,6 @@ import {
     GoshSmvProposal
 } from "../../types/classes";
 import {
-    IGoshBlob,
     IGoshCommit,
     IGoshRepository,
     IGoshRoot,
@@ -23,15 +21,13 @@ import {
 import * as Yup from "yup";
 import CopyClipboard from "../../components/CopyClipboard";
 import { classNames, shortString } from "../../utils";
-import { getBlobContent, getCodeLanguageFromFilename, getCommitTree } from "../../helpers";
-import BlobDiffPreview from "../../components/Blob/DiffPreview";
 import { useGoshRoot } from "../../hooks/gosh.hooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircle } from "@fortawesome/free-solid-svg-icons";
-import { useMonaco } from "@monaco-editor/react";
 import { TDaoLayoutOutletContext } from "../DaoLayout";
 import { EGoshError, GoshError } from "../../types/errors";
 import { toast } from "react-toastify";
+import CommitBlobs from "../Commit/CommitBlobs";
 
 
 type TFormValues = {
@@ -43,7 +39,6 @@ const EventPage = () => {
     const { daoName, eventAddr } = useParams();
     const { goshDao, goshWallet } = useOutletContext<TDaoLayoutOutletContext>();
     const goshRoot = useGoshRoot();
-    const monaco = useMonaco();
     const [release, setRelease] = useState<boolean>(false);
     const [check, setCheck] = useState<boolean>(false);
     const [service, setService] = useState<{
@@ -53,77 +48,14 @@ const EventPage = () => {
         balance: number;
         repo?: IGoshRepository;
         commit?: IGoshCommit;
-        blobs?: {
-            name: string;
-            curr: IGoshBlob;
-            currContent: string;
-            prevContent?: string;
-        }[];
     }>();
 
-    const getCommit = async (repo: IGoshRepository, name: string): Promise<[IGoshCommit, any[]]> => {
+    const getCommit = async (repo: IGoshRepository, name: string): Promise<IGoshCommit> => {
         // Get commit data
         const address = await repo.getCommitAddr(name);
         const commit = new GoshCommit(repo.account.client, address);
         await commit.load();
-
-        // Get commit blobs
-        const blobAddrs = await commit.getBlobs();
-        console.debug('Blob addrs:', blobAddrs);
-        const blobTrees: IGoshBlob[] = [];
-        const blobs: {
-            name: string;
-            curr: IGoshBlob;
-            currContent: string;
-            prevContent?: string;
-        }[] = [];
-        for (let i = 0; i < blobAddrs.length; i += 30) {
-            const chunk = blobAddrs.slice(i, i + 30);
-            await new Promise((resolve) => setInterval(resolve, 1500));
-            await Promise.all(
-                chunk.map(async (addr) => {
-                    // Create blob and load it's data
-                    const blob = new GoshBlob(repo.account.client, addr);
-                    await blob.load();
-                    if (!blob.meta) throw new GoshError(EGoshError.META_LOAD, { type: 'file', address: addr });
-
-                    // Extract tree blob from common blobs
-                    if (blob.meta.name.indexOf('tree ') >= 0) blobTrees.push(blob);
-                    else {
-                        const currFullBlob = await getBlobContent(repo, blob.meta.name);
-                        // If blob has prevSha, load this prev blob
-                        let prevFullBlob = undefined;
-                        if (blob.meta?.prevSha) {
-                            prevFullBlob = await getBlobContent(repo, blob.meta.prevSha);
-                        }
-                        blobs.push({ name: '', curr: blob, currContent: currFullBlob, prevContent: prevFullBlob });
-                    }
-                })
-            );
-        }
-        console.debug('Trees blobs', blobTrees);
-        console.debug('Common blobs', blobs);
-
-        // Construct commit tree
-        const filesList = blobTrees
-            .map((blob) => blob.meta?.content || '')
-            .reduce((a: string[], content) => [...a, ...content.split('\n')], []);
-        console.debug('Files list', filesList);
-        const commitTree = getCommitTree(filesList);
-        console.debug('Commit tree', commitTree);
-
-        // Update blobs names (path) from tree
-        Object.values(commitTree).forEach((items) => {
-            items.forEach((item) => {
-                const found = blobs.find((bItem) => (
-                    bItem.curr.meta?.name === `${item.type} ${item.sha}`
-                ));
-                if (found) found.name = item.name;
-            })
-        });
-        console.debug('Ready to render blobs', blobs);
-
-        return [commit, blobs];
+        return commit;
     }
 
     const onProposalCheck = async (proposal: IGoshSmvProposal, wallet: IGoshWallet) => {
@@ -203,7 +135,7 @@ const EventPage = () => {
                 daoName
             );
             const repo = new GoshRepository(root.account.client, repoAddr);
-            const [commit, blobs] = await getCommit(repo, prop.meta.commit.commitName);
+            const commit = await getCommit(repo, prop.meta.commit.commitName);
 
             // Get SMVLocker
             let locker: IGoshSmvLocker | undefined;
@@ -221,8 +153,7 @@ const EventPage = () => {
                 locker,
                 balance,
                 repo,
-                commit,
-                blobs
+                commit
             });
         }
 
@@ -266,7 +197,7 @@ const EventPage = () => {
                 </div>
             )}
 
-            {service?.proposal && monaco && (
+            {service?.proposal && service.repo && service.commit && (
                 <div>
                     {goshWallet?.isDaoParticipant && (
                         <div
@@ -439,21 +370,7 @@ const EventPage = () => {
                     )}
 
                     <h3 className="mt-10 mb-4 text-xl font-semibold">Proposal diff</h3>
-                    {service.blobs?.map((item, index) => {
-                        const language = getCodeLanguageFromFilename(monaco, item.name);
-                        return (
-                            <div key={index} className="my-5 border rounded overflow-hidden">
-                                <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
-                                    {item.name}
-                                </div>
-                                <BlobDiffPreview
-                                    original={item.prevContent}
-                                    modified={item.currContent}
-                                    modifiedLanguage={language}
-                                />
-                            </div>
-                        );
-                    })}
+                    <CommitBlobs repo={service.repo} commit={service.commit} />
                 </div>
             )}
         </div>

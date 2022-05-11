@@ -1,6 +1,5 @@
 import { Account } from "@eversdk/appkit";
 import { ClientConfig, KeyPair } from "@eversdk/core";
-import { boolean } from "yup";
 
 
 export type TEverState = {
@@ -207,6 +206,7 @@ export interface IGoshBlob extends IContract {
     }
 
     load(): Promise<void>;
+    getName(): Promise<string>;
     getBlob(): Promise<any>;
     getPrevSha(): Promise<string>;
 }

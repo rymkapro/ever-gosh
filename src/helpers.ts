@@ -6,7 +6,6 @@ import { GoshBlob, GoshCommit, GoshDaoCreator } from "./types/classes";
 import {
     IGoshDaoCreator,
     IGoshRepository,
-    TGoshBranch,
     TGoshTree,
     TGoshTreeItem
 } from "./types/types";
@@ -147,15 +146,38 @@ export const getTreeFromItems = (items: TGoshTreeItem[]): TGoshTree => {
     return result;
 }
 
+/**
+ * Get repository tree for specific commit
+ * @param repo
+ * @param commitAddr
+ * @param filterPath Load only part of tree with provided path. Full tree will be loaded if `undefined`
+ * @returns
+ */
 export const getRepoTree = async (
     repo: IGoshRepository,
-    branch: TGoshBranch
+    commitAddr: string,
+    filterPath?: string
 ): Promise<{ tree: TGoshTree; items: TGoshTreeItem[]; }> => {
     /** Recursive walker through tree blobs */
     const blobTreeWalker = async (path: string, subitems: TGoshTreeItem[]) => {
-        const trees = subitems.filter((item) => item.type === 'tree');
+        let trees = subitems.filter((item) => item.type === 'tree');
 
-        await Promise.all(trees.map(async (tree) => {
+        if (filterPath) {
+            let [_path] = splitByPath(filterPath);
+            const filtered: string[] = [filterPath, _path];
+            while (_path !== '') {
+                const [__path] = splitByPath(_path);
+                filtered.push(__path);
+                _path = __path;
+            }
+
+            trees = trees.filter((item) => (
+                filtered.indexOf(`${item.path ? `${item.path}/` : ''}${item.name}`) >= 0
+            ));
+        }
+
+        for (let i = 0; i < trees.length; i++) {
+            const tree = trees[i];
             const treeAddr = await repo.getBlobAddr(`tree ${tree.sha}`);
             const treeBlob = new GoshBlob(repo.account.client, treeAddr);
             await treeBlob.load();
@@ -165,13 +187,14 @@ export const getRepoTree = async (
 
             treeItems.forEach((item) => item.path = treePath);
             items.push(...treeItems);
+            await new Promise((resolve) => setInterval(resolve, 150));
             await blobTreeWalker(treePath, treeItems);
-        }));
+        }
     }
 
     // Get latest branch commit
-    if (!branch.commitAddr) return { tree: { '': [] }, items: [] };
-    const commit = new GoshCommit(repo.account.client, branch.commitAddr);
+    if (!commitAddr) return { tree: { '': [] }, items: [] };
+    const commit = new GoshCommit(repo.account.client, commitAddr);
     await commit.load();
 
     // Get root tree blob
@@ -185,29 +208,12 @@ export const getRepoTree = async (
 
     // Get root tree items and recursively get subtrees
     const items = rootTreeBlobContent ? getTreeItemsFromBlob(rootTreeBlobContent) : [];
-    await blobTreeWalker('', items);
+    if (filterPath !== '') await blobTreeWalker('', items);
 
     // Build full tree
     const tree = getTreeFromItems(items);
-    console.debug('[getRepoTree] - Tree:', tree);
+    console.debug('[Helpers: getRepoTree] - Tree:', tree);
     return { tree, items };
-}
-
-export const getCommitTree = (filesList: string[]): TGoshTree => {
-    const list = filesList.map((entry: string) => {
-        const [mode, type, tail] = entry.split(' ')
-        const [sha, fname] = tail.split('\t')
-        const lastSlash = fname.lastIndexOf('/')
-        const path = lastSlash >= 0 ? fname.slice(0, lastSlash) : ''
-        return {
-            mode,
-            type,
-            sha,
-            path,
-            name: lastSlash >= 0 ? fname.slice(lastSlash + 1) : fname,
-        }
-    })
-    return getTreeFromItems(list as TGoshTreeItem[]);
 }
 
 /**
