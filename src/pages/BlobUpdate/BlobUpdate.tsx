@@ -41,7 +41,7 @@ const BlobUpdatePage = () => {
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
     const treeItem = useRecoilValue(goshRepoTree.getTreeItem(pathName));
     const [activeTab, setActiveTab] = useState<number>(0);
-    const [blobContent, setBlobContent] = useState<string>();
+    const [blobContent, setBlobContent] = useState<string>('');
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
 
     const urlBack = `/${daoName}/${repoName}/blobs/${branchName}${pathName && `/${pathName}`}`;
@@ -52,7 +52,6 @@ const BlobUpdatePage = () => {
             if (!goshWallet) throw new GoshError(EGoshError.NO_WALLET);
             if (!repoName) throw new GoshError(EGoshError.NO_REPO);
             if (!branch) throw new GoshError(EGoshError.NO_BRANCH);
-            if (!blobContent) throw new GoshError(EGoshError.FILE_EMPTY);
             if (isMainBranch(branchName)) throw new GoshError(EGoshError.PR_BRANCH, { branch: branchName });
             if (!goshWallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_PARTICIPANT);
 
