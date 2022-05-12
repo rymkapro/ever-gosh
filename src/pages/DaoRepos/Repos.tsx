@@ -22,11 +22,11 @@ const DaoRepositoriesPage = () => {
 
             // Get GoshDaoRepoCode by GoshDao address and get all repos addreses
             const repoCode = await goshRoot.getDaoRepoCode(goshDao.address);
-            // console.debug('Repo code', repoCode);
+            const repoCodeHash = await goshRoot.account.client.boc.get_boc_hash({ boc: repoCode });
             const reposAddrs = await goshRoot.account.client.net.query_collection({
                 collection: 'accounts',
                 filter: {
-                    code: { eq: repoCode }
+                    code_hash: { eq: repoCodeHash.hash }
                 },
                 result: 'id'
             });

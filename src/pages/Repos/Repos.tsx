@@ -20,10 +20,11 @@ const RepositoriesPage = () => {
 
             // Get GoshWallet code by user's pubkey and get all user's wallets
             const walletCode = await goshRoot.getDaoWalletCode(`0x${userState.keys.public}`);
+            const walletCodeHash = await goshRoot.account.client.boc.get_boc_hash({ boc: walletCode });
             const walletAddrs = await goshRoot.account.client.net.query_collection({
                 collection: 'accounts',
                 filter: {
-                    code: { eq: walletCode }
+                    code_hash: { eq: walletCodeHash.hash }
                 },
                 result: 'id'
             });
@@ -42,10 +43,11 @@ const RepositoriesPage = () => {
             const repos = await Promise.all(
                 daos.map(async (dao) => {
                     const repoCode = await goshRoot.getDaoRepoCode(dao.address);
+                    const repoCodeHash = await goshRoot.account.client.boc.get_boc_hash({ boc: repoCode });
                     const repoAddrs = await goshRoot.account.client.net.query_collection({
                         collection: 'accounts',
                         filter: {
-                            code: { eq: repoCode }
+                            code_hash: { eq: repoCodeHash.hash }
                         },
                         result: 'id'
                     });
