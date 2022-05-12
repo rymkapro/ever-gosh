@@ -15,7 +15,7 @@ import BlobPreview from "../../components/Blob/Preview";
 import FormCommitBlock from "./FormCommitBlock";
 import { useRecoilValue } from "recoil";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
-import { useGoshRepoBranches, useGoshRepoTree } from "../../hooks/gosh.hooks";
+import { useCommitProgress, useGoshRepoBranches, useGoshRepoTree } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
 import RepoBreadcrumbs from "../../components/Repo/Breadcrumbs";
 import { EGoshError, GoshError } from "../../types/errors";
@@ -41,6 +41,7 @@ const BlobCreatePage = () => {
     const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName, true);
     const [activeTab, setActiveTab] = useState<number>(0);
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
+    const { progress, progressCallback } = useCommitProgress();
 
     const urlBack = `/${daoName}/${repoName}/tree/${branchName}${pathName && `/${pathName}`}`;
 
@@ -65,7 +66,9 @@ const BlobCreatePage = () => {
                 branch,
                 userState.keys.public,
                 [{ name, modified: values.content, original: '' }],
-                message
+                message,
+                undefined,
+                progressCallback
             );
             await updateBranch(branch.name);
             navigate(urlBack);
@@ -192,6 +195,7 @@ const BlobCreatePage = () => {
                             urlBack={urlBack}
                             isDisabled={!monaco || isSubmitting}
                             isSubmitting={isSubmitting}
+                            progress={progress}
                         />
                     </Form>
                 )}

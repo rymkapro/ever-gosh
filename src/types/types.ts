@@ -41,6 +41,20 @@ export type TGoshTree = {
     [key: string]: TGoshTreeItem[]
 }
 
+export type TCreateCommitCallbackParams = {
+    tree?: boolean;
+    commitData?: boolean;
+    commitDeploy?: boolean;
+    blobsPrepare?: { counter: number; total: number; }
+    blobsDeploy?: { counter: number; total: number; }
+    blobsAddrs?: { counter: number; total: number; }
+    blobsSet?: { counter: number; total: number; }
+    completed?: boolean;
+}
+export interface ICreateCommitCallback {
+    (params: TCreateCommitCallbackParams): void
+}
+
 interface IContract {
     abi: any;
     tvc?: string;
@@ -106,7 +120,8 @@ export interface IGoshWallet extends IContract {
         pubkey: string,
         blobs: { name: string; modified: string; original: string; }[],
         message: string,
-        parent2?: TGoshBranch
+        parent2?: TGoshBranch,
+        callback?: ICreateCommitCallback
     ): Promise<void>;
 
     getMoney(): Promise<void>;

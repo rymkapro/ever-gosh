@@ -16,7 +16,7 @@ import { getCodeLanguageFromFilename, getBlobContent, splitByPath, isMainBranch 
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useRecoilValue } from "recoil";
-import { useGoshRepoBranches, useGoshRepoTree } from "../../hooks/gosh.hooks";
+import { useCommitProgress, useGoshRepoBranches, useGoshRepoTree } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
 import RepoBreadcrumbs from "../../components/Repo/Breadcrumbs";
 import { EGoshError, GoshError } from "../../types/errors";
@@ -45,6 +45,7 @@ const BlobUpdatePage = () => {
     const [activeTab, setActiveTab] = useState<number>(0);
     const [blobContent, setBlobContent] = useState<string>();
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
+    const { progress, progressCallback } = useCommitProgress();
 
     const urlBack = `/${daoName}/${repoName}/blobs/${branchName}${pathName && `/${pathName}`}`;
 
@@ -68,7 +69,9 @@ const BlobUpdatePage = () => {
                     modified: values.content,
                     original: blobContent ?? ''
                 }],
-                message
+                message,
+                undefined,
+                progressCallback
             );
             await updateBranch(branch.name);
             navigate(urlBack);
@@ -215,6 +218,7 @@ const BlobUpdatePage = () => {
                                 urlBack={urlBack}
                                 isDisabled={!monaco || isSubmitting}
                                 isSubmitting={isSubmitting}
+                                progress={progress}
                             />
                         </Form>
                     )}

@@ -5,7 +5,7 @@ import { getRepoTree } from "../helpers";
 import { goshBranchesAtom, goshRepoBlobSelector, goshRepoTreeAtom, goshRepoTreeSelector } from "../store/gosh.state";
 import { userStateAtom } from "../store/user.state";
 import { GoshDao, GoshRoot, GoshWallet, GoshRepository } from "../types/classes";
-import { IGoshDao, IGoshRepository, IGoshRoot, IGoshWallet, TGoshBranch } from "../types/types";
+import { IGoshDao, IGoshRepository, IGoshRoot, IGoshWallet, TCreateCommitCallbackParams, TGoshBranch } from "../types/types";
 import { useEverClient } from "./ever.hooks";
 
 
@@ -125,4 +125,14 @@ export const useGoshRepoTree = (
     }, [repo, branch?.commitAddr, filterPath, disableEffect, setTree]);
 
     return { tree, getSubtree, getTreeItems, getTreeItem };
+}
+
+export const useCommitProgress = () => {
+    const [progress, setProgress] = useState<TCreateCommitCallbackParams>({});
+
+    const progressCallback = (params: TCreateCommitCallbackParams) => {
+        setProgress((currVal) => ({ ...currVal, ...params }));
+    }
+
+    return { progress, progressCallback };
 }

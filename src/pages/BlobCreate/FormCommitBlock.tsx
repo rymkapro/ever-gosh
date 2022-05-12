@@ -5,6 +5,8 @@ import TextareaField from "../../components/FormikForms/TextareaField";
 import { useNavigate } from "react-router-dom";
 import { classNames } from "../../utils";
 import Spinner from "../../components/Spinner";
+import { TCreateCommitCallbackParams } from "../../types/types";
+import CommitProgress from "./CommitProgress";
 
 
 type TFormCommitBlockProps = {
@@ -14,10 +16,19 @@ type TFormCommitBlockProps = {
     isSubmitting?: boolean;
     extraFields?: any;
     extraButtons?: any;
+    progress?: TCreateCommitCallbackParams;
 }
 
 const FormCommitBlock = (props: TFormCommitBlockProps) => {
-    const { urlBack, className, isDisabled, isSubmitting, extraFields, extraButtons } = props;
+    const {
+        urlBack,
+        className,
+        isDisabled,
+        isSubmitting,
+        extraFields,
+        extraButtons,
+        progress
+    } = props;
     const navigate = useNavigate();
 
     return (
@@ -70,6 +81,12 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                 )}
                 {extraButtons}
             </div>
+
+            {isSubmitting && progress && (
+                <div className="mt-6">
+                    <CommitProgress {...progress} />
+                </div>
+            )}
         </div>
     );
 }

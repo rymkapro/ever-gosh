@@ -41,7 +41,8 @@ import {
     IGoshSmvProposal,
     IGoshSmvLocker,
     IGoshSmvClient,
-    IGoshSmvTokenRoot
+    IGoshSmvTokenRoot,
+    ICreateCommitCallback
 } from "./types";
 import { EGoshError, GoshError } from "./errors";
 import { Buffer } from "buffer";
@@ -297,7 +298,8 @@ export class GoshWallet implements IGoshWallet {
         pubkey: string,
         blobs: { name: string; modified: string; original: string; }[],
         message: string,
-        parentBranch?: TGoshBranch
+        parentBranch?: TGoshBranch,
+        callback?: ICreateCommitCallback
     ): Promise<void> {
         if (!repo.meta) await repo.load();
         if (!repo.meta?.name)
@@ -345,6 +347,7 @@ export class GoshWallet implements IGoshWallet {
         const updatedTree = getTreeFromItems(items);
         calculateSubtrees(updatedTree);
         const updatedTreeHash = sha1Tree(updatedTree['']);
+        !!callback && callback({ tree: true });
         console.debug('[Create commit] - Updated tree:', updatedTree);
 
         // Build commit data and calculate commit name
@@ -371,12 +374,15 @@ export class GoshWallet implements IGoshWallet {
         ];
         const commitData = fullCommit.filter((item) => item !== null).join('\n')
         const commitName = sha1(commitData, 'commit');
+        !!callback && callback({ commitData: true });
         console.debug('[Create commit] - Commit data:', commitData);
         console.debug('[Create commit] - Commit name:', commitName);
 
         // Prepare blobs to deploy
         //  - Promises for tree blobs deploy;
         //  - Promises for common blobs deploy
+        const blobsPrepare = { counter: 0, total: updatedPaths.length + _blobs.length };
+        !!callback && callback({ blobsPrepare });
         const blobsToDeploy: { name: string[]; fn: Function[]; } = { name: [], fn: [] };
         for (let i = 0; i < updatedPaths.length; i++) {
             const path = updatedPaths[i];
@@ -410,7 +416,8 @@ export class GoshWallet implements IGoshWallet {
                     ''
                 )
             ));
-
+            blobsPrepare.counter += 1;
+            !!callback && callback({ blobsPrepare });
             await new Promise((resolve) => setInterval(resolve, 200));
         }
 
@@ -441,7 +448,8 @@ export class GoshWallet implements IGoshWallet {
                     blob.prevSha
                 )
             ));
-
+            blobsPrepare.counter += 1;
+            !!callback && callback({ blobsPrepare });
             await new Promise((resolve) => setInterval(resolve, 200));
         }
         console.debug('[Create commit] - Blobs to deploy:', blobsToDeploy);
@@ -454,19 +462,27 @@ export class GoshWallet implements IGoshWallet {
             }, []);
         console.debug('[Create commit] - Args:', repoName, branch.name, commitName, commitData, parents);
         await this.deployCommit(repoName, branch.name, commitName, commitData, parents);
+        !!callback && callback({ commitDeploy: true });
         console.debug('[Create commit] - Commit deployed');
 
         // Deploy blobs
+        const blobsDeploy = { counter: 0, total: blobsToDeploy.fn.length };
+        !!callback && callback({ blobsDeploy });
         for (let i = 0; i < blobsToDeploy.fn.length; i += 5) {
             const chunk = blobsToDeploy.fn.slice(i, i + 5);
             await Promise.all(chunk.map(async (fn) => await fn()));
             console.debug('[Create commit] - Blobs chunk:', i, i + 5);
+
+            blobsDeploy.counter += chunk.length;
+            !!callback && callback({ blobsDeploy });
             await new Promise((resolve) => setInterval(resolve, 1000));
         }
         console.debug('[Create commit] - Blobs deployed');
 
         // Set blobs for commit
         const blobAddrs: string[] = [];
+        const blobsAddrs = { counter: blobAddrs.length, total: blobsToDeploy.name.length };
+        !!callback && callback({ blobsAddrs });
         for (let i = 0; i < blobsToDeploy.name.length; i += 20) {
             const chunk = blobsToDeploy.name.slice(i, i + 20);
             await Promise.all(
@@ -476,14 +492,22 @@ export class GoshWallet implements IGoshWallet {
                 })
             );
             console.debug('[Create commit] - Get blobs addresses chunk:', i, i + 20);
+
+            blobsAddrs.counter += blobAddrs.length;
+            !!callback && callback({ blobsAddrs });
             await new Promise((resolve) => setInterval(resolve, 500));
         }
         console.debug('[Create commit] - Blobs addrs:', blobAddrs);
 
+        const blobsSet = { counter: 0, total: blobAddrs.length };
+        !!callback && callback({ blobsSet });
         for (let i = 0; i < blobAddrs.length; i += 100) {
             const chunk = blobAddrs.slice(i, i + 100);
             await this.setBlobs(repoName, commitName, chunk);
             console.debug('[Create commit] - Set blobs chunk:', i, i + 100);
+
+            blobsSet.counter += chunk.length;
+            !!callback && callback({ blobsSet });
             await new Promise((resolve) => setInterval(resolve, 500));
         }
         console.debug('[Create commit] - Set blobs: OK');
@@ -504,6 +528,7 @@ export class GoshWallet implements IGoshWallet {
         } else {
             await this.startProposalForSetCommit(repoName, branch.name, commitName, branch.commitAddr);
         }
+        !!callback && callback({ completed: true });
     }
 
     async getMoney(): Promise<void> {

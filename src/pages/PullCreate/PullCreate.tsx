@@ -13,7 +13,7 @@ import * as Yup from "yup";
 import FormCommitBlock from "../BlobCreate/FormCommitBlock";
 import Spinner from "../../components/Spinner";
 import SwitchField from "../../components/FormikForms/SwitchField";
-import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
+import { useCommitProgress, useGoshRepoBranches } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
 import { IGoshBlob, TGoshBranch, TGoshTreeItem } from "../../types/types";
 import { GoshBlob } from "../../types/classes";
@@ -46,6 +46,7 @@ const PullCreatePage = () => {
         from?: TGoshBranch;
         to?: TGoshBranch;
     }>({ from: branchFrom, to: branchTo });
+    const { progress, progressCallback } = useCommitProgress();
 
     const setShowDiff = (i: number) => setCompare((currVal) => currVal?.map((item, index) => {
         if (i === index) return { ...item, showDiff: true };
@@ -180,7 +181,8 @@ const PullCreatePage = () => {
                 userState.keys.public,
                 blobs,
                 message,
-                branchFrom
+                branchFrom,
+                progressCallback
             );
 
             // Delete branch after merge (if selected), update branches, redirect
@@ -309,6 +311,7 @@ const PullCreatePage = () => {
                                                     labelClassName="text-sm text-gray-505050"
                                                 />
                                             )}
+                                            progress={progress}
                                         />
                                     </Form>
                                 )}
