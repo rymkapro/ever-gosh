@@ -116,7 +116,7 @@ const RepoPage = () => {
                                         className="flex border border-gray-0a1124/65 rounded
                                         items-center text-gray-0a1124/65"
                                     >
-                                        <div className="text-xs font-mono px-3 py-1 overflow-hidden">
+                                        <div className="text-xs font-mono px-3 py-1 overflow-hidden whitespace-nowrap">
                                             gosh://{shortString(process.env.REACT_APP_GOSH_ADDR ?? '')}/{daoName}/{repoName}
                                         </div>
                                         <CopyClipboard
