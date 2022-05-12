@@ -8,7 +8,10 @@ import {
     faCodeBranch,
     faFolder,
     faMagnifyingGlass,
-    faFileCirclePlus
+    faFileCirclePlus,
+    faCode,
+    faChevronDown,
+    faTerminal
 } from "@fortawesome/free-solid-svg-icons";
 import { useRecoilValue } from "recoil";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
@@ -16,6 +19,9 @@ import { useGoshRepoBranches, useGoshRepoTree } from "../../hooks/gosh.hooks";
 import Spinner from "../../components/Spinner";
 import { isMainBranch, splitByPath } from "../../helpers";
 import { faFile } from "@fortawesome/free-regular-svg-icons";
+import { Menu, Transition } from "@headlessui/react";
+import CopyClipboard from "../../components/CopyClipboard";
+import { shortString } from "../../utils";
 
 
 const RepoPage = () => {
@@ -68,7 +74,7 @@ const RepoPage = () => {
                     </Link>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex grow gap-3 justify-end">
                     <Link
                         to={`/${daoName}/${repoName}/find/${branchName}`}
                         className="btn btn--body px-4 py-1.5 text-sm !font-normal"
@@ -85,6 +91,48 @@ const RepoPage = () => {
                             <span className="hidden sm:inline-block ml-2">Add file</span>
                         </Link>
                     )}
+                    <Menu as="div" className="relative">
+                        <Menu.Button className="btn btn--body text-sm px-4 py-1.5 !font-normal">
+                            <FontAwesomeIcon icon={faCode} />
+                            <span className="hidden sm:inline-block ml-2">Code</span>
+                            <FontAwesomeIcon icon={faChevronDown} size="xs" className="ml-2" />
+                        </Menu.Button>
+                        <Transition
+                            as={React.Fragment}
+                            enter="transition ease-out duration-100"
+                            enterFrom="transform opacity-0 scale-95"
+                            enterTo="transform opacity-100 scale-100"
+                            leave="transition ease-in duration-75"
+                            leaveFrom="transform opacity-100 scale-100"
+                            leaveTo="transform opacity-0 scale-95"
+                        >
+                            <Menu.Items className="dropdown-menu !py-4 max-w-264px sm:max-w-none">
+                                <div>
+                                    <h3 className="text-sm font-semibold mb-2">
+                                        <FontAwesomeIcon icon={faTerminal} className="mr-2" />
+                                        Clone
+                                    </h3>
+                                    <div
+                                        className="flex border border-gray-0a1124/65 rounded
+                                        items-center text-gray-0a1124/65"
+                                    >
+                                        <div className="text-xs font-mono px-3 py-1 overflow-hidden">
+                                            gosh://{shortString(process.env.REACT_APP_GOSH_ADDR ?? '')}/{daoName}/{repoName}
+                                        </div>
+                                        <CopyClipboard
+                                            componentProps={{
+                                                text: `gosh://${process.env.REACT_APP_GOSH_ADDR}/${daoName}/${repoName}`
+                                            }}
+                                            iconContainerClassName="px-2 border-l border-gray-0a1124 hover:text-gray-0a1124"
+                                            iconProps={{
+                                                size: 'sm'
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            </Menu.Items>
+                        </Transition>
+                    </Menu>
                 </div>
             </div>
 
