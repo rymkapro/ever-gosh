@@ -457,33 +457,33 @@ export class GoshWallet implements IGoshWallet {
         console.debug('[Create commit] - Commit deployed');
 
         // Deploy blobs
-        for (let i = 0; i < blobsToDeploy.fn.length; i += 10) {
-            const chunk = blobsToDeploy.fn.slice(i, i + 10);
+        for (let i = 0; i < blobsToDeploy.fn.length; i += 5) {
+            const chunk = blobsToDeploy.fn.slice(i, i + 5);
             await Promise.all(chunk.map(async (fn) => await fn()));
-            console.debug('[Create commit] - Blobs chunk:', i, i + 10);
+            console.debug('[Create commit] - Blobs chunk:', i, i + 5);
             await new Promise((resolve) => setInterval(resolve, 1000));
         }
         console.debug('[Create commit] - Blobs deployed');
 
         // Set blobs for commit
         const blobAddrs: string[] = [];
-        for (let i = 0; i < blobsToDeploy.name.length; i += 50) {
-            const chunk = blobsToDeploy.name.slice(i, i + 50);
+        for (let i = 0; i < blobsToDeploy.name.length; i += 20) {
+            const chunk = blobsToDeploy.name.slice(i, i + 20);
             await Promise.all(
                 chunk.map(async (name) => {
                     const blobAddr = await repo.getBlobAddr(name);
                     blobAddrs.push(blobAddr);
                 })
             );
-            console.debug('[Create commit] - Get blobs addresses chunk:', i, i + 50);
-            await new Promise((resolve) => setInterval(resolve, 1000));
+            console.debug('[Create commit] - Get blobs addresses chunk:', i, i + 20);
+            await new Promise((resolve) => setInterval(resolve, 500));
         }
         console.debug('[Create commit] - Blobs addrs:', blobAddrs);
 
-        for (let i = 0; i < blobAddrs.length; i += 50) {
-            const chunk = blobAddrs.slice(i, i + 50);
+        for (let i = 0; i < blobAddrs.length; i += 100) {
+            const chunk = blobAddrs.slice(i, i + 100);
             await this.setBlobs(repoName, commitName, chunk);
-            console.debug('[Create commit] - Set blobs chunk:', i, i + 50);
+            console.debug('[Create commit] - Set blobs chunk:', i, i + 100);
             await new Promise((resolve) => setInterval(resolve, 500));
         }
         console.debug('[Create commit] - Set blobs: OK');
