@@ -114,8 +114,8 @@ export const getTreeItemsFromPath = (filePath: string, fileContent: string): TGo
 
 const getTreeItemsFromBlob = (content: string): TGoshTreeItem[] => {
     return content.split('\n').map((entry: string) => {
-        const [mode, type, tail] = entry.split(' ')
-        const [sha, fname] = tail.split('\t')
+        const [head, fname] = entry.split('\t');
+        const [mode, type, sha] = head.split(' ');
         const lastSlash = fname.lastIndexOf('/')
         const path = lastSlash >= 0 ? fname.slice(0, lastSlash) : ''
         return {
