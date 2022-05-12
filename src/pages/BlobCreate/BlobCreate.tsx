@@ -15,7 +15,7 @@ import BlobPreview from "../../components/Blob/Preview";
 import FormCommitBlock from "./FormCommitBlock";
 import { useRecoilValue } from "recoil";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
-import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
+import { useGoshRepoBranches, useGoshRepoTree } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
 import RepoBreadcrumbs from "../../components/Repo/Breadcrumbs";
 import { EGoshError, GoshError } from "../../types/errors";
@@ -33,11 +33,12 @@ const BlobCreatePage = () => {
     const pathName = useParams()['*'];
     const { daoName, repoName, branchName = 'main' } = useParams();
     const navigate = useNavigate();
-    const { goshRepo, goshWallet, goshRepoTree } = useOutletContext<TRepoLayoutOutletContext>();
+    const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
     const monaco = useMonaco();
     const userState = useRecoilValue(userStateAtom);
     const { updateBranch } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
+    const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName, true);
     const [activeTab, setActiveTab] = useState<number>(0);
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
 
@@ -53,7 +54,7 @@ const BlobCreatePage = () => {
             if (!goshWallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_PARTICIPANT);
 
             const name = `${pathName ? `${pathName}/` : ''}${values.name}`;
-            const exists = goshRepoTree.tree.items.find((item) => (
+            const exists = goshRepoTree.tree?.items.find((item) => (
                 `${item.path ? `${item.path}/` : ''}${item.name}` === name
             ));
             if (exists) throw new GoshError(EGoshError.FILE_EXISTS, { file: name });
@@ -66,7 +67,6 @@ const BlobCreatePage = () => {
                 [{ name, modified: values.content, original: '' }],
                 message
             );
-
             await updateBranch(branch.name);
             navigate(urlBack);
         } catch (e: any) {
@@ -87,7 +87,7 @@ const BlobCreatePage = () => {
                 onSubmit={onCommitChanges}
             >
                 {({ values, setFieldValue, isSubmitting, handleBlur }) => (
-                    <Form className="px-4">
+                    <Form className="px-4 sm:px-7">
                         <div className="flex flex-wrap gap-3 items-baseline justify-between ">
                             <div className="flex flex-wrap items-baseline gap-y-2">
                                 <RepoBreadcrumbs

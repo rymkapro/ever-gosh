@@ -3,34 +3,24 @@ import { faCode, faCodePullRequest } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
 import Spinner from "../components/Spinner";
-import { useGoshRepo, useGoshWallet, useGoshRepoBranches, useGoshRepoTree } from "../hooks/gosh.hooks";
-import { IGoshRepository, IGoshWallet, TGoshTree, TGoshTreeItem } from "../types/types";
+import { useGoshRepo, useGoshWallet, useGoshRepoBranches } from "../hooks/gosh.hooks";
+import { IGoshRepository, IGoshWallet } from "../types/types";
 import { classNames } from "../utils";
-import { RecoilValueReadOnly, useRecoilValue } from "recoil";
-import { goshCurrBranchSelector } from "../store/gosh.state";
+import { useRecoilValue } from "recoil";
 import { userStatePersistAtom } from "../store/user.state";
 
 
 export type TRepoLayoutOutletContext = {
     goshRepo: IGoshRepository;
     goshWallet?: IGoshWallet;
-    goshRepoTree: {
-        tree: { tree: TGoshTree; items: TGoshTreeItem[] };
-        getSubtree(path?: string): RecoilValueReadOnly<TGoshTreeItem[]>;
-        getTreeItems(path?: string): RecoilValueReadOnly<TGoshTreeItem[]>;
-        getTreeItem(path?: string): RecoilValueReadOnly<TGoshTreeItem>;
-    };
 }
 
 const RepoLayout = () => {
-    const pathName = useParams()['*'] || '';
     const userStatePersist = useRecoilValue(userStatePersistAtom);
-    const { daoName, repoName, branchName = 'main' } = useParams();
+    const { daoName, repoName } = useParams();
     const goshRepo = useGoshRepo(daoName, repoName);
     const goshWallet = useGoshWallet(daoName);
     const { updateBranches } = useGoshRepoBranches(goshRepo);
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
-    const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName);
     const [isFetched, setIsFetched] = useState<boolean>(false);
 
     const tabs = [
@@ -88,7 +78,7 @@ const RepoLayout = () => {
                             ))}
                     </div>
 
-                    <Outlet context={{ goshRepo, goshWallet, goshRepoTree }} />
+                    <Outlet context={{ goshRepo, goshWallet }} />
                 </>
             )}
         </div>

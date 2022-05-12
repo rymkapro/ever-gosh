@@ -42,7 +42,9 @@ const BlobPreview = (props: TBlobPreviewProps) => {
             }}
             onMount={(editor) => {
                 // Set diff editor dom element calculated real height
-                editor._domElement.style.height = `${editor.getContentHeight()}px`;
+                editor.onDidContentSizeChange(() => {
+                    editor._domElement.style.height = `${editor.getContentHeight()}px`;
+                })
             }}
         />
     );

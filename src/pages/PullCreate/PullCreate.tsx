@@ -62,6 +62,10 @@ const PullCreatePage = () => {
 
         const onCompare = async () => {
             try {
+                const [branchFromName, branchToName] = compareParam.split('...');
+                const branchFrom = await goshRepo.getBranch(branchFromName);
+                const branchTo = await goshRepo.getBranch(branchToName);
+
                 if (!branchFrom?.commitAddr || !branchTo?.commitAddr) throw new GoshError(EGoshError.NO_BRANCH);
                 if (branchFrom.commitAddr === branchTo.commitAddr) {
                     setCompare([]);
@@ -117,7 +121,7 @@ const PullCreatePage = () => {
                         });
                     }
                     setBlobProgress((currVal) => ({ ...currVal, count: currVal?.count + 1 }));
-                    await new Promise((resolve) => setInterval(resolve, 150));
+                    await new Promise((resolve) => setInterval(resolve, 200));
                 }
 
                 for (let i = 0; i < added.length; i++) {
@@ -129,7 +133,7 @@ const PullCreatePage = () => {
                         showDiff: compare.length < 10
                     });
                     setBlobProgress((currVal) => ({ ...currVal, count: currVal?.count + 1 }));
-                    await new Promise((resolve) => setInterval(resolve, 150));
+                    await new Promise((resolve) => setInterval(resolve, 200));
                 }
                 console.debug('[Pull create] - Compare list:', compare);
                 setCompare(compare);
@@ -140,8 +144,8 @@ const PullCreatePage = () => {
             }
         }
 
-        if (goshRepo && branchFrom?.commitAddr && branchTo?.commitAddr) onCompare();
-    }, [branchFrom?.commitAddr, branchTo?.commitAddr, goshRepo]);
+        if (goshRepo && compareParam) onCompare();
+    }, [compareParam, goshRepo]);
 
     const onCommitMerge = async (values: TCommitFormValues) => {
         try {

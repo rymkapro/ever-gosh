@@ -12,19 +12,20 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useRecoilValue } from "recoil";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
-import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
+import { useGoshRepoBranches, useGoshRepoTree } from "../../hooks/gosh.hooks";
 import Spinner from "../../components/Spinner";
 import { isMainBranch, splitByPath } from "../../helpers";
 import { faFile } from "@fortawesome/free-regular-svg-icons";
 
 
 const RepoPage = () => {
-    const { daoName, repoName, branchName = 'main' } = useParams();
     const pathName = useParams()['*'] || '';
+    const { daoName, repoName, branchName = 'main' } = useParams();
     const navigate = useNavigate();
-    const { goshWallet, goshRepo, goshRepoTree } = useOutletContext<TRepoLayoutOutletContext>();
+    const { goshWallet, goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
     const { branches, updateBranch } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
+    const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName);
     const subtree = useRecoilValue(goshRepoTree.getSubtree(pathName));
 
     const [dirUp] = splitByPath(pathName);

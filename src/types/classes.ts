@@ -411,7 +411,7 @@ export class GoshWallet implements IGoshWallet {
                 )
             ));
 
-            await new Promise((resolve) => setInterval(resolve, 150));
+            await new Promise((resolve) => setInterval(resolve, 200));
         }
 
         for (let i = 0; i < _blobs.length; i++) {
@@ -442,7 +442,7 @@ export class GoshWallet implements IGoshWallet {
                 )
             ));
 
-            await new Promise((resolve) => setInterval(resolve, 150));
+            await new Promise((resolve) => setInterval(resolve, 200));
         }
         console.debug('[Create commit] - Blobs to deploy:', blobsToDeploy);
 
@@ -467,16 +467,16 @@ export class GoshWallet implements IGoshWallet {
 
         // Set blobs for commit
         const blobAddrs: string[] = [];
-        for (let i = 0; i < blobsToDeploy.name.length; i += 10) {
-            const chunk = blobsToDeploy.name.slice(i, i + 10);
+        for (let i = 0; i < blobsToDeploy.name.length; i += 50) {
+            const chunk = blobsToDeploy.name.slice(i, i + 50);
             await Promise.all(
                 chunk.map(async (name) => {
                     const blobAddr = await repo.getBlobAddr(name);
                     blobAddrs.push(blobAddr);
                 })
             );
-            console.debug('[Create commit] - Get blobs addresses chunk:', i, i + 10);
-            await new Promise((resolve) => setInterval(resolve, 500));
+            console.debug('[Create commit] - Get blobs addresses chunk:', i, i + 50);
+            await new Promise((resolve) => setInterval(resolve, 1000));
         }
         console.debug('[Create commit] - Blobs addrs:', blobAddrs);
 

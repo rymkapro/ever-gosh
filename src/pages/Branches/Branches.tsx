@@ -77,6 +77,10 @@ export const BranchesPage = () => {
     }
 
     useEffect(() => {
+        updateBranches();
+    }, [updateBranches]);
+
+    useEffect(() => {
         if (search) {
             const pattern = new RegExp(search, 'i');
             setFiltered(branches.filter((item) => item.name.search(pattern) >= 0));

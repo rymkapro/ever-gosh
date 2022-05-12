@@ -16,11 +16,12 @@ import { getCodeLanguageFromFilename, getBlobContent, splitByPath, isMainBranch 
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useRecoilValue } from "recoil";
-import { useGoshRepoBranches } from "../../hooks/gosh.hooks";
+import { useGoshRepoBranches, useGoshRepoTree } from "../../hooks/gosh.hooks";
 import { userStateAtom } from "../../store/user.state";
 import RepoBreadcrumbs from "../../components/Repo/Breadcrumbs";
 import { EGoshError, GoshError } from "../../types/errors";
 import { toast } from "react-toastify";
+import Spinner from "../../components/Spinner";
 
 
 type TFormValues = {
@@ -34,14 +35,15 @@ const BlobUpdatePage = () => {
     const pathName = useParams()['*'];
     const { daoName, repoName, branchName = 'main' } = useParams();
     const navigate = useNavigate();
-    const { goshRepo, goshRepoTree, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
+    const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
     const monaco = useMonaco();
     const userState = useRecoilValue(userStateAtom);
     const { updateBranch } = useGoshRepoBranches(goshRepo);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
+    const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName, true);
     const treeItem = useRecoilValue(goshRepoTree.getTreeItem(pathName));
     const [activeTab, setActiveTab] = useState<number>(0);
-    const [blobContent, setBlobContent] = useState<string>('');
+    const [blobContent, setBlobContent] = useState<string>();
     const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
 
     const urlBack = `/${daoName}/${repoName}/blobs/${branchName}${pathName && `/${pathName}`}`;
@@ -64,11 +66,10 @@ const BlobUpdatePage = () => {
                 [{
                     name: `${path ? `${path}/` : ''}${values.name}`,
                     modified: values.content,
-                    original: blobContent
+                    original: blobContent ?? ''
                 }],
                 message
             );
-
             await updateBranch(branch.name);
             navigate(urlBack);
         } catch (e: any) {
@@ -96,6 +97,17 @@ const BlobUpdatePage = () => {
     if (!goshWallet?.isDaoParticipant) return <Navigate to={urlBack} />;
     return (
         <div className="bordered-block py-8">
+            <div className="px-4 sm:px-7">
+                {goshRepoTree.tree && !treeItem && (
+                    <div className="text-gray-606060 text-sm">File not found</div>
+                )}
+                {(!goshRepoTree.tree || (treeItem && blobContent === undefined)) && (
+                    <div className="text-gray-606060 text-sm">
+                        <Spinner className="mr-3" />
+                        Loading file...
+                    </div>
+                )}
+            </div>
             {monaco && pathName && blobContent !== undefined && (
                 <Formik
                     initialValues={{
@@ -111,7 +123,7 @@ const BlobUpdatePage = () => {
                     onSubmit={onCommitChanges}
                 >
                     {({ values, setFieldValue, isSubmitting }) => (
-                        <Form className="px-4">
+                        <Form className="px-4 sm:px-7">
                             <div className="flex flex-wrap gap-3 items-baseline justify-between ">
                                 <div className="flex flex-wrap items-baseline gap-y-2">
                                     <RepoBreadcrumbs

@@ -102,7 +102,12 @@ export const useGoshRepoBranches = (goshRepo?: IGoshRepository) => {
 }
 
 /** Get GoshRepo tree and selectors */
-export const useGoshRepoTree = (repo?: IGoshRepository, branch?: TGoshBranch, filterPath?: string) => {
+export const useGoshRepoTree = (
+    repo?: IGoshRepository,
+    branch?: TGoshBranch,
+    filterPath?: string,
+    disableEffect?: boolean
+) => {
     const [tree, setTree] = useRecoilState(goshRepoTreeAtom);
 
     const getSubtree = (path?: string) => goshRepoTreeSelector({ type: 'tree', path });
@@ -116,8 +121,8 @@ export const useGoshRepoTree = (repo?: IGoshRepository, branch?: TGoshBranch, fi
             setTree(tree);
         }
 
-        if (repo && branch?.commitAddr) getTree(repo, branch.commitAddr);
-    }, [repo, branch?.commitAddr, filterPath, setTree]);
+        if (repo && branch?.commitAddr && !disableEffect) getTree(repo, branch.commitAddr);
+    }, [repo, branch?.commitAddr, filterPath, disableEffect, setTree]);
 
     return { tree, getSubtree, getTreeItems, getTreeItem };
 }

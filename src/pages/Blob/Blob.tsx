@@ -15,16 +15,18 @@ import { goshBranchesAtom, goshCurrBranchSelector } from "../../store/gosh.state
 import { AccountType } from "@eversdk/appkit";
 import RepoBreadcrumbs from "../../components/Repo/Breadcrumbs";
 import { GoshBlob } from "../../types/classes";
+import { useGoshRepoTree } from "../../hooks/gosh.hooks";
 
 
 const BlobPage = () => {
     const pathName = useParams()['*'];
     const { daoName, repoName, branchName = 'main' } = useParams();
     const navigate = useNavigate();
-    const { goshWallet, goshRepo, goshRepoTree } = useOutletContext<TRepoLayoutOutletContext>();
+    const { goshWallet, goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
     const monaco = useMonaco();
     const branches = useRecoilValue(goshBranchesAtom);
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
+    const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName);
     const treeItem = useRecoilValue(goshRepoTree.getTreeItem(pathName));
     const [blob, setBlob] = useState<IGoshBlob>();
 
@@ -76,7 +78,9 @@ const BlobPage = () => {
                 </div>
             </div>
 
-            {goshRepoTree.tree && !treeItem && (<div className="text-gray-606060 text-sm">File not found</div>)}
+            {goshRepoTree.tree && !treeItem && (
+                <div className="text-gray-606060 text-sm">File not found</div>
+            )}
             {(!goshRepoTree.tree || (treeItem && !blob)) && (
                 <div className="text-gray-606060 text-sm">
                     <Spinner className="mr-3" />
