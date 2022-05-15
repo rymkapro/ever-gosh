@@ -110,6 +110,8 @@ export const useGoshRepoTree = (
 ) => {
     const [tree, setTree] = useRecoilState(goshRepoTreeAtom);
 
+    const needEffect = !disableEffect || (disableEffect && !tree);
+
     const getSubtree = (path?: string) => goshRepoTreeSelector({ type: 'tree', path });
     const getTreeItems = (path?: string) => goshRepoTreeSelector({ type: 'items', path });
     const getTreeItem = (path?: string) => goshRepoBlobSelector(path);
@@ -121,8 +123,8 @@ export const useGoshRepoTree = (
             setTree(tree);
         }
 
-        if (repo && branch?.commitAddr && !disableEffect) getTree(repo, branch.commitAddr);
-    }, [repo, branch?.commitAddr, filterPath, disableEffect, setTree]);
+        if (repo && branch?.commitAddr && needEffect) getTree(repo, branch.commitAddr);
+    }, [repo, branch?.commitAddr, filterPath, needEffect, setTree]);
 
     return { tree, getSubtree, getTreeItems, getTreeItem };
 }

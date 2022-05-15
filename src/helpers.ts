@@ -9,7 +9,6 @@ import {
     TGoshTree,
     TGoshTreeItem
 } from "./types/types";
-import { AccountType } from "@eversdk/appkit";
 import * as Diff from 'diff';
 import { EGoshError, GoshError } from "./types/errors";
 
@@ -67,11 +66,21 @@ export const fromEvers = (value: number): number => {
 
 export const isMainBranch = (branch: string = 'main'): boolean => ['master', 'main'].indexOf(branch) >= 0;
 
-export const sha1 = (data: string, type: 'blob' | 'commit'): string => {
+export const sha1 = (data: string | Buffer, type: 'blob' | 'commit' | 'tree'): string => {
     let content = data;
-    const size = Buffer.from(content, 'utf-8').byteLength;
-    const object = Buffer.from(`${type} ${size}\0${content}`);
-    const hash = SHA1(object.toString());
+
+    const size = Buffer.isBuffer(content)
+        ? content.byteLength
+        : Buffer.from(content, 'utf-8').byteLength;
+
+    let words = cryptoJs.enc.Utf8.parse(`${type} ${size}\0`);
+    words.concat(
+        Buffer.isBuffer(content)
+            ? cryptoJs.enc.Hex.parse(content.toString('hex'))
+            : cryptoJs.enc.Utf8.parse(content)
+    );
+
+    const hash = SHA1(words);
     return hash.toString();
 }
 
@@ -85,15 +94,10 @@ export const sha1Tree = (items: TGoshTreeItem[]) => {
                 Buffer.from(i.sha, 'hex')
             ]))
     );
-
-    const size = buffer.byteLength;
-    let words = cryptoJs.enc.Utf8.parse(`tree ${size}\0`);
-    words.concat(cryptoJs.enc.Hex.parse(buffer.toString('hex')));
-    const hash = SHA1(words);
-    return hash.toString();
+    return sha1(buffer, 'tree');
 }
 
-export const getTreeItemsFromPath = (filePath: string, fileContent: string): TGoshTreeItem[] => {
+export const getTreeItemsFromPath = (filePath: string, fileContent: string | Buffer): TGoshTreeItem[] => {
     const items: TGoshTreeItem[] = [];
 
     // Get blob sha, path and name and push it to items
@@ -180,9 +184,9 @@ export const getRepoTree = async (
             const tree = trees[i];
             const treeAddr = await repo.getBlobAddr(`tree ${tree.sha}`);
             const treeBlob = new GoshBlob(repo.account.client, treeAddr);
-            await treeBlob.load();
 
-            const treeItems = getTreeItemsFromBlob(treeBlob.meta?.content || '');
+            const treeContent = (await treeBlob.loadContent()).toString();
+            const treeItems = getTreeItemsFromBlob(treeContent);
             const treePath = `${path ? `${path}/` : ''}${tree.name}`;
 
             treeItems.forEach((item) => item.path = treePath);
@@ -203,7 +207,7 @@ export const getRepoTree = async (
         const rootTreeBlobAddr = await repo.getBlobAddr(`tree ${commit.meta?.content.tree}`);
         const rootTreeBlob = new GoshBlob(repo.account.client, rootTreeBlobAddr);
         await rootTreeBlob.load();
-        rootTreeBlobContent = rootTreeBlob.meta?.content || '';
+        rootTreeBlobContent = (await rootTreeBlob.loadContent()).toString();
     }
 
     // Get root tree items and recursively get subtrees
@@ -246,38 +250,29 @@ export const getBlobDiffPatch = (fileName: string, modified: string, original: s
     return patch;
 }
 
-export const getBlobContent = async (repo: IGoshRepository, blobName: string): Promise<string> => {
-    const name = blobName.indexOf('blob ') < 0 ? `blob ${blobName}` : blobName;
-    const blobAddr = await repo.getBlobAddr(name);
-    const blob = new GoshBlob(repo.account.client, blobAddr);
-    const { acc_type } = await blob.account.getAccount();
-    if (acc_type !== AccountType.active) return '';
+// export const getBlobContent = async (repo: IGoshRepository, blobName: string): Promise<string> => {
+//     const blobWalker = async (blobName: string) => {
+//         const name = blobName.indexOf('blob ') < 0 ? `blob ${blobName}` : blobName;
+//         const blobAddr = await repo.getBlobAddr(name);
+//         const blob = new GoshBlob(repo.account.client, blobAddr);
+//         const { acc_type } = await blob.account.getAccount();
+//         if (acc_type !== AccountType.active) return;
 
-    await blob.load();
-    return blob.meta?.content || '';
+//         await blob.load();
+//         patches.push(blob.meta?.content || '');
 
-    // const blobWalker = async (blobName: string) => {
-    //     const name = blobName.indexOf('blob ') < 0 ? `blob ${blobName}` : blobName;
-    //     const blobAddr = await repo.getBlobAddr(name);
-    //     const blob = new GoshBlob(repo.account.client, blobAddr);
-    //     const { acc_type } = await blob.account.getAccount();
-    //     if (acc_type !== AccountType.active) return;
+//         if (blob.meta?.prevSha) await blobWalker(blob.meta.prevSha);
+//     }
 
-    //     await blob.load();
-    //     patches.push(blob.meta?.content || '');
+//     const patches: string[] = [];
+//     await blobWalker(blobName);
+//     console.debug('[getFullBlob] - Patches:', patches);
 
-    //     if (blob.meta?.prevSha) await blobWalker(blob.meta.prevSha);
-    // }
-
-    // const patches: string[] = [];
-    // await blobWalker(blobName);
-    // console.debug('[getFullBlob] - Patches:', patches);
-
-    // let content = '';
-    // patches.reverse().forEach((patch) => content = Diff.applyPatch(content, patch));
-    // console.debug('[getFullBlob] - Content:', `"${content}"`);
-    // return content;
-}
+//     let content = '';
+//     patches.reverse().forEach((patch) => content = Diff.applyPatch(content, patch));
+//     console.debug('[getFullBlob] - Content:', `"${content}"`);
+//     return content;
+// }
 
 /** Split file path to path and file name */
 export const splitByPath = (fullPath: string): [path: string, name: string] => {

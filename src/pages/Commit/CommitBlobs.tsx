@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useMonaco } from "@monaco-editor/react";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 import Spinner from "../../components/Spinner";
-import { getBlobContent, getCodeLanguageFromFilename, getRepoTree } from "../../helpers";
+import { getCodeLanguageFromFilename, getRepoTree } from "../../helpers";
 import { GoshBlob } from "../../types/classes";
 import { IGoshBlob, IGoshCommit, IGoshRepository } from "../../types/types";
 
@@ -21,22 +21,23 @@ const CommitBlobs = (props: TCommitBlobsType) => {
         path: string;
         curr: IGoshBlob;
         name?: string;
-        currContent?: string;
-        prevContent?: string;
+        currContent?: string | Buffer;
+        prevContent?: string | Buffer;
     }[]>([]);
 
-    const loadBlobContent = useCallback(async (blob: IGoshBlob): Promise<{ curr: string; prev: string; }> => {
-        await blob.load();
-        if (blob.meta) {
-            const currContent = await getBlobContent(repo, blob.meta.name);
-            let prevContent: string | undefined = undefined;
-            if (blob.meta.prevSha) {
-                prevContent = await getBlobContent(repo, blob.meta.prevSha);
+    const loadBlobContent = useCallback(
+        async (blob: IGoshBlob): Promise<{ curr: string | Buffer; prev: string | Buffer; }> => {
+            const curr = await blob.loadContent();
+            let prev: string | Buffer = '';
+            if (blob.meta?.prevSha) {
+                const prevBlobAddr = await repo.getBlobAddr(`blob ${blob.meta.prevSha}`);
+                const prevBlob = new GoshBlob(repo.account.client, prevBlobAddr);
+                prev = await prevBlob.loadContent();
             }
-            return { curr: currContent, prev: prevContent ?? '' }
-        }
-        return { curr: '', prev: '' };
-    }, [repo]);
+            return { curr, prev };
+        },
+        [repo]
+    );
 
     const loadBlobDiff = async (i: number) => {
         setIsLoadingDiff(true);
@@ -49,7 +50,7 @@ const CommitBlobs = (props: TCommitBlobsType) => {
     }
 
     useEffect(() => {
-        const getCommitBlobs = async (repo: IGoshRepository, commitAddr: string) => {
+        const getCommitBlobs = async (repo: IGoshRepository, commit: IGoshCommit) => {
             setIsFetched(false);
 
             // Build repo tree by provided commit
@@ -62,8 +63,8 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                 path: string;
                 curr: IGoshBlob;
                 name?: string;
-                currContent?: string;
-                prevContent?: string;
+                currContent?: string | Buffer;
+                prevContent?: string | Buffer;
             }[] = [];
             for (let i = 0; i < blobAddrs.length; i += 10) {
                 const chunk = blobAddrs.slice(i, i + 10);
@@ -100,8 +101,8 @@ const CommitBlobs = (props: TCommitBlobsType) => {
             setIsFetched(true);
         }
 
-        getCommitBlobs(repo, commit.address);
-    }, [repo, commit.address, loadBlobContent]);
+        getCommitBlobs(repo, commit);
+    }, [repo, commit, loadBlobContent]);
 
     return (
         <>

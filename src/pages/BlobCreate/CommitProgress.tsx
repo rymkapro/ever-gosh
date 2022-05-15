@@ -14,11 +14,8 @@ const Result = (props: any) => {
 const CommitProgress = (props: TCreateCommitCallbackParams) => {
     const {
         tree,
-        commitData,
         commitDeploy,
-        blobsPrepare,
         blobsDeploy,
-        blobsAddrs,
         blobsSet,
         completed
     } = props;
@@ -30,24 +27,12 @@ const CommitProgress = (props: TCreateCommitCallbackParams) => {
                     Build updated tree...
                 </div>
                 <div>
-                    <Result flag={commitData} />
-                    Build commit data...
-                </div>
-                <div>
-                    <Result flag={blobsPrepare && blobsPrepare?.counter === blobsPrepare?.total} />
-                    Prepare blobs... {blobsPrepare?.counter ?? 0} / {blobsPrepare?.total ?? 0}
-                </div>
-                <div>
                     <Result flag={commitDeploy} />
                     Deploy commit...
                 </div>
                 <div>
                     <Result flag={blobsDeploy && blobsDeploy?.counter === blobsDeploy?.total} />
                     Deploy blobs... {blobsDeploy?.counter ?? 0} / {blobsDeploy?.total ?? 0}
-                </div>
-                <div>
-                    <Result flag={blobsAddrs && blobsAddrs?.counter === blobsAddrs?.total} />
-                    Get blobs addresses... {blobsAddrs?.counter ?? 0} / {blobsAddrs?.total ?? 0}
                 </div>
                 <div>
                     <Result flag={blobsSet && blobsSet?.counter === blobsSet?.total} />

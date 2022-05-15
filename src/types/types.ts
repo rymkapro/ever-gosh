@@ -43,16 +43,19 @@ export type TGoshTree = {
 
 export type TCreateCommitCallbackParams = {
     tree?: boolean;
-    commitData?: boolean;
     commitDeploy?: boolean;
-    blobsPrepare?: { counter: number; total: number; }
     blobsDeploy?: { counter: number; total: number; }
-    blobsAddrs?: { counter: number; total: number; }
     blobsSet?: { counter: number; total: number; }
     completed?: boolean;
 }
 export interface ICreateCommitCallback {
     (params: TCreateCommitCallbackParams): void
+}
+
+export enum EGoshBlobFlag {
+    BINARY = 1,
+    COMPRESSED = 2,
+    IPFS = 4
 }
 
 interface IContract {
@@ -118,7 +121,7 @@ export interface IGoshWallet extends IContract {
         repo: IGoshRepository,
         branch: TGoshBranch,
         pubkey: string,
-        blobs: { name: string; modified: string; original: string; }[],
+        blobs: { name: string; modified: string | Buffer; original?: string | Buffer; }[],
         message: string,
         parent2?: TGoshBranch,
         callback?: ICreateCommitCallback
@@ -133,21 +136,20 @@ export interface IGoshWallet extends IContract {
     deleteBranch(repo: IGoshRepository, branchName: string): Promise<void>;
     deployCommit(
         repoName: string,
-        branchName: string,
-        commitName: string,
-        commitData: string,
-        parents: string[]
-    ): Promise<void>;
+        branch: TGoshBranch,
+        treeRootSha: string,
+        authorPubkey: string,
+        message: string,
+        parentBranch?: TGoshBranch
+    ): Promise<string>;
     deployBlob(
-        repoName: string,
+        repo: IGoshRepository,
         branchName: string,
         commitName: string,
-        blobName: string,
-        blobContent: string,
-        blobIpfs: string,
-        blobFlags: number,
-        blobPrevSha: string
-    ): Promise<void>;
+        blobType: 'tree' | 'blob',
+        blobContent: string | Buffer,
+        blobPrevContent?: string | Buffer
+    ): Promise<string>;
     setCommit(
         repoName: string,
         branchName: string,
@@ -219,8 +221,10 @@ export interface IGoshBlob extends IContract {
         commitAddr: string;
         prevSha: string;
     }
+    content?: string | Buffer;
 
     load(): Promise<void>;
+    loadContent(): Promise<string | Buffer>;
     getName(): Promise<string>;
     getBlob(): Promise<any>;
     getPrevSha(): Promise<string>;

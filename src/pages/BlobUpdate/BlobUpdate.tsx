@@ -11,8 +11,8 @@ import BlobEditor from "../../components/Blob/Editor";
 import FormCommitBlock from "../BlobCreate/FormCommitBlock";
 import { useMonaco } from "@monaco-editor/react";
 import { TRepoLayoutOutletContext } from "../RepoLayout";
-import { IGoshRepository, TGoshTreeItem } from "../../types/types";
-import { getCodeLanguageFromFilename, getBlobContent, splitByPath, isMainBranch } from "../../helpers";
+import { IGoshRepository } from "../../types/types";
+import { getCodeLanguageFromFilename, splitByPath, isMainBranch } from "../../helpers";
 import BlobDiffPreview from "../../components/Blob/DiffPreview";
 import { goshCurrBranchSelector } from "../../store/gosh.state";
 import { useRecoilValue } from "recoil";
@@ -22,6 +22,8 @@ import RepoBreadcrumbs from "../../components/Repo/Breadcrumbs";
 import { EGoshError, GoshError } from "../../types/errors";
 import { toast } from "react-toastify";
 import Spinner from "../../components/Spinner";
+import { GoshBlob } from "../../types/classes";
+import { Buffer } from "buffer";
 
 
 type TFormValues = {
@@ -57,6 +59,7 @@ const BlobUpdatePage = () => {
             if (!branch) throw new GoshError(EGoshError.NO_BRANCH);
             if (isMainBranch(branchName)) throw new GoshError(EGoshError.PR_BRANCH, { branch: branchName });
             if (!goshWallet.isDaoParticipant) throw new GoshError(EGoshError.NOT_PARTICIPANT);
+            if (values.content === blobContent) throw new GoshError(EGoshError.FILE_UNMODIFIED);
 
             const [path] = splitByPath(pathName || '');
             const message = [values.title, values.message].filter((v) => !!v).join('\n\n');
@@ -82,13 +85,18 @@ const BlobUpdatePage = () => {
     }
 
     useEffect(() => {
-        const getBlob = async (repo: IGoshRepository, treeItem: TGoshTreeItem) => {
-            const content = await getBlobContent(repo, treeItem.sha);
-            setBlobContent(content);
+        const getBlob = async (repo: IGoshRepository, treeItemSha: string) => {
+            const blobAddr = await repo.getBlobAddr(`blob ${treeItemSha}`);
+            const blob = new GoshBlob(repo.account.client, blobAddr);
+            const content = await blob.loadContent();
+            if (Buffer.isBuffer(content)) {
+                toast.error(EGoshError.FILE_BINARY);
+                navigate(urlBack);
+            } else setBlobContent(content);
         }
 
-        if (goshRepo && treeItem) getBlob(goshRepo, treeItem);
-    }, [goshRepo, treeItem]);
+        if (goshRepo && treeItem?.sha) getBlob(goshRepo, treeItem.sha);
+    }, [goshRepo, treeItem?.sha, urlBack, navigate]);
 
     useEffect(() => {
         if (monaco && pathName) {

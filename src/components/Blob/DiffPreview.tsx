@@ -1,18 +1,22 @@
 import React from "react";
 import { DiffEditor } from "@monaco-editor/react";
+import { Buffer } from "buffer";
 
 
 type TBlobDiffPreviewProps = {
     originalLanguage?: string;
-    original?: string;
+    original?: string | Buffer;
     modifiedLanguage?: string;
-    modified?: string;
+    modified?: string | Buffer;
     className?: string;
 }
 
 const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
     const { original, modified, originalLanguage, modifiedLanguage, className } = props;
 
+    if (Buffer.isBuffer(modified) || Buffer.isBuffer(original)) return (
+        <p className="text-gray-606060 p-3 text-sm">Binary data not shown</p>
+    );
     return (
         <DiffEditor
             wrapperProps={{

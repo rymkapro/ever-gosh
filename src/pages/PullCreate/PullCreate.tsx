@@ -20,6 +20,7 @@ import { GoshBlob } from "../../types/classes";
 import BranchSelect from "../../components/BranchSelect";
 import { EGoshError, GoshError } from "../../types/errors";
 import { toast } from "react-toastify";
+import { Buffer } from "buffer";
 
 
 type TCommitFormValues = {
@@ -36,7 +37,11 @@ const PullCreatePage = () => {
     const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
     const monaco = useMonaco();
     const { branches, updateBranches } = useGoshRepoBranches(goshRepo);
-    const [compare, setCompare] = useState<{ to?: any, from?: any; showDiff?: boolean; }[]>();
+    const [compare, setCompare] = useState<{
+        to?: { item: TGoshTreeItem; blob: IGoshBlob; };
+        from: { item: TGoshTreeItem; blob: IGoshBlob; };
+        showDiff?: boolean;
+    }[]>();
     const [blobProgress, setBlobProgress] = useState<{ count: number; total: number }>({ count: 0, total: 0 });
 
     const compareParam = searchParams.get('compare') || 'main...main';
@@ -57,7 +62,7 @@ const PullCreatePage = () => {
         const getBlob = async (hash: string): Promise<IGoshBlob> => {
             const addr = await goshRepo.getBlobAddr(`blob ${hash}`);
             const blob = new GoshBlob(goshRepo.account.client, addr);
-            await blob.load();
+            await blob.loadContent();
             return blob;
         }
 
@@ -104,7 +109,7 @@ const PullCreatePage = () => {
                 // Merge intersected and added and generate compare list
                 const compare: {
                     to?: { item: TGoshTreeItem; blob: IGoshBlob; };
-                    from?: { item: TGoshTreeItem; blob: IGoshBlob; };
+                    from: { item: TGoshTreeItem; blob: IGoshBlob; };
                     showDiff?: boolean;
                 }[] = [];
 
@@ -118,7 +123,11 @@ const PullCreatePage = () => {
                         compare.push({
                             to: { item: to, blob: toBlob },
                             from: { item: from, blob: fromBlob },
-                            showDiff: compare.length < 10
+                            showDiff: (
+                                compare.length < 10 ||
+                                Buffer.isBuffer(toBlob.content) ||
+                                Buffer.isBuffer(fromBlob.content)
+                            )
                         });
                     }
                     setBlobProgress((currVal) => ({ ...currVal, count: currVal?.count + 1 }));
@@ -131,7 +140,7 @@ const PullCreatePage = () => {
                     compare.push({
                         to: undefined,
                         from: { item, blob: fromBlob },
-                        showDiff: compare.length < 10
+                        showDiff: compare.length < 10 || Buffer.isBuffer(fromBlob.content)
                     });
                     setBlobProgress((currVal) => ({ ...currVal, count: currVal?.count + 1 }));
                     await new Promise((resolve) => setInterval(resolve, 200));
@@ -145,7 +154,8 @@ const PullCreatePage = () => {
             }
         }
 
-        if (goshRepo && compareParam) onCompare();
+        setCompare([]);
+        if (goshRepo && compareParam !== 'main...main') onCompare();
     }, [compareParam, goshRepo]);
 
     const onCommitMerge = async (values: TCommitFormValues) => {
@@ -162,8 +172,8 @@ const PullCreatePage = () => {
                 if (!from.item || !from.blob.meta) throw new GoshError(EGoshError.FILE_EMPTY);
                 return {
                     name: `${from.item.path ? `${from.item.path}/` : ''}${from.item.name}`,
-                    modified: from.blob.meta?.content,
-                    original: to?.blob.meta?.content || ''
+                    modified: from.blob.content ?? '',
+                    original: to?.blob.content
                 }
             });
             console.debug('Blobs', blobs);
@@ -269,8 +279,8 @@ const PullCreatePage = () => {
                                     {showDiff
                                         ? (
                                             <BlobDiffPreview
-                                                original={to?.blob.meta?.content}
-                                                modified={from?.blob.meta?.content}
+                                                original={to?.blob.content}
+                                                modified={from?.blob.content}
                                                 modifiedLanguage={language}
                                             />
                                         )

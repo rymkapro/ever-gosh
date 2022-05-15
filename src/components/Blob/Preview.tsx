@@ -2,17 +2,21 @@ import React from "react";
 import Editor from "@monaco-editor/react";
 import ReactMarkdown from "react-markdown";
 import { classNames } from "../../utils";
+import { Buffer } from "buffer";
 
 
 type TBlobPreviewProps = {
     language?: string;
-    value?: string;
+    value?: string | Buffer;
     className?: string;
 }
 
 const BlobPreview = (props: TBlobPreviewProps) => {
     const { language, value, className } = props;
 
+    if (Buffer.isBuffer(value)) return (
+        <p className="text-gray-606060 p-3 text-sm">Binary data not shown</p>
+    );
     if (language === 'markdown') return (
         <div className={classNames('markdown-body px-4 py-4', className)}>
             <ReactMarkdown>{value || ''}</ReactMarkdown>

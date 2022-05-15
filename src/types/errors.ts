@@ -17,6 +17,8 @@ export enum EGoshError {
 
     FILE_EXISTS = 'File already exists',
     FILE_EMPTY = 'File is empty',
+    FILE_BINARY = 'File has binary data',
+    FILE_UNMODIFIED = 'File content was not changed',
 
     SMV_LOCKER_BUSY = 'SMV locker busy',
     SMV_NO_PROPOSAL = 'SMV proposal undefined',

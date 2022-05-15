@@ -17,7 +17,6 @@ import {
     getRepoTree,
     getTreeFromItems,
     getTreeItemsFromPath,
-    getBlobDiffPatch,
     sha1,
     sha1Tree,
     unixtimeWithTz,
@@ -42,7 +41,9 @@ import {
     IGoshSmvLocker,
     IGoshSmvClient,
     IGoshSmvTokenRoot,
-    ICreateCommitCallback
+    ICreateCommitCallback,
+    EGoshBlobFlag,
+    TGoshTreeItem
 } from "./types";
 import { EGoshError, GoshError } from "./errors";
 import { Buffer } from "buffer";
@@ -296,7 +297,7 @@ export class GoshWallet implements IGoshWallet {
         repo: IGoshRepository,
         branch: TGoshBranch,
         pubkey: string,
-        blobs: { name: string; modified: string; original: string; }[],
+        blobs: { name: string; modified: string | Buffer; original?: string | Buffer; }[],
         message: string,
         parentBranch?: TGoshBranch,
         callback?: ICreateCommitCallback
@@ -304,21 +305,6 @@ export class GoshWallet implements IGoshWallet {
         if (!repo.meta) await repo.load();
         if (!repo.meta?.name)
             throw new GoshError(EGoshError.META_LOAD, { type: 'repository', address: repo.address });
-        const repoName = repo.meta.name;
-
-        // Prepare blobs
-        const _blobs = await Promise.all(
-            blobs.map(async (blob) => {
-                const patch = getBlobDiffPatch(blob.name, blob.modified, blob.original);
-                return {
-                    ...blob,
-                    sha: sha1(blob.modified, 'blob'),
-                    prevSha: blob.original ? sha1(blob.original, 'blob') : '',
-                    patch
-                }
-            })
-        );
-        console.log('[Create commit] - Blobs:', _blobs);
 
         // Generate current branch full tree and get it's items (TGoshTreeItem[]).
         // Iterate over changed blobs, create TGoshTreeItem[] from blob path and push it
@@ -326,7 +312,7 @@ export class GoshWallet implements IGoshWallet {
         // Store updated paths in separate variable
         const { items } = await getRepoTree(repo, branch.commitAddr);
         const updatedPaths: string[] = [];
-        _blobs.forEach((blob) => {
+        blobs.forEach((blob) => {
             const blobPathItems = getTreeItemsFromPath(blob.name, blob.modified);
             blobPathItems.forEach((pathItem) => {
                 if (updatedPaths.findIndex((path) => path === pathItem.path) < 0) {
@@ -343,167 +329,68 @@ export class GoshWallet implements IGoshWallet {
         console.debug('[Create commit] - New tree items:', items);
         console.debug('[Create commit] - Updated paths:', updatedPaths);
 
-        // Build updated tree and get it's hash
+        // Build updated tree and updated hashes
         const updatedTree = getTreeFromItems(items);
         calculateSubtrees(updatedTree);
-        const updatedTreeHash = sha1Tree(updatedTree['']);
+        const updatedTreeRootSha = sha1Tree(updatedTree['']);
         !!callback && callback({ tree: true });
         console.debug('[Create commit] - Updated tree:', updatedTree);
 
-        // Build commit data and calculate commit name
-        let parentCommitName = '';
-        if (branch.commitAddr) {
-            const commit = new GoshCommit(this.account.client, branch.commitAddr);
-            const name = await commit.getName();
-            if (name !== ZERO_COMMIT) parentCommitName = name;
-        }
-        let parentBranchCommitName = '';
-        if (parentBranch?.commitAddr) {
-            const commit = new GoshCommit(this.account.client, parentBranch.commitAddr);
-            const name = await commit.getName();
-            if (name !== ZERO_COMMIT) parentBranchCommitName = name;
-        }
-        const fullCommit = [
-            `tree ${updatedTreeHash}`,
-            parentCommitName ? `parent ${parentCommitName}` : null,
-            parentBranchCommitName ? `parent ${parentBranchCommitName}` : null,
-            `author ${pubkey} <${pubkey}@gosh.sh> ${unixtimeWithTz()}`,
-            `committer ${pubkey} <${pubkey}@gosh.sh> ${unixtimeWithTz()}`,
-            '',
-            message
-        ];
-        const commitData = fullCommit.filter((item) => item !== null).join('\n')
-        const commitName = sha1(commitData, 'commit');
-        !!callback && callback({ commitData: true });
-        console.debug('[Create commit] - Commit data:', commitData);
+        // Deploy commit
+        const commitName = await this.deployCommit(
+            repo.meta.name,
+            branch,
+            updatedTreeRootSha,
+            pubkey,
+            message,
+            parentBranch
+        );
+        !!callback && callback({ commitDeploy: true });
         console.debug('[Create commit] - Commit name:', commitName);
 
-        // Prepare blobs to deploy
-        //  - Promises for tree blobs deploy;
-        //  - Promises for common blobs deploy
-        const blobsPrepare = { counter: 0, total: updatedPaths.length + _blobs.length };
-        !!callback && callback({ blobsPrepare });
-        const blobsToDeploy: { name: string[]; fn: Function[]; } = { name: [], fn: [] };
+        // Deploy blobs
+        const blobsAddrs = [];
+        const blobsDeploy = { counter: 0, total: updatedPaths.length + blobs.length };
+        !!callback && callback({ blobsDeploy });
+
+        // Deploy tree blobs
         for (let i = 0; i < updatedPaths.length; i++) {
             const path = updatedPaths[i];
             const subtree = updatedTree[path];
-            const subtreeHash = sha1Tree(subtree);
-            const blobContent = subtree.map((item) => (
-                `${item.mode} ${item.type} ${item.sha}\t${item.name}`
-            )).join('\n');
-            const compressed = await zstd.compress(this.account.client, blobContent);
-
-            let content = '';
-            let ipfsCID = '';
-            if (compressed.length > MAX_ONCHAIN_FILE_SIZE) {
-                console.debug('[Create commit] - Save blob to ipfs');
-                ipfsCID = await saveToIPFS(compressed);
-            } else {
-                console.debug('[Create commit] - Save blob to blockchain');
-                content = compressed;
-            }
-
-            blobsToDeploy.name.push(`tree ${subtreeHash}`);
-            blobsToDeploy.fn.push(() => (
-                this.deployBlob(
-                    repoName,
-                    branch.name,
-                    commitName,
-                    `tree ${subtreeHash}`,
-                    content,
-                    ipfsCID,
-                    0,
-                    ''
-                )
-            ));
-            blobsPrepare.counter += 1;
-            !!callback && callback({ blobsPrepare });
-            await new Promise((resolve) => setInterval(resolve, 200));
-        }
-
-        for (let i = 0; i < _blobs.length; i++) {
-            const blob = _blobs[i];
-            const compressed = await zstd.compress(this.account.client, blob.modified);
-
-            let content = '';
-            let ipfsCID = '';
-            if (compressed.length > MAX_ONCHAIN_FILE_SIZE) {
-                console.debug('[Create commit] - Save blob to ipfs');
-                ipfsCID = await saveToIPFS(compressed);
-            } else {
-                console.debug('[Create commit] - Save blob to blockchain');
-                content = compressed;
-            }
-
-            blobsToDeploy.name.push(`blob ${blob.sha}`);
-            blobsToDeploy.fn.push(() => (
-                this.deployBlob(
-                    repoName,
-                    branch.name,
-                    commitName,
-                    `blob ${blob.sha}`,
-                    content,
-                    ipfsCID,
-                    0,
-                    blob.prevSha
-                )
-            ));
-            blobsPrepare.counter += 1;
-            !!callback && callback({ blobsPrepare });
-            await new Promise((resolve) => setInterval(resolve, 200));
-        }
-        console.debug('[Create commit] - Blobs to deploy:', blobsToDeploy);
-
-        // Deploy commit and blobs
-        const parents = [branch.commitAddr, parentBranch?.commitAddr]
-            .reduce((filtered: string[], item) => {
-                if (!!item) filtered.push(item);
-                return filtered;
-            }, []);
-        console.debug('[Create commit] - Args:', repoName, branch.name, commitName, commitData, parents);
-        await this.deployCommit(repoName, branch.name, commitName, commitData, parents);
-        !!callback && callback({ commitDeploy: true });
-        console.debug('[Create commit] - Commit deployed');
-
-        // Deploy blobs
-        const blobsDeploy = { counter: 0, total: blobsToDeploy.fn.length };
-        !!callback && callback({ blobsDeploy });
-        for (let i = 0; i < blobsToDeploy.fn.length; i += 5) {
-            const chunk = blobsToDeploy.fn.slice(i, i + 5);
-            await Promise.all(chunk.map(async (fn) => await fn()));
-            console.debug('[Create commit] - Blobs chunk:', i, i + 5);
-
-            blobsDeploy.counter += chunk.length;
+            const addr = await this.deployBlob(
+                repo,
+                branch.name,
+                commitName,
+                'tree',
+                subtree
+            );
+            blobsDeploy.counter += 1;
             !!callback && callback({ blobsDeploy });
-            await new Promise((resolve) => setInterval(resolve, 1000));
+            blobsAddrs.push(addr);
         }
-        console.debug('[Create commit] - Blobs deployed');
+
+        // Deploy content blobs
+        for (let i = 0; i < blobs.length; i++) {
+            const blob = blobs[i];
+            const addr = await this.deployBlob(
+                repo,
+                branch.name,
+                commitName,
+                'blob',
+                blob.modified,
+                blob.original
+            );
+            blobsDeploy.counter += 1;
+            !!callback && callback({ blobsDeploy });
+            blobsAddrs.push(addr);
+        }
 
         // Set blobs for commit
-        const blobAddrs: string[] = [];
-        const blobsAddrs = { counter: blobAddrs.length, total: blobsToDeploy.name.length };
-        !!callback && callback({ blobsAddrs });
-        for (let i = 0; i < blobsToDeploy.name.length; i += 20) {
-            const chunk = blobsToDeploy.name.slice(i, i + 20);
-            await Promise.all(
-                chunk.map(async (name) => {
-                    const blobAddr = await repo.getBlobAddr(name);
-                    blobAddrs.push(blobAddr);
-                })
-            );
-            console.debug('[Create commit] - Get blobs addresses chunk:', i, i + 20);
-
-            blobsAddrs.counter += blobAddrs.length;
-            !!callback && callback({ blobsAddrs });
-            await new Promise((resolve) => setInterval(resolve, 500));
-        }
-        console.debug('[Create commit] - Blobs addrs:', blobAddrs);
-
-        const blobsSet = { counter: 0, total: blobAddrs.length };
+        const blobsSet = { counter: 0, total: blobsAddrs.length };
         !!callback && callback({ blobsSet });
-        for (let i = 0; i < blobAddrs.length; i += 100) {
-            const chunk = blobAddrs.slice(i, i + 100);
-            await this.setBlobs(repoName, commitName, chunk);
+        for (let i = 0; i < blobsAddrs.length; i += 100) {
+            const chunk = blobsAddrs.slice(i, i + 100);
+            await this.setBlobs(repo.meta.name, commitName, chunk);
             console.debug('[Create commit] - Set blobs chunk:', i, i + 100);
 
             blobsSet.counter += chunk.length;
@@ -514,7 +401,7 @@ export class GoshWallet implements IGoshWallet {
 
         // Set repo commit if not proposal or start new proposal
         if (!isMainBranch(branch.name)) {
-            await this.setCommit(repoName, branch.name, commitName, branch.commitAddr);
+            await this.setCommit(repo.meta.name, branch.name, commitName, branch.commitAddr);
             await new Promise<void>((resolve) => {
                 const interval = setInterval(async () => {
                     const upd = await repo.getBranch(branch.name);
@@ -526,7 +413,11 @@ export class GoshWallet implements IGoshWallet {
                 }, 1500);
             });
         } else {
-            await this.startProposalForSetCommit(repoName, branch.name, commitName, branch.commitAddr);
+            await this.startProposalForSetCommit(
+                repo.meta.name,
+                branch.name, commitName,
+                branch.commitAddr
+            );
         }
         !!callback && callback({ completed: true });
     }
@@ -624,40 +515,135 @@ export class GoshWallet implements IGoshWallet {
 
     async deployCommit(
         repoName: string,
-        branchName: string,
-        commitName: string,
-        commitData: string,
-        parents: string[]
-    ): Promise<void> {
+        branch: TGoshBranch,
+        treeRootSha: string,
+        authorPubkey: string,
+        message: string,
+        parentBranch?: TGoshBranch
+    ): Promise<string> {
+        // Build commit data and calculate commit name
+        let parentCommitName = '';
+        if (branch.commitAddr) {
+            const commit = new GoshCommit(this.account.client, branch.commitAddr);
+            const name = await commit.getName();
+            if (name !== ZERO_COMMIT) parentCommitName = name;
+        }
+
+        let parentBranchCommitName = '';
+        if (parentBranch?.commitAddr) {
+            const commit = new GoshCommit(this.account.client, parentBranch.commitAddr);
+            const name = await commit.getName();
+            if (name !== ZERO_COMMIT) parentBranchCommitName = name;
+        }
+
+        const fullCommit = [
+            `tree ${treeRootSha}`,
+            parentCommitName ? `parent ${parentCommitName}` : null,
+            parentBranchCommitName ? `parent ${parentBranchCommitName}` : null,
+            `author ${authorPubkey} <${authorPubkey}@gosh.sh> ${unixtimeWithTz()}`,
+            `committer ${authorPubkey} <${authorPubkey}@gosh.sh> ${unixtimeWithTz()}`,
+            '',
+            message
+        ];
+
+        const parents = [branch.commitAddr, parentBranch?.commitAddr]
+            .reduce((filtered: string[], item) => {
+                if (!!item) filtered.push(item);
+                return filtered;
+            }, []);
+
+        const commitData = fullCommit.filter((item) => item !== null).join('\n')
+        const commitName = sha1(commitData, 'commit');
+
         await this.run(
             'deployCommit',
-            { repoName, branchName, commitName, fullCommit: commitData, parents }
+            { repoName, branchName: branch.name, commitName, fullCommit: commitData, parents }
         );
+        return commitName;
     }
 
     async deployBlob(
-        repoName: string,
+        repo: IGoshRepository,
         branchName: string,
         commitName: string,
-        blobName: string,
-        blobContent: string,
-        blobIpfs: string,
-        blobFlags: number,
-        blobPrevSha: string
-    ): Promise<void> {
+        blobType: 'tree' | 'blob',
+        blobContent: string | Buffer | TGoshTreeItem[],
+        blobPrevContent?: string | Buffer
+    ): Promise<string> {
+        if (!repo.meta) throw new GoshError(EGoshError.NO_REPO);
+
+        // Calculate blob sha and prepared content
+        let sha, prepared = '';
+        if (blobType === 'tree') {
+            const subtree = blobContent as TGoshTreeItem[];
+            const content = subtree.map((item) => (
+                `${item.mode} ${item.type} ${item.sha}\t${item.name}`
+            )).join('\n');
+
+            sha = sha1Tree(subtree);
+            prepared = (await this.prepareBlobContent(content)).prepared;
+        }
+        if (blobType === 'blob') {
+            const content = blobContent as string | Buffer;
+            const result = await this.prepareBlobContent(content);
+
+            sha = result.sha;
+            prepared = result.prepared;
+        }
+        if (!sha) {
+            const details = { type: blobType, content: blobContent }
+            throw new Error(`[Deploy blob] - Blob sha is not calculated (${JSON.stringify(details)})`);
+        }
+
+        // Blob name and check if not deployed
+        const name = `${blobType} ${sha}`;
+        const addr = await repo.getBlobAddr(name);
+        const blob = new GoshBlob(this.account.client, addr);
+        const blobAcc = await blob.account.getAccount();
+        if (blobAcc.acc_type === AccountType.active) {
+            return addr;
+        }
+
+        // Calculate blob previous content sha
+        const prevSha = blobPrevContent
+            ? (await this.prepareBlobContent(blobPrevContent)).sha
+            : '';
+
+        // Upload to ipfs (if needed) and generate flags
+        let ipfs = '';
+        let flags = 0 | EGoshBlobFlag.COMPRESSED;
+        if (Buffer.isBuffer(blobContent)) flags |= EGoshBlobFlag.BINARY;
+        if (prepared.length > MAX_ONCHAIN_FILE_SIZE) {
+            console.debug('[Deploy blob] - Save blob to ipfs');
+            ipfs = await saveToIPFS(prepared);
+            flags |= EGoshBlobFlag.IPFS;
+        }
+
+        // Deploy blob and get address
+        console.debug('[Deploy blob] - Deploy blob params:', {
+            repoName: repo.meta?.name,
+            branch: branchName,
+            commit: commitName,
+            blobName: name,
+            fullBlob: !ipfs ? prepared : '',
+            ipfsBlob: ipfs,
+            flags,
+            prevSha
+        })
         await this.run(
             'deployBlob',
             {
-                repoName,
+                repoName: repo.meta?.name,
                 branch: branchName,
                 commit: commitName,
-                blobName,
-                fullBlob: blobContent,
-                ipfsBlob: blobIpfs,
-                flags: blobFlags,
-                prevSha: blobPrevSha
+                blobName: name,
+                fullBlob: !ipfs ? prepared : '',
+                ipfsBlob: ipfs,
+                flags,
+                prevSha
             }
         );
+        return addr;
     }
 
     async setCommit(
@@ -744,6 +730,15 @@ export class GoshWallet implements IGoshWallet {
 
         // Run contract
         await this.account.run(functionName, input, options);
+    }
+
+    private async prepareBlobContent(
+        content: string | Buffer
+    ): Promise<{ sha: string; prepared: string; }> {
+        const contentSha = sha1(content, 'blob');
+        let prepared = Buffer.isBuffer(content) ? content.toString('base64') : content;
+        prepared = await zstd.compress(this.account.client, prepared);
+        return { sha: contentSha, prepared };
     }
 }
 
@@ -867,6 +862,7 @@ export class GoshBlob implements IGoshBlob {
     account: Account;
     address: string;
     meta?: IGoshBlob['meta'];
+    content?: string | Buffer;
 
     constructor(client: TonClient, address: string) {
         this.address = address;
@@ -875,23 +871,50 @@ export class GoshBlob implements IGoshBlob {
 
     async load(): Promise<void> {
         const meta = await this.getBlob();
-
-        if (meta.ipfs) {
-            const loaded = await loadFromIPFS(meta.ipfs);
-            meta.content = loaded.toString();
-        }
-        meta.content = await zstd.decompress(this.account.client, meta.content, false);
-        // TODO: check for binary and set `meta.content=decompressed`
-        meta.content = Buffer.from(meta.content, 'base64').toString();
-
         this.meta = {
             name: meta.sha,
             content: meta.content,
             ipfs: meta.ipfs,
-            flags: meta.flags,
+            flags: +meta.flags,
             commitAddr: meta.commit,
             prevSha: await this.getPrevSha()
         }
+    }
+
+    async loadContent(): Promise<string | Buffer> {
+        if (this.content) return this.content;
+        if (!this.meta) await this.load();
+        if (this.meta?.flags === undefined) throw new GoshError(EGoshError.META_LOAD);
+
+        let content;
+
+        // Backward compatibility
+        if (this.meta.flags === 0) {
+            this.meta.flags += EGoshBlobFlag.COMPRESSED;
+            if (this.meta.ipfs) this.meta.flags += EGoshBlobFlag.IPFS;
+        }
+
+        // Load from IPFS or blockchain
+        if ((this.meta.flags & EGoshBlobFlag.IPFS) === EGoshBlobFlag.IPFS) {
+            content = await loadFromIPFS(this.meta.ipfs);
+            content = content.toString();
+        } else {
+            content = this.meta.content;
+        }
+
+        // Decompress
+        if ((this.meta.flags & EGoshBlobFlag.COMPRESSED) === EGoshBlobFlag.COMPRESSED) {
+            content = await zstd.decompress(this.account.client, content, false);
+        }
+
+        // Binary or string
+        content = Buffer.from(content, 'base64');
+        if ((this.meta.flags & EGoshBlobFlag.BINARY) !== EGoshBlobFlag.BINARY) {
+            content = content.toString();
+        }
+
+        this.content = content;
+        return content;
     }
 
     async getName(): Promise<string> {

@@ -13,7 +13,7 @@ const GotoPage = () => {
     const { daoName, repoName, branchName = 'main' } = useParams();
     const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
     const branch = useRecoilValue(goshCurrBranchSelector(branchName));
-    const { tree, getTreeItems } = useGoshRepoTree(goshRepo, branch, undefined);
+    const { tree, getTreeItems } = useGoshRepoTree(goshRepo, branch);
     const [search, setSearch] = useState<string>('');
     const treeItems = useRecoilValue(getTreeItems(search));
 
