@@ -415,7 +415,8 @@ export class GoshWallet implements IGoshWallet {
         } else {
             await this.startProposalForSetCommit(
                 repo.meta.name,
-                branch.name, commitName,
+                branch.name,
+                commitName,
                 branch.commitAddr
             );
         }
