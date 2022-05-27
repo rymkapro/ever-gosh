@@ -1,17 +1,15 @@
-import React from "react";
-import { faCode, faCodeFork } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Link } from "react-router-dom";
-import CopyClipboard from "../../components/CopyClipboard";
-import { IGoshRepository } from "../../types/types";
-import { shortString } from "../../utils";
-
+import { faCode, faCodeFork } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Link } from 'react-router-dom';
+import CopyClipboard from '../../components/CopyClipboard';
+import { IGoshRepository } from '../../types/types';
+import { shortString } from '../../utils';
 
 type TRepositoryListItemProps = {
     daoName: string;
     repository: IGoshRepository;
     daoLink?: boolean;
-}
+};
 
 const RepositoryListItem = (props: TRepositoryListItemProps) => {
     const { daoName, repository, daoLink = false } = props;
@@ -38,10 +36,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                 </Link>
             </div>
 
-
-            <div className="text-sm text-gray-606060">
-                Gosh repository
-            </div>
+            <div className="text-sm text-gray-606060">Gosh repository</div>
 
             <div className="flex flex-wrap gap-1 mt-2">
                 {['gosh', 'vcs', 'ever'].map((value, index) => (
@@ -72,7 +67,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                 </div>
                 <CopyClipboard
                     componentProps={{
-                        text: repository.address
+                        text: repository.address,
                     }}
                     className="hover:text-gray-050a15"
                     label={shortString(repository.address)}
@@ -80,6 +75,6 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
             </div>
         </div>
     );
-}
+};
 
 export default RepositoryListItem;

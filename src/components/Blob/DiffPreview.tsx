@@ -51,7 +51,9 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
                     let calc = originalHeight + modifiedHeight;
                     const max = Math.max(originalHeight, modifiedHeight);
                     if (max > 500) calc = 500;
-                    editor._domElement.style.height = `${calc}px`;
+
+                    const node = editor.getContainerDomNode();
+                    if(node) node.style.height = `${calc}px`;
                 });
             }}
         />

@@ -1,13 +1,12 @@
-import React from "react";
-import { Field } from "formik";
-import TextField from "../../components/FormikForms/TextField";
-import TextareaField from "../../components/FormikForms/TextareaField";
-import { useNavigate } from "react-router-dom";
-import { classNames } from "../../utils";
-import Spinner from "../../components/Spinner";
-import { TCreateCommitCallbackParams } from "../../types/types";
-import CommitProgress from "./CommitProgress";
-
+import React from 'react';
+import { Field } from 'formik';
+import TextField from '../../components/FormikForms/TextField';
+import TextareaField from '../../components/FormikForms/TextareaField';
+import { useNavigate } from 'react-router-dom';
+import { classNames } from '../../utils';
+import Spinner from '../../components/Spinner';
+import { TCreateCommitCallbackParams } from '../../types/types';
+import CommitProgress from './CommitProgress';
 
 type TFormCommitBlockProps = {
     urlBack?: string;
@@ -17,7 +16,7 @@ type TFormCommitBlockProps = {
     extraFields?: any;
     extraButtons?: any;
     progress?: TCreateCommitCallbackParams;
-}
+};
 
 const FormCommitBlock = (props: TFormCommitBlockProps) => {
     const {
@@ -27,7 +26,7 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
         isSubmitting,
         extraFields,
         extraButtons,
-        progress
+        progress,
     } = props;
     const navigate = useNavigate();
 
@@ -42,7 +41,7 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                         className: 'text-sm py-1.5 w-full',
                         autoComplete: 'off',
                         placeholder: 'Commit title',
-                        disabled: isSubmitting || isDisabled
+                        disabled: isSubmitting || isDisabled,
                     }}
                 />
             </div>
@@ -53,10 +52,24 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                     inputProps={{
                         className: 'text-sm py-1.5 w-full',
                         placeholder: 'Commit optional description',
-                        disabled: isSubmitting || isDisabled
+                        disabled: isSubmitting || isDisabled,
                     }}
                 />
             </div>
+
+            {/* <div className="mt-3">
+                <Field
+                    name="tags"
+                    component={TextField}
+                    help="Space separated tags"
+                    inputProps={{
+                        className: 'text-sm py-1.5 w-full',
+                        placeholder: 'Commit tags',
+                        autoComplete: 'off',
+                        disabled: isSubmitting || isDisabled,
+                    }}
+                />
+            </div> */}
 
             {extraFields}
 
@@ -89,6 +102,6 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
             )}
         </div>
     );
-}
+};
 
 export default FormCommitBlock;

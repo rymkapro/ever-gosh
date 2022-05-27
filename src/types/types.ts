@@ -1,25 +1,24 @@
-import { Account } from "@eversdk/appkit";
-import { ClientConfig, KeyPair } from "@eversdk/core";
-
+import { Account } from '@eversdk/appkit';
+import { ClientConfig, KeyPair } from '@eversdk/core';
 
 export type TEverState = {
     config: ClientConfig;
-}
+};
 
 export type TUserStatePersist = {
     phrase?: string;
     nonce?: string;
     pin?: string;
-}
+};
 
 export type TUserState = TUserStatePersist & {
     keys?: KeyPair;
-}
+};
 
 export type TGoshBranch = {
     name: string;
     commitAddr: string;
-}
+};
 
 export type TGoshCommitContent = {
     tree: string;
@@ -27,7 +26,7 @@ export type TGoshCommitContent = {
     committer: string;
     title: string;
     message: string;
-}
+};
 
 export type TGoshTreeItem = {
     mode: '040000' | '100644';
@@ -35,27 +34,27 @@ export type TGoshTreeItem = {
     sha: string;
     path: string;
     name: string;
-}
+};
 
 export type TGoshTree = {
-    [key: string]: TGoshTreeItem[]
-}
+    [key: string]: TGoshTreeItem[];
+};
 
 export type TCreateCommitCallbackParams = {
     tree?: boolean;
     commitDeploy?: boolean;
-    blobsDeploy?: { counter: number; total: number; }
-    blobsSet?: { counter: number; total: number; }
+    blobsDeploy?: { counter: number; total: number };
+    blobsSet?: { counter: number; total: number };
     completed?: boolean;
-}
+};
 export interface ICreateCommitCallback {
-    (params: TCreateCommitCallbackParams): void
+    (params: TCreateCommitCallbackParams): void;
 }
 
 export enum EGoshBlobFlag {
     BINARY = 1,
     COMPRESSED = 2,
-    IPFS = 4
+    IPFS = 4,
 }
 
 interface IContract {
@@ -90,7 +89,11 @@ export interface IGoshDao extends IContract {
     };
 
     load(): Promise<void>;
-    deployWallet(rootPubkey: string, pubkey: string, keys: KeyPair): Promise<string>;
+    deployWallet(
+        rootPubkey: string,
+        pubkey: string,
+        keys: KeyPair
+    ): Promise<string>;
     getWalletAddr(rootPubkey: string, pubkey: string): Promise<string>;
     getWallets(): Promise<string[]>;
     getName(): Promise<string>;
@@ -121,8 +124,13 @@ export interface IGoshWallet extends IContract {
         repo: IGoshRepository,
         branch: TGoshBranch,
         pubkey: string,
-        blobs: { name: string; modified: string | Buffer; original?: string | Buffer; }[],
+        blobs: {
+            name: string;
+            modified: string | Buffer;
+            original?: string | Buffer;
+        }[],
         message: string,
+        tags?: string,
         parent2?: TGoshBranch,
         callback?: ICreateCommitCallback
     ): Promise<void>;
@@ -132,7 +140,11 @@ export interface IGoshWallet extends IContract {
     getRootAddr(): Promise<string>;
     getPubkey(): Promise<string>;
     deployRepo(name: string): Promise<void>;
-    deployBranch(repo: IGoshRepository, newName: string, fromName: string): Promise<void>;
+    deployBranch(
+        repo: IGoshRepository,
+        newName: string,
+        fromName: string
+    ): Promise<void>;
     deleteBranch(repo: IGoshRepository, branchName: string): Promise<void>;
     deployCommit(
         repoName: string,
@@ -150,6 +162,11 @@ export interface IGoshWallet extends IContract {
         blobContent: string | Buffer,
         blobPrevContent?: string | Buffer
     ): Promise<string>;
+    deployTag(
+        repo: IGoshRepository,
+        commitName: string,
+        content: string
+    ): Promise<void>;
     setCommit(
         repoName: string,
         branchName: string,
@@ -162,7 +179,11 @@ export interface IGoshWallet extends IContract {
         commitName: string,
         branchCommit: string
     ): Promise<void>;
-    setBlobs(repoName: string, commitName: string, blobAddr: string[]): Promise<void>;
+    setBlobs(
+        repoName: string,
+        commitName: string,
+        blobAddr: string[]
+    ): Promise<void>;
     getSmvLockerAddr(): Promise<string>;
     getSmvTokenBalance(): Promise<number>;
     getSmvClientAddr(lockerAddr: string, proposalId: string): Promise<string>;
@@ -184,7 +205,8 @@ export interface IGoshRepository extends IContract {
     meta?: {
         name: string;
         branchCount: number;
-    }
+        tags: string[];
+    };
 
     load(): Promise<void>;
     getName(): Promise<string>;
@@ -192,6 +214,8 @@ export interface IGoshRepository extends IContract {
     getBranch(name: string): Promise<TGoshBranch>;
     getCommitAddr(commitSha: string): Promise<string>;
     getBlobAddr(blobName: string): Promise<string>;
+    getTagCode(): Promise<string>;
+    getTags(): Promise<string[]>;
 }
 
 export interface IGoshCommit extends IContract {
@@ -202,7 +226,7 @@ export interface IGoshCommit extends IContract {
         sha: string;
         content: TGoshCommitContent;
         parents: string[];
-    }
+    };
 
     load(): Promise<void>;
     getCommit(): Promise<any>;
@@ -220,7 +244,7 @@ export interface IGoshBlob extends IContract {
         flags: number;
         commitAddr: string;
         prevSha: string;
-    }
+    };
     content?: string | Buffer;
 
     load(): Promise<void>;
@@ -230,26 +254,35 @@ export interface IGoshBlob extends IContract {
     getPrevSha(): Promise<string>;
 }
 
+export interface IGoshTag extends IContract {
+    address: string;
+    meta?: {
+        content: string;
+    };
+
+    load(): Promise<void>;
+    getContent(): Promise<string>;
+}
+
 export interface IGoshSmvProposal extends IContract {
     address: string;
     meta?: {
         id: string;
-        votes: { yes: number; no: number; }
-        time: { start: Date; finish: Date; }
+        votes: { yes: number; no: number };
+        time: { start: Date; finish: Date };
         isCompleted: boolean;
         commit: {
             kind: string;
             repoName: string;
             branchName: string;
             commitName: string;
-        }
-
+        };
     };
 
     load(): Promise<void>;
     getId(): Promise<string>;
-    getVotes(): Promise<{ yes: number; no: number; }>;
-    getTime(): Promise<{ start: Date; finish: Date; }>;
+    getVotes(): Promise<{ yes: number; no: number }>;
+    getTime(): Promise<{ start: Date; finish: Date }>;
     getGoshSetCommitProposalParams(): Promise<any>;
     getLockerAddr(): Promise<string>;
     isCompleted(): Promise<boolean>;
@@ -261,10 +294,10 @@ export interface IGoshSmvLocker extends IContract {
         votesTotal: number;
         votesLocked: number;
         isBusy: boolean;
-    }
+    };
 
     load(): Promise<void>;
-    getVotes(): Promise<{ total: number; locked: number; }>;
+    getVotes(): Promise<{ total: number; locked: number }>;
     getIsBusy(): Promise<boolean>;
 }
 

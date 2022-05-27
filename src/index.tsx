@@ -1,20 +1,19 @@
-import React from "react";
-import { createRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
-import reportWebVitals from "./reportWebVitals";
-import { TonClient, BinaryLibrary } from "@eversdk/core";
-import { libWeb } from "@eversdk/lib-web";
-import App from "./App";
-import { RecoilRoot } from "recoil";
-import { QueryClient, QueryClientProvider } from "react-query";
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import reportWebVitals from './reportWebVitals';
+import { TonClient, BinaryLibrary } from '@eversdk/core';
+import { libWeb } from '@eversdk/lib-web';
+import App from './App';
+import { RecoilRoot } from 'recoil';
+import { QueryClient, QueryClientProvider } from 'react-query';
 
 // Create React QueryClient
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            refetchOnWindowFocus: false
-        }
-    }
+            refetchOnWindowFocus: false,
+        },
+    },
 });
 
 const container = document.getElementById('root');
