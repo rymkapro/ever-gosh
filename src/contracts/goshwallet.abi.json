@@ -8,15 +8,22 @@
 			"inputs": [
 				{"name":"creator","type":"address"},
 				{"name":"commitCode","type":"cell"},
-				{"name":"blobCode","type":"cell"},
 				{"name":"repositoryCode","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
 				{"name":"TagCode","type":"cell"},
+				{"name":"SnapshotCode","type":"cell"},
 				{"name":"lockerCode","type":"cell"},
 				{"name":"platformCode","type":"cell"},
 				{"name":"clientCode","type":"cell"},
 				{"name":"proposalCode","type":"cell"},
 				{"name":"_tip3Root","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroy",
+			"inputs": [
 			],
 			"outputs": [
 			]
@@ -33,6 +40,16 @@
 			"name": "deployRepository",
 			"inputs": [
 				{"name":"nameRepo","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployNewSnapshot",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"name","type":"string"}
 			],
 			"outputs": [
 			]
@@ -72,26 +89,11 @@
 			]
 		},
 		{
-			"name": "deployBlob",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"commit","type":"string"},
-				{"name":"branch","type":"string"},
-				{"name":"blobName","type":"string"},
-				{"name":"fullBlob","type":"string"},
-				{"name":"ipfsBlob","type":"string"},
-				{"name":"prevSha","type":"string"},
-				{"name":"flags","type":"uint8"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setBlob",
+			"name": "setDiff",
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"commitName","type":"string"},
-				{"name":"blobs","type":"address[]"}
+				{"components":[{"name":"snap","type":"address"},{"name":"patch","type":"bytes"}],"name":"diffs","type":"tuple[]"}
 			],
 			"outputs": [
 			]
@@ -213,6 +215,17 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "getSnapshotAddr",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
 			]
 		},
 		{
@@ -472,9 +485,9 @@
 		{"name":"_flag","type":"bool"},
 		{"name":"m_RepositoryCode","type":"cell"},
 		{"name":"m_CommitCode","type":"cell"},
-		{"name":"m_BlobCode","type":"cell"},
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_TagCode","type":"cell"},
+		{"name":"m_SnapshotCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
 		{"name":"m_SMVClientCode","type":"cell"},
 		{"name":"m_SMVProposalCode","type":"cell"}

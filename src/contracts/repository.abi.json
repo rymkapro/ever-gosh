@@ -10,9 +10,9 @@
 				{"name":"name","type":"string"},
 				{"name":"goshdao","type":"address"},
 				{"name":"CommitCode","type":"cell"},
-				{"name":"BlobCode","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
-				{"name":"codeTag","type":"cell"}
+				{"name":"codeTag","type":"cell"},
+				{"name":"SnapshotCode","type":"cell"}
 			],
 			"outputs": [
 			]
@@ -23,6 +23,37 @@
 				{"name":"pubkey","type":"uint256"},
 				{"name":"newname","type":"string"},
 				{"name":"fromname","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addSnapshot",
+			"inputs": [
+				{"name":"addr","type":"address"},
+				{"name":"oldbranch","type":"string"},
+				{"name":"newbranch","type":"string"},
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addSnapshotSimple",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"newS","type":"address"},
+				{"name":"newbranch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "copySnapshot",
+			"inputs": [
+				{"name":"index","type":"uint32"},
+				{"name":"fromname","type":"string"},
+				{"name":"newname","type":"string"}
 			],
 			"outputs": [
 			]
@@ -67,7 +98,7 @@
 				{"name":"name","type":"string"}
 			],
 			"outputs": [
-				{"components":[{"name":"key","type":"string"},{"name":"value","type":"address"}],"name":"value0","type":"tuple"}
+				{"components":[{"name":"key","type":"string"},{"name":"value","type":"address"},{"name":"snapshot","type":"address[]"}],"name":"value0","type":"tuple"}
 			]
 		},
 		{
@@ -75,7 +106,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"key","type":"string"},{"name":"value","type":"address"}],"name":"value0","type":"tuple[]"}
+				{"components":[{"name":"key","type":"string"},{"name":"value","type":"address"},{"name":"snapshot","type":"address[]"}],"name":"value0","type":"tuple[]"}
 			]
 		},
 		{
@@ -136,15 +167,6 @@
 			]
 		},
 		{
-			"name": "getBlobAddr",
-			"inputs": [
-				{"name":"nameBlob","type":"string"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
 			"name": "getVersion",
 			"inputs": [
 			],
@@ -164,7 +186,7 @@
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"_pubkey","type":"uint256"},
 		{"name":"m_CommitCode","type":"cell"},
-		{"name":"m_BlobCode","type":"cell"},
+		{"name":"m_SnapshotCode","type":"cell"},
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_codeTag","type":"cell"},
 		{"name":"_rootGosh","type":"address"},

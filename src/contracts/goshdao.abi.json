@@ -11,10 +11,10 @@
 				{"name":"pubkey","type":"uint256"},
 				{"name":"name","type":"string"},
 				{"name":"CommitCode","type":"cell"},
-				{"name":"BlobCode","type":"cell"},
 				{"name":"RepositoryCode","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
 				{"name":"TagCode","type":"cell"},
+				{"name":"codeSnapshot","type":"cell"},
 				{"name":"TokenLockerCode","type":"cell"},
 				{"name":"SMVPlatformCode","type":"cell"},
 				{"name":"SMVClientCode","type":"cell"},
@@ -27,6 +27,14 @@
 		},
 		{
 			"name": "deployWallet",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteWallet",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"}
 			],
@@ -206,8 +214,8 @@
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_RepositoryCode","type":"cell"},
 		{"name":"m_CommitCode","type":"cell"},
-		{"name":"m_BlobCode","type":"cell"},
 		{"name":"m_TagCode","type":"cell"},
+		{"name":"m_codeSnapshot","type":"cell"},
 		{"name":"_rootgosh","type":"address"},
 		{"name":"_nameDao","type":"string"},
 		{"name":"_wallets","type":"address[]"},

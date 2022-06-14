@@ -93,120 +93,113 @@ const PullCreatePage = () => {
         };
 
         const onCompare = async () => {
-            try {
-                const [branchFromName, branchToName] =
-                    compareParam.split('...');
-                const branchFrom = await goshRepo.getBranch(branchFromName);
-                const branchTo = await goshRepo.getBranch(branchToName);
-
-                if (!branchFrom?.commitAddr || !branchTo?.commitAddr)
-                    throw new GoshError(EGoshError.NO_BRANCH);
-                if (branchFrom.commitAddr === branchTo.commitAddr) {
-                    setCompare([]);
-                    return;
-                }
-
-                setCompare(undefined);
-                const fromTree = await getRepoTree(
-                    goshRepo,
-                    branchFrom.commitAddr
-                );
-                const fromTreeItems = [...fromTree.items].filter(
-                    (item) => item.type === 'blob'
-                );
-                console.debug(
-                    '[Pull create] - From tree blobs:',
-                    fromTreeItems
-                );
-                const toTree = await getRepoTree(goshRepo, branchTo.commitAddr);
-                const toTreeItems = [...toTree.items].filter(
-                    (item) => item.type === 'blob'
-                );
-                console.debug('[Pull create] - To tree blobs:', toTreeItems);
-
-                // Find items that exist in both trees and were changed
-                const intersected = toTreeItems.filter((item) => {
-                    return fromTreeItems.find(
-                        (fItem) =>
-                            fItem.path === item.path &&
-                            fItem.name === item.name &&
-                            fItem.sha !== item.sha
-                    );
-                });
-                console.debug('[Pull crreate] - Intersected:', intersected);
-
-                // Find items that where added by `fromBranch`
-                const added = fromTreeItems.filter((item) => {
-                    return !toTreeItems.find(
-                        (tItem) =>
-                            tItem.path === item.path && tItem.name === item.name
-                    );
-                });
-                console.debug('[Pull crreate] - Added:', added);
-                setBlobProgress({
-                    count: 0,
-                    total: intersected.length + added.length,
-                });
-
-                // Merge intersected and added and generate compare list
-                const compare: {
-                    to?: { item: TGoshTreeItem; blob: IGoshBlob };
-                    from: { item: TGoshTreeItem; blob: IGoshBlob };
-                    showDiff?: boolean;
-                }[] = [];
-
-                for (let i = 0; i < intersected.length; i++) {
-                    const item = intersected[i];
-                    const from = fromTreeItems.find(
-                        (fItem) =>
-                            fItem.path === item.path && fItem.name === item.name
-                    );
-                    const to = toTreeItems.find(
-                        (tItem) =>
-                            tItem.path === item.path && tItem.name === item.name
-                    );
-                    if (from && to) {
-                        const fromBlob = await getBlob(from.sha);
-                        const toBlob = await getBlob(to.sha);
-                        compare.push({
-                            to: { item: to, blob: toBlob },
-                            from: { item: from, blob: fromBlob },
-                            showDiff:
-                                compare.length < 10 ||
-                                Buffer.isBuffer(toBlob.content) ||
-                                Buffer.isBuffer(fromBlob.content),
-                        });
-                    }
-                    setBlobProgress((currVal) => ({
-                        ...currVal,
-                        count: currVal?.count + 1,
-                    }));
-                    await new Promise((resolve) => setInterval(resolve, 200));
-                }
-
-                for (let i = 0; i < added.length; i++) {
-                    const item = added[i];
-                    const fromBlob = await getBlob(item.sha);
-                    compare.push({
-                        to: undefined,
-                        from: { item, blob: fromBlob },
-                        showDiff:
-                            compare.length < 10 ||
-                            Buffer.isBuffer(fromBlob.content),
-                    });
-                    setBlobProgress((currVal) => ({
-                        ...currVal,
-                        count: currVal?.count + 1,
-                    }));
-                    await new Promise((resolve) => setInterval(resolve, 200));
-                }
-                console.debug('[Pull create] - Compare list:', compare);
-                setCompare(compare);
-                setBlobProgress({ count: 0, total: 0 });
-            } catch (e: any) {
-                console.error(e.message);
-                toast.error(e.message);
-            }
+            // try {
+            //     const [branchFromName, branchToName] =
+            //         compareParam.split('...');
+            //     const branchFrom = await goshRepo.getBranch(branchFromName);
+            //     const branchTo = await goshRepo.getBranch(branchToName);
+            //     if (!branchFrom?.commitAddr || !branchTo?.commitAddr)
+            //         throw new GoshError(EGoshError.NO_BRANCH);
+            //     if (branchFrom.commitAddr === branchTo.commitAddr) {
+            //         setCompare([]);
+            //         return;
+            //     }
+            //     setCompare(undefined);
+            //     const fromTree = await getRepoTree(
+            //         goshRepo,
+            //         branchFrom.commitAddr
+            //     );
+            //     const fromTreeItems = [...fromTree.items].filter(
+            //         (item) => item.type === 'blob'
+            //     );
+            //     console.debug(
+            //         '[Pull create] - From tree blobs:',
+            //         fromTreeItems
+            //     );
+            //     const toTree = await getRepoTree(goshRepo, branchTo.commitAddr);
+            //     const toTreeItems = [...toTree.items].filter(
+            //         (item) => item.type === 'blob'
+            //     );
+            //     console.debug('[Pull create] - To tree blobs:', toTreeItems);
+            //     // Find items that exist in both trees and were changed
+            //     const intersected = toTreeItems.filter((item) => {
+            //         return fromTreeItems.find(
+            //             (fItem) =>
+            //                 fItem.path === item.path &&
+            //                 fItem.name === item.name &&
+            //                 fItem.sha !== item.sha
+            //         );
+            //     });
+            //     console.debug('[Pull crreate] - Intersected:', intersected);
+            //     // Find items that where added by `fromBranch`
+            //     const added = fromTreeItems.filter((item) => {
+            //         return !toTreeItems.find(
+            //             (tItem) =>
+            //                 tItem.path === item.path && tItem.name === item.name
+            //         );
+            //     });
+            //     console.debug('[Pull crreate] - Added:', added);
+            //     setBlobProgress({
+            //         count: 0,
+            //         total: intersected.length + added.length,
+            //     });
+            //     // Merge intersected and added and generate compare list
+            //     const compare: {
+            //         to?: { item: TGoshTreeItem; blob: IGoshBlob };
+            //         from: { item: TGoshTreeItem; blob: IGoshBlob };
+            //         showDiff?: boolean;
+            //     }[] = [];
+            //     for (let i = 0; i < intersected.length; i++) {
+            //         const item = intersected[i];
+            //         const from = fromTreeItems.find(
+            //             (fItem) =>
+            //                 fItem.path === item.path && fItem.name === item.name
+            //         );
+            //         const to = toTreeItems.find(
+            //             (tItem) =>
+            //                 tItem.path === item.path && tItem.name === item.name
+            //         );
+            //         if (from && to) {
+            //             const fromBlob = await getBlob(from.sha);
+            //             const toBlob = await getBlob(to.sha);
+            //             compare.push({
+            //                 to: { item: to, blob: toBlob },
+            //                 from: { item: from, blob: fromBlob },
+            //                 showDiff:
+            //                     compare.length < 10 ||
+            //                     Buffer.isBuffer(toBlob.content) ||
+            //                     Buffer.isBuffer(fromBlob.content),
+            //             });
+            //         }
+            //         setBlobProgress((currVal) => ({
+            //             ...currVal,
+            //             count: currVal?.count + 1,
+            //         }));
+            //         await new Promise((resolve) => setInterval(resolve, 200));
+            //     }
+            //     for (let i = 0; i < added.length; i++) {
+            //         const item = added[i];
+            //         const fromBlob = await getBlob(item.sha);
+            //         compare.push({
+            //             to: undefined,
+            //             from: { item, blob: fromBlob },
+            //             showDiff:
+            //                 compare.length < 10 ||
+            //                 Buffer.isBuffer(fromBlob.content),
+            //         });
+            //         setBlobProgress((currVal) => ({
+            //             ...currVal,
+            //             count: currVal?.count + 1,
+            //         }));
+            //         await new Promise((resolve) => setInterval(resolve, 200));
+            //     }
+            //     console.debug('[Pull create] - Compare list:', compare);
+            //     setCompare(compare);
+            //     setBlobProgress({ count: 0, total: 0 });
+            // } catch (e: any) {
+            //     console.error(e.message);
+            //     toast.error(e.message);
+            // }
         };
 
         setCompare([]);
@@ -247,16 +240,16 @@ const PullCreatePage = () => {
             const message = [values.title, values.message]
                 .filter((v) => !!v)
                 .join('\n\n');
-            await goshWallet.createCommit(
-                goshRepo,
-                branchTo,
-                userState.keys.public,
-                blobs,
-                message,
-                values.tags,
-                branchFrom,
-                progressCallback
-            );
+            // await goshWallet.createCommit(
+            //     goshRepo,
+            //     branchTo,
+            //     userState.keys.public,
+            //     blobs,
+            //     message,
+            //     values.tags,
+            //     branchFrom,
+            //     progressCallback
+            // );
 
             // Delete branch after merge (if selected), update branches, redirect
             if (values.deleteBranch)

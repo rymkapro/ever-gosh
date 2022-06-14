@@ -18,6 +18,7 @@ export type TUserState = TUserStatePersist & {
 export type TGoshBranch = {
     name: string;
     commitAddr: string;
+    snapshotAddr: string[];
 };
 
 export type TGoshCommitContent = {
@@ -26,6 +27,15 @@ export type TGoshCommitContent = {
     committer: string;
     title: string;
     message: string;
+};
+
+export type TGoshCommit = {
+    addr: string;
+    addrRepo: string;
+    branch: string;
+    name: string;
+    content: TGoshCommitContent;
+    parents: string[];
 };
 
 export type TGoshTreeItem = {
@@ -40,6 +50,11 @@ export type TGoshTree = {
     [key: string]: TGoshTreeItem[];
 };
 
+export type TGoshDiff = {
+    snapshotAddr: string;
+    patch: string;
+};
+
 export type TCreateCommitCallbackParams = {
     tree?: boolean;
     commitDeploy?: boolean;
@@ -47,6 +62,7 @@ export type TCreateCommitCallbackParams = {
     blobsSet?: { counter: number; total: number };
     completed?: boolean;
 };
+
 export interface ICreateCommitCallback {
     (params: TCreateCommitCallbackParams): void;
 }
@@ -167,6 +183,21 @@ export interface IGoshWallet extends IContract {
         commitName: string,
         content: string
     ): Promise<void>;
+    deployNewSnapshot(
+        repoAddr: string,
+        branchName: string,
+        filename: string
+    ): Promise<string>;
+    getSnapshotAddr(
+        repoAddr: string,
+        branchName: string,
+        filename: string
+    ): Promise<string>;
+    setDiff(
+        repoName: string,
+        commitName: string,
+        diffs: TGoshDiff[]
+    ): Promise<void>;
     setCommit(
         repoName: string,
         branchName: string,
@@ -233,6 +264,13 @@ export interface IGoshCommit extends IContract {
     getName(): Promise<string>;
     getParents(): Promise<string[]>;
     getBlobs(): Promise<string[]>;
+}
+
+export interface IGoshSnapshot extends IContract {
+    address: string;
+
+    getName(): Promise<string>;
+    getSnapshot(commitAddr: string): Promise<string>;
 }
 
 export interface IGoshBlob extends IContract {

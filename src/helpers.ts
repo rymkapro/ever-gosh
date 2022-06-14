@@ -2,15 +2,25 @@ import { TonClient } from '@eversdk/core';
 import { toast } from 'react-toastify';
 import cryptoJs, { SHA1 } from 'crypto-js';
 import { Buffer } from 'buffer';
-import { GoshBlob, GoshCommit, GoshDaoCreator } from './types/classes';
+import {
+    GoshBlob,
+    GoshCommit,
+    GoshDaoCreator,
+    GoshSnapshot,
+} from './types/classes';
 import {
     IGoshDaoCreator,
     IGoshRepository,
+    TGoshBranch,
+    TGoshCommit,
     TGoshTree,
     TGoshTreeItem,
 } from './types/types';
 import * as Diff from 'diff';
+import LightningFS from '@isomorphic-git/lightning-fs';
 import { EGoshError, GoshError } from './types/errors';
+
+export const fs = new LightningFS('app.gosh');
 
 export const ZERO_COMMIT = '0000000000000000000000000000000000000000';
 export const MAX_ONCHAIN_FILE_SIZE = 15360;
@@ -18,12 +28,26 @@ export const MAX_ONCHAIN_FILE_SIZE = 15360;
 export const getEndpoints = (): string[] => {
     switch (process.env.REACT_APP_EVER_NETWORK) {
         case 'devnet':
-            return ['https://net.ton.dev'];
+            return ['https://vps23.ton.dev'];
         case 'mainnet':
             return ['https://network.gosh.sh'];
         case 'se':
         default:
             return ['http://localhost'];
+    }
+};
+
+export const fsExists = async (pathname: string): Promise<boolean> => {
+    try {
+        await fs.promises.stat(pathname);
+        return true;
+    } catch (e: any) {
+        if (e.code === 'ENOENT' || e.code === 'ENOTDIR') {
+            return false;
+        } else {
+            console.debug('Unhandled error in `fs.exists()`', e);
+            throw e;
+        }
     }
 };
 
@@ -175,6 +199,54 @@ export const getTreeFromItems = (items: TGoshTreeItem[]): TGoshTree => {
     return result;
 };
 
+export const getRepoTree = async (
+    repo: IGoshRepository,
+    branch: TGoshBranch
+) => {
+    // Read branch dump file if exists
+    const dumpPath = `/${repo.address}/${branch.name}.tree`;
+    if (await fsExists(dumpPath)) {
+        const content = await fs.promises.readFile(dumpPath);
+        const data = content ? JSON.parse(content as string) : {};
+        if (data.commitAddr === branch.commitAddr) {
+            return {
+                tree: getTreeFromItems(data.treeItems),
+                items: data.treeItems,
+            };
+        }
+    }
+
+    // Build tree from snapshots (if dump was not found)
+    const files = [];
+    for (const addr of branch.snapshotAddr) {
+        const snapshot = new GoshSnapshot(repo.account.client, addr);
+        const filename = await snapshot.getName();
+        files.push(filename.replace(`${branch.name}/`, ''));
+    }
+    console.debug('Files list', files);
+
+    const items = files.reduce((prev: TGoshTreeItem[], path: string) => {
+        const _items = getTreeItemsFromPath(path, '');
+        prev.push(..._items);
+        return prev;
+    }, []);
+    console.debug('Tree items', items);
+
+    const tree = getTreeFromItems(items);
+    console.debug('Tree', tree);
+
+    // Save branch dump
+    await fs.promises.writeFile(
+        dumpPath,
+        JSON.stringify({
+            commitAddr: branch.commitAddr,
+            treeItems: items,
+        })
+    );
+
+    return { tree, items };
+};
+
 /**
  * Get repository tree for specific commit
  * @param repo
@@ -182,78 +254,78 @@ export const getTreeFromItems = (items: TGoshTreeItem[]): TGoshTree => {
  * @param filterPath Load only part of tree with provided path. Full tree will be loaded if `undefined`
  * @returns
  */
-export const getRepoTree = async (
-    repo: IGoshRepository,
-    commitAddr: string,
-    filterPath?: string
-): Promise<{ tree: TGoshTree; items: TGoshTreeItem[] }> => {
-    /** Recursive walker through tree blobs */
-    const blobTreeWalker = async (path: string, subitems: TGoshTreeItem[]) => {
-        let trees = subitems.filter((item) => item.type === 'tree');
+// export const getRepoTree = async (
+//     repo: IGoshRepository,
+//     commitAddr: string,
+//     filterPath?: string
+// ): Promise<{ tree: TGoshTree; items: TGoshTreeItem[] }> => {
+//     /** Recursive walker through tree blobs */
+//     const blobTreeWalker = async (path: string, subitems: TGoshTreeItem[]) => {
+//         let trees = subitems.filter((item) => item.type === 'tree');
 
-        if (filterPath) {
-            let [_path] = splitByPath(filterPath);
-            const filtered: string[] = [filterPath, _path];
-            while (_path !== '') {
-                const [__path] = splitByPath(_path);
-                filtered.push(__path);
-                _path = __path;
-            }
+//         if (filterPath) {
+//             let [_path] = splitByPath(filterPath);
+//             const filtered: string[] = [filterPath, _path];
+//             while (_path !== '') {
+//                 const [__path] = splitByPath(_path);
+//                 filtered.push(__path);
+//                 _path = __path;
+//             }
 
-            trees = trees.filter(
-                (item) =>
-                    filtered.indexOf(
-                        `${item.path ? `${item.path}/` : ''}${item.name}`
-                    ) >= 0
-            );
-        }
+//             trees = trees.filter(
+//                 (item) =>
+//                     filtered.indexOf(
+//                         `${item.path ? `${item.path}/` : ''}${item.name}`
+//                     ) >= 0
+//             );
+//         }
 
-        for (let i = 0; i < trees.length; i++) {
-            const tree = trees[i];
-            const treeAddr = await repo.getBlobAddr(`tree ${tree.sha}`);
-            const treeBlob = new GoshBlob(repo.account.client, treeAddr);
+//         for (let i = 0; i < trees.length; i++) {
+//             const tree = trees[i];
+//             const treeAddr = await repo.getBlobAddr(`tree ${tree.sha}`);
+//             const treeBlob = new GoshBlob(repo.account.client, treeAddr);
 
-            const treeContent = (await treeBlob.loadContent()).toString();
-            const treeItems = getTreeItemsFromBlob(treeContent);
-            const treePath = `${path ? `${path}/` : ''}${tree.name}`;
+//             const treeContent = (await treeBlob.loadContent()).toString();
+//             const treeItems = getTreeItemsFromBlob(treeContent);
+//             const treePath = `${path ? `${path}/` : ''}${tree.name}`;
 
-            treeItems.forEach((item) => (item.path = treePath));
-            items.push(...treeItems);
-            await new Promise((resolve) => setInterval(resolve, 150));
-            await blobTreeWalker(treePath, treeItems);
-        }
-    };
+//             treeItems.forEach((item) => (item.path = treePath));
+//             items.push(...treeItems);
+//             await new Promise((resolve) => setInterval(resolve, 150));
+//             await blobTreeWalker(treePath, treeItems);
+//         }
+//     };
 
-    // Get latest branch commit
-    if (!commitAddr) return { tree: { '': [] }, items: [] };
-    const commit = new GoshCommit(repo.account.client, commitAddr);
-    await commit.load();
+//     // Get latest branch commit
+//     if (!commitAddr) return { tree: { '': [] }, items: [] };
+//     const commit = new GoshCommit(repo.account.client, commitAddr);
+//     await commit.load();
 
-    // Get root tree blob
-    let rootTreeBlobContent: string = '';
-    if (commit.meta?.sha !== ZERO_COMMIT) {
-        const rootTreeBlobAddr = await repo.getBlobAddr(
-            `tree ${commit.meta?.content.tree}`
-        );
-        const rootTreeBlob = new GoshBlob(
-            repo.account.client,
-            rootTreeBlobAddr
-        );
-        await rootTreeBlob.load();
-        rootTreeBlobContent = (await rootTreeBlob.loadContent()).toString();
-    }
+//     // Get root tree blob
+//     let rootTreeBlobContent: string = '';
+//     if (commit.meta?.sha !== ZERO_COMMIT) {
+//         const rootTreeBlobAddr = await repo.getBlobAddr(
+//             `tree ${commit.meta?.content.tree}`
+//         );
+//         const rootTreeBlob = new GoshBlob(
+//             repo.account.client,
+//             rootTreeBlobAddr
+//         );
+//         await rootTreeBlob.load();
+//         rootTreeBlobContent = (await rootTreeBlob.loadContent()).toString();
+//     }
 
-    // Get root tree items and recursively get subtrees
-    const items = rootTreeBlobContent
-        ? getTreeItemsFromBlob(rootTreeBlobContent)
-        : [];
-    if (filterPath !== '') await blobTreeWalker('', items);
+//     // Get root tree items and recursively get subtrees
+//     const items = rootTreeBlobContent
+//         ? getTreeItemsFromBlob(rootTreeBlobContent)
+//         : [];
+//     if (filterPath !== '') await blobTreeWalker('', items);
 
-    // Build full tree
-    const tree = getTreeFromItems(items);
-    console.debug('[Helpers: getRepoTree] - Tree:', tree);
-    return { tree, items };
-};
+//     // Build full tree
+//     const tree = getTreeFromItems(items);
+//     console.debug('[Helpers: getRepoTree] - Tree:', tree);
+//     return { tree, items };
+// };
 
 /**
  * Sort the hole tree by the longest key (this key will contain blobs only),
@@ -274,13 +346,13 @@ export const calculateSubtrees = (tree: TGoshTree) => {
 };
 
 export const getBlobDiffPatch = (
-    fileName: string,
+    filename: string,
     modified: string,
     original: string
 ) => {
     let patch = Diff.createTwoFilesPatch(
-        `a/${fileName}`,
-        `b/${fileName}`,
+        `a/${filename}`,
+        `b/${filename}`,
         original,
         modified
     );
@@ -294,9 +366,8 @@ export const getBlobDiffPatch = (
             7
         )} 100644\n` + patch;
 
-    if (!original) patch = patch.replace(`a/${fileName}`, '/dev/null');
-    if (!modified) patch = patch.replace(`b/${fileName}`, '/dev/null');
-    // patch = patch.replace('\n\\ No newline at end of file\n', '');
+    if (!original) patch = patch.replace(`a/${filename}`, '/dev/null');
+    if (!modified) patch = patch.replace(`b/${filename}`, '/dev/null');
     return patch;
 };
 
@@ -323,6 +394,37 @@ export const getBlobDiffPatch = (
 //     console.debug('[getFullBlob] - Content:', `"${content}"`);
 //     return content;
 // }
+
+export const getCommit = async (
+    repo: IGoshRepository,
+    commitAddr: string
+): Promise<TGoshCommit> => {
+    const filepath = `/${repo.address}/commits/${commitAddr}`;
+
+    let commitData: any = {};
+    if (await fsExists(filepath)) {
+        const data = await fs.promises.readFile(filepath);
+        commitData = JSON.parse(data as string);
+        console.debug('Commit', commitData);
+    } else {
+        const commit = new GoshCommit(repo.account.client, commitAddr);
+        const meta = await commit.getCommit();
+        commitData = {
+            addr: commitAddr,
+            addrRepo: meta.repo,
+            branch: meta.branch,
+            name: meta.sha,
+            content: meta.content,
+            parents: meta.parents,
+        };
+        await fs.promises.writeFile(filepath, JSON.stringify(commitData));
+    }
+
+    return {
+        ...commitData,
+        content: GoshCommit.parseContent(commitData.content),
+    };
+};
 
 /** Split file path to path and file name */
 export const splitByPath = (fullPath: string): [path: string, name: string] => {

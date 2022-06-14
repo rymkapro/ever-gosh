@@ -6,7 +6,8 @@ import GoshDaoABI from '../contracts/goshdao.abi.json';
 import GoshWalletABI from '../contracts/goshwallet.abi.json';
 import GoshRepositoryABI from '../contracts/repository.abi.json';
 import GoshCommitABI from '../contracts/commit.abi.json';
-import GoshBlobABI from '../contracts/blob.abi.json';
+import GoshBlobABI from '../contracts/snapshot.abi.json';
+import GoshSnapshotABI from '../contracts/snapshot.abi.json';
 import GoshTagABI from '../contracts/tag.abi.json';
 import GoshSmvProposalABI from '../contracts/SMVProposal.abi.json';
 import GoshSmvLockerABI from '../contracts/SMVTokenLocker.abi.json';
@@ -27,6 +28,7 @@ import {
     MAX_ONCHAIN_FILE_SIZE,
     saveToIPFS,
     ZERO_COMMIT,
+    getBlobDiffPatch,
 } from '../helpers';
 import {
     IGoshBlob,
@@ -46,6 +48,8 @@ import {
     EGoshBlobFlag,
     TGoshTreeItem,
     IGoshTag,
+    IGoshSnapshot,
+    TGoshDiff,
 } from './types';
 import { EGoshError, GoshError } from './errors';
 import { Buffer } from 'buffer';
@@ -344,48 +348,11 @@ export class GoshWallet implements IGoshWallet {
                 address: repo.address,
             });
 
-        // Generate current branch full tree and get it's items (TGoshTreeItem[]).
-        // Iterate over changed blobs, create TGoshTreeItem[] from blob path and push it
-        // to full tree items list.
-        // Store updated paths in separate variable
-        const { items } = await getRepoTree(repo, branch.commitAddr);
-        const updatedPaths: string[] = [];
-        blobs.forEach((blob) => {
-            const blobPathItems = getTreeItemsFromPath(
-                blob.name,
-                blob.modified
-            );
-            blobPathItems.forEach((pathItem) => {
-                if (
-                    updatedPaths.findIndex((path) => path === pathItem.path) < 0
-                ) {
-                    updatedPaths.push(pathItem.path);
-                }
-
-                const foundIndex = items.findIndex(
-                    (item) =>
-                        item.path === pathItem.path &&
-                        item.name === pathItem.name
-                );
-                if (foundIndex >= 0) items[foundIndex] = pathItem;
-                else items.push(pathItem);
-            });
-        });
-        console.debug('[Create commit] - New tree items:', items);
-        console.debug('[Create commit] - Updated paths:', updatedPaths);
-
-        // Build updated tree and updated hashes
-        const updatedTree = getTreeFromItems(items);
-        calculateSubtrees(updatedTree);
-        const updatedTreeRootSha = sha1Tree(updatedTree['']);
-        !!callback && callback({ tree: true });
-        console.debug('[Create commit] - Updated tree:', updatedTree);
-
         // Deploy commit
         const commitName = await this.deployCommit(
             repo.meta.name,
             branch,
-            updatedTreeRootSha,
+            '',
             pubkey,
             message,
             parentBranch
@@ -393,66 +360,30 @@ export class GoshWallet implements IGoshWallet {
         !!callback && callback({ commitDeploy: true });
         console.debug('[Create commit] - Commit name:', commitName);
 
-        // Deploy blobs
-        const blobsAddrs = [];
-        const blobsDeploy = {
-            counter: 0,
-            total: updatedPaths.length + blobs.length,
-        };
-        !!callback && callback({ blobsDeploy });
-
-        // Deploy tree blobs
-        for (let i = 0; i < updatedPaths.length; i++) {
-            const path = updatedPaths[i];
-            const subtree = updatedTree[path];
-            const addr = await this.deployBlob(
-                repo,
-                branch.name,
-                commitName,
-                'tree',
-                subtree
-            );
-            blobsDeploy.counter += 1;
-            !!callback && callback({ blobsDeploy });
-            blobsAddrs.push(addr);
+        // Generate diff patches for blobs and deploy snapshots if needed
+        const diffs: TGoshDiff[] = [];
+        for (const blob of blobs) {
+            const { name, modified, original } = blob;
+            if (!Buffer.isBuffer(modified) && !Buffer.isBuffer(original)) {
+                const addr = await this.deployNewSnapshot(
+                    repo.address,
+                    branch.name,
+                    name
+                );
+                let patch = getBlobDiffPatch(name, modified, original || '');
+                console.debug('Patch', patch);
+                patch = await zstd.compress(this.account.client, patch);
+                patch = Buffer.from(patch, 'base64').toString('hex');
+                diffs.push({
+                    snapshotAddr: addr,
+                    patch,
+                });
+            }
         }
+        console.debug('Diffs:', diffs);
 
-        // Deploy content blobs
-        for (let i = 0; i < blobs.length; i++) {
-            const blob = blobs[i];
-            const addr = await this.deployBlob(
-                repo,
-                branch.name,
-                commitName,
-                'blob',
-                blob.modified,
-                blob.original
-            );
-            blobsDeploy.counter += 1;
-            !!callback && callback({ blobsDeploy });
-            blobsAddrs.push(addr);
-        }
-
-        // Set blobs for commit
-        const blobsSet = { counter: 0, total: blobsAddrs.length };
-        !!callback && callback({ blobsSet });
-        for (let i = 0; i < blobsAddrs.length; i += 100) {
-            const chunk = blobsAddrs.slice(i, i + 100);
-            await this.setBlobs(repo.meta.name, commitName, chunk);
-            console.debug('[Create commit] - Set blobs chunk:', i, i + 100);
-
-            blobsSet.counter += chunk.length;
-            !!callback && callback({ blobsSet });
-            await new Promise((resolve) => setInterval(resolve, 500));
-        }
-        console.debug('[Create commit] - Set blobs: OK');
-
-        // Deploy tags
-        const tagsList = tags ? tags.split(' ') : [];
-        for (let i = 0; i < tagsList.length; i++) {
-            console.debug('[Create commit] - Deploy tag:', i, tagsList[i]);
-            await this.deployTag(repo, commitName, tagsList[i]);
-        }
+        // Set commit diffs
+        await this.setDiff(repo.meta.name, commitName, diffs);
 
         // Set repo commit if not proposal or start new proposal
         if (!isMainBranch(branch.name)) {
@@ -485,6 +416,148 @@ export class GoshWallet implements IGoshWallet {
             );
         }
         !!callback && callback({ completed: true });
+
+        // // Generate current branch full tree and get it's items (TGoshTreeItem[]).
+        // // Iterate over changed blobs, create TGoshTreeItem[] from blob path and push it
+        // // to full tree items list.
+        // // Store updated paths in separate variable
+        // const { items } = await getRepoTree(repo, branch.commitAddr);
+        // const updatedPaths: string[] = [];
+        // blobs.forEach((blob) => {
+        //     const blobPathItems = getTreeItemsFromPath(
+        //         blob.name,
+        //         blob.modified
+        //     );
+        //     blobPathItems.forEach((pathItem) => {
+        //         if (
+        //             updatedPaths.findIndex((path) => path === pathItem.path) < 0
+        //         ) {
+        //             updatedPaths.push(pathItem.path);
+        //         }
+
+        //         const foundIndex = items.findIndex(
+        //             (item) =>
+        //                 item.path === pathItem.path &&
+        //                 item.name === pathItem.name
+        //         );
+        //         if (foundIndex >= 0) items[foundIndex] = pathItem;
+        //         else items.push(pathItem);
+        //     });
+        // });
+        // console.debug('[Create commit] - New tree items:', items);
+        // console.debug('[Create commit] - Updated paths:', updatedPaths);
+
+        // // Build updated tree and updated hashes
+        // const updatedTree = getTreeFromItems(items);
+        // calculateSubtrees(updatedTree);
+        // const updatedTreeRootSha = sha1Tree(updatedTree['']);
+        // !!callback && callback({ tree: true });
+        // console.debug('[Create commit] - Updated tree:', updatedTree);
+
+        // Deploy commit
+        // const commitName = await this.deployCommit(
+        //     repo.meta.name,
+        //     branch,
+        //     '',
+        //     pubkey,
+        //     message,
+        //     parentBranch
+        // );
+        // !!callback && callback({ commitDeploy: true });
+        // console.debug('[Create commit] - Commit name:', commitName);
+
+        // // Deploy blobs
+        // const blobsAddrs = [];
+        // const blobsDeploy = {
+        //     counter: 0,
+        //     total: 0,
+        // };
+        // !!callback && callback({ blobsDeploy });
+
+        // Deploy tree blobs
+        // for (let i = 0; i < updatedPaths.length; i++) {
+        //     const path = updatedPaths[i];
+        //     const subtree = updatedTree[path];
+        //     const addr = await this.deployBlob(
+        //         repo,
+        //         branch.name,
+        //         commitName,
+        //         'tree',
+        //         subtree
+        //     );
+        //     blobsDeploy.counter += 1;
+        //     !!callback && callback({ blobsDeploy });
+        //     blobsAddrs.push(addr);
+        // }
+
+        // Deploy content blobs
+        // for (let i = 0; i < blobs.length; i++) {
+        //     const blob = blobs[i];
+        //     const addr = await this.deployBlob(
+        //         repo,
+        //         branch.name,
+        //         commitName,
+        //         'blob',
+        //         blob.modified,
+        //         blob.original
+        //     );
+        //     blobsDeploy.counter += 1;
+        //     !!callback && callback({ blobsDeploy });
+        //     blobsAddrs.push(addr);
+        // }
+
+        // // Set blobs for commit
+        // const blobsSet = { counter: 0, total: blobsAddrs.length };
+        // !!callback && callback({ blobsSet });
+        // for (let i = 0; i < blobsAddrs.length; i += 100) {
+        //     const chunk = blobsAddrs.slice(i, i + 100);
+        //     await this.setBlobs(repo.meta.name, commitName, chunk);
+        //     console.debug('[Create commit] - Set blobs chunk:', i, i + 100);
+
+        //     blobsSet.counter += chunk.length;
+        //     !!callback && callback({ blobsSet });
+        //     await new Promise((resolve) => setInterval(resolve, 500));
+        // }
+        // console.debug('[Create commit] - Set blobs: OK');
+
+        // // Deploy tags
+        // const tagsList = tags ? tags.split(' ') : [];
+        // for (let i = 0; i < tagsList.length; i++) {
+        //     console.debug('[Create commit] - Deploy tag:', i, tagsList[i]);
+        //     await this.deployTag(repo, commitName, tagsList[i]);
+        // }
+
+        // // Set repo commit if not proposal or start new proposal
+        // if (!isMainBranch(branch.name)) {
+        //     await this.setCommit(
+        //         repo.meta.name,
+        //         branch.name,
+        //         commitName,
+        //         branch.commitAddr
+        //     );
+        //     await new Promise<void>((resolve) => {
+        //         const interval = setInterval(async () => {
+        //             const upd = await repo.getBranch(branch.name);
+        //             console.debug(
+        //                 '[Create commit] - Branches (curr/upd):',
+        //                 branch,
+        //                 upd
+        //             );
+        //             if (upd.commitAddr !== branch.commitAddr) {
+        //                 clearInterval(interval);
+        //                 resolve();
+        //             }
+        //         }, 1500);
+        //     });
+        // } else {
+        //     await this.startProposalForSetCommit(
+        //         repo.meta.name,
+        //         branch.name,
+        //         commitName,
+        //         branch.commitAddr
+        //     );
+        // }
+        // !!callback && callback({ completed: true });
     }
 
     async getMoney(): Promise<void> {
@@ -767,6 +840,52 @@ export class GoshWallet implements IGoshWallet {
         });
     }
 
+    async deployNewSnapshot(
+        repoAddr: string,
+        branchName: string,
+        filename: string
+    ): Promise<string> {
+        const addr = await this.getSnapshotAddr(repoAddr, branchName, filename);
+        const snapshot = new GoshSnapshot(this.account.client, addr);
+
+        const snapshotAcc = await snapshot.account.getAccount();
+        if (snapshotAcc.acc_type !== AccountType.active) {
+            await this.run('deployNewSnapshot', {
+                branch: branchName,
+                repo: repoAddr,
+                name: filename,
+            });
+        }
+
+        return addr;
+    }
+
+    async getSnapshotAddr(
+        repoAddr: string,
+        branchName: string,
+        filename: string
+    ): Promise<string> {
+        const result = await this.account.runLocal('getSnapshotAddr', {
+            branch: branchName,
+            repo: repoAddr,
+            name: filename,
+        });
+        return result.decoded?.output.value0;
+    }
+
+    async setDiff(
+        repoName: string,
+        commitName: string,
+        diffs: TGoshDiff[]
+    ): Promise<void> {
+        const _diffs = diffs.map(({ snapshotAddr, patch }) => ({
+            snap: snapshotAddr,
+            patch,
+        }));
+        console.debug('[Set diff] - Diffs:', _diffs);
+        await this.run('setDiff', { repoName, commitName, diffs: _diffs });
+    }
+
     async setCommit(
         repoName: string,
         branchName: string,
@@ -927,6 +1046,7 @@ export class GoshRepository implements IGoshRepository {
         return result.decoded?.output.value0.map((item: any) => ({
             name: item.key,
             commitAddr: item.value,
+            snapshotAddr: item.snapshot,
         }));
     }
 
@@ -936,6 +1056,7 @@ export class GoshRepository implements IGoshRepository {
         return {
             name: decoded.key,
             commitAddr: decoded.value,
+            snapshotAddr: decoded.snapshot,
         };
     }
 
@@ -1045,6 +1166,29 @@ export class GoshCommit implements IGoshCommit {
             });
         });
         return parsed as TGoshCommitContent;
+    }
+}
+
+export class GoshSnapshot implements IGoshSnapshot {
+    abi: any = GoshSnapshotABI;
+    account: Account;
+    address: string;
+
+    constructor(client: TonClient, address: string) {
+        this.address = address;
+        this.account = new Account({ abi: this.abi }, { client, address });
+    }
+
+    async getName(): Promise<string> {
+        const result = await this.account.runLocal('getName', {});
+        return result.decoded?.output.value0;
+    }
+
+    async getSnapshot(commitAddr: string): Promise<string> {
+        const result = await this.account.runLocal('getSnapshot', {
+            commit: commitAddr,
+        });
+        return result.decoded?.output.value0;
     }
 }
 

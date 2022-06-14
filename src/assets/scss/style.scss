@@ -3,27 +3,25 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-@import "./iconsfont.css";
+@import './iconsfont.css';
 
-@import "react-toastify/scss/main";
-@import "github-markdown-css/github-markdown-light.css";
+@import 'react-toastify/scss/main';
+@import 'github-markdown-css/github-markdown-light.css';
+@import 'diff2html/bundles/css/diff2html.min.css';
 // @import "github-markdown-css/github-markdown.css";  // Based on prefers-color-scheme media query
-
 
 html,
 body,
 #root {
-    @apply
-        h-full
+    @apply h-full
         bg-white
         text-black
-        font-body
+        font-body;
 }
 
 .wrapper {
     background-image: url('../images/bg.png');
-    @apply
-        bg-right-top
+    @apply bg-right-top
         bg-no-repeat
         bg-cover
         bg-fixed
@@ -33,8 +31,7 @@ body,
 }
 
 .container {
-    @apply
-        px-5
+    @apply px-5
         max-w-container
         mx-auto;
 
@@ -44,8 +41,8 @@ body,
 }
 
 .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
 
     /* Chrome, Safari and Opera */
     &::-webkit-scrollbar {
@@ -62,26 +59,21 @@ for those elements which require gradient border color
         border-radius: <the same as parent element has>
 */
 .gradient-border-after {
-    content: "";
-    @apply
-        absolute
+    content: '';
+    @apply absolute
         -z-1
         inset-0
         p-px
         transition-colors;
-    -webkit-mask:
-        linear-gradient(#ffffff 0 0) content-box,
+    -webkit-mask: linear-gradient(#ffffff 0 0) content-box,
         linear-gradient(#ffffff 0 0);
-    mask:
-        linear-gradient(#ffffff 0 0) content-box,
-        linear-gradient(#ffffff 0 0);
+    mask: linear-gradient(#ffffff 0 0) content-box, linear-gradient(#ffffff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
 }
 
 .btn {
-    @apply
-        inline-block
+    @apply inline-block
         relative
         z-0
         rounded-5px
@@ -95,8 +87,7 @@ for those elements which require gradient border color
 
     /* Base app button */
     &--body {
-        @apply
-            bg-gray-050a15
+        @apply bg-gray-050a15
             text-white
             font-semibold;
 
@@ -109,8 +100,7 @@ for those elements which require gradient border color
         }
 
         &:disabled {
-            @apply
-                bg-gray-050a15/75
+            @apply bg-gray-050a15/75
                 text-white/75
                 pointer-events-none;
         }
@@ -118,8 +108,7 @@ for those elements which require gradient border color
 
     /* Header button */
     &--header {
-        @apply
-            bg-gray-c4c4c4/1
+        @apply bg-gray-c4c4c4/1
             sm:backdrop-blur-sm
             flex
             flex-row-reverse
@@ -153,8 +142,7 @@ for those elements which require gradient border color
 
     /* Header burger button */
     &--burger {
-        @apply
-            w-10 sm:w-12
+        @apply w-10 sm:w-12
             h-10 sm:h-12
             flex
             items-center
@@ -163,8 +151,7 @@ for those elements which require gradient border color
             text-gray-0a1124 sm:text-gray-53596d;
 
         &::before {
-            @apply
-                text-inherit
+            @apply text-inherit
                 translate-x-px
                 translate-y-px;
         }
@@ -172,8 +159,7 @@ for those elements which require gradient border color
 }
 
 .dropdown-menu {
-    @apply
-        origin-top-right
+    @apply origin-top-right
         absolute
         right-0
         mt-2
@@ -192,8 +178,7 @@ for those elements which require gradient border color
 }
 
 .block-auth {
-    @apply
-        relative
+    @apply relative
         max-w-696px
         pt-12 sm:pt-72px
         pb-16
@@ -206,23 +191,20 @@ for those elements which require gradient border color
 
     &::after {
         @extend .gradient-border-after;
-        @apply
-            bg-block-border
+        @apply bg-block-border
             rounded-t-21px sm:rounded-21px;
     }
 }
 
 .bordered-block {
-    @apply
-        relative
+    @apply relative
         bg-white/65
         backdrop-blur-33px
         rounded-21px;
 
     &::after {
         @extend .gradient-border-after;
-        @apply
-            bg-block-border
+        @apply bg-block-border
             rounded-21px;
     }
 }
@@ -242,8 +224,7 @@ for those elements which require gradient border color
 }
 
 .input {
-    @apply
-        relative
+    @apply relative
         rounded-3px
         bg-gray-050a15/3
         transition
@@ -261,8 +242,7 @@ for those elements which require gradient border color
     }
 
     .element {
-        @apply
-            w-full
+        @apply w-full
             outline-none
             bg-transparent
             text-base
@@ -284,8 +264,7 @@ for those elements which require gradient border color
 }
 
 .input-switch {
-    @apply
-        relative
+    @apply relative
         inline-flex
         flex-shrink-0
         items-center
@@ -301,8 +280,7 @@ for those elements which require gradient border color
     }
 
     span {
-        @apply
-            inline-block
+        @apply inline-block
             w-18px
             h-18px
             transform

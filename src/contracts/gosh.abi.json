@@ -96,7 +96,7 @@
 			]
 		},
 		{
-			"name": "setBlob",
+			"name": "setSnapshot",
 			"inputs": [
 				{"name":"code","type":"cell"}
 			],
@@ -205,7 +205,7 @@
 			]
 		},
 		{
-			"name": "getBlobCode",
+			"name": "getSnapshotCode",
 			"inputs": [
 			],
 			"outputs": [
@@ -248,10 +248,10 @@
 		{"name":"_creator","type":"address"},
 		{"name":"m_RepositoryCode","type":"cell"},
 		{"name":"m_CommitCode","type":"cell"},
-		{"name":"m_BlobCode","type":"cell"},
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_codeDao","type":"cell"},
 		{"name":"m_codeTag","type":"cell"},
+		{"name":"m_codeSnapshot","type":"cell"},
 		{"name":"m_TokenLockerCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
 		{"name":"m_SMVClientCode","type":"cell"},

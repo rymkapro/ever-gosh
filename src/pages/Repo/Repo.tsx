@@ -1,8 +1,13 @@
-import React, { useEffect } from "react";
-import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
-import { TRepoLayoutOutletContext } from "../RepoLayout";
-import BranchSelect from "../../components/BranchSelect";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import React, { useEffect } from 'react';
+import {
+    Link,
+    useNavigate,
+    useOutletContext,
+    useParams,
+} from 'react-router-dom';
+import { TRepoLayoutOutletContext } from '../RepoLayout';
+import BranchSelect from '../../components/BranchSelect';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faClockRotateLeft,
     faCodeBranch,
@@ -11,34 +16,35 @@ import {
     faFileCirclePlus,
     faCode,
     faChevronDown,
-    faTerminal
-} from "@fortawesome/free-solid-svg-icons";
-import { useRecoilValue } from "recoil";
-import { goshCurrBranchSelector } from "../../store/gosh.state";
-import { useGoshRepoBranches, useGoshRepoTree } from "../../hooks/gosh.hooks";
-import Spinner from "../../components/Spinner";
-import { isMainBranch, splitByPath } from "../../helpers";
-import { faFile } from "@fortawesome/free-regular-svg-icons";
-import { Menu, Transition } from "@headlessui/react";
-import CopyClipboard from "../../components/CopyClipboard";
-import { shortString } from "../../utils";
-
+    faTerminal,
+} from '@fortawesome/free-solid-svg-icons';
+import { useRecoilValue } from 'recoil';
+import { useGoshRepoBranches, useGoshRepoTree } from '../../hooks/gosh.hooks';
+import Spinner from '../../components/Spinner';
+import { isMainBranch, splitByPath } from '../../helpers';
+import { faFile } from '@fortawesome/free-regular-svg-icons';
+import { Menu, Transition } from '@headlessui/react';
+import CopyClipboard from '../../components/CopyClipboard';
+import { shortString } from '../../utils';
 
 const RepoPage = () => {
     const pathName = useParams()['*'] || '';
-    const { daoName, repoName, branchName = 'main' } = useParams();
+    const { daoName, repoName, branchName } = useParams();
     const navigate = useNavigate();
-    const { goshWallet, goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const { branches, updateBranch } = useGoshRepoBranches(goshRepo);
-    const branch = useRecoilValue(goshCurrBranchSelector(branchName));
+    const { goshWallet, goshRepo } =
+        useOutletContext<TRepoLayoutOutletContext>();
+    const { branches, branch, updateBranch } = useGoshRepoBranches(
+        goshRepo,
+        branchName
+    );
     const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName);
     const subtree = useRecoilValue(goshRepoTree.getSubtree(pathName));
 
     const [dirUp] = splitByPath(pathName);
 
     useEffect(() => {
-        updateBranch(branchName);
-    }, [branchName, updateBranch]);
+        if (branch?.name) updateBranch(branch.name);
+    }, [branch?.name, updateBranch]);
 
     return (
         <div className="bordered-block px-7 py-8">
@@ -49,7 +55,9 @@ const RepoPage = () => {
                         branches={branches}
                         onChange={(selected) => {
                             if (selected) {
-                                navigate(`/${daoName}/${repoName}/tree/${selected.name}`);
+                                navigate(
+                                    `/${daoName}/${repoName}/tree/${selected.name}`
+                                );
                             }
                         }}
                     />
@@ -59,43 +67,62 @@ const RepoPage = () => {
                         className="block text-sm text-gray-050a15/65 hover:text-gray-050a15"
                     >
                         <span className="font-semibold">
-                            <FontAwesomeIcon icon={faCodeBranch} className="mr-1" />
+                            <FontAwesomeIcon
+                                icon={faCodeBranch}
+                                className="mr-1"
+                            />
                             {branches.length}
                         </span>
-                        <span className="hidden sm:inline-block ml-1">branches</span>
+                        <span className="hidden sm:inline-block ml-1">
+                            branches
+                        </span>
                     </Link>
 
                     <Link
-                        to={`/${daoName}/${repoName}/commits/${branchName}`}
+                        to={`/${daoName}/${repoName}/commits/${branch?.name}`}
                         className="block text-sm text-gray-050a15/65 hover:text-gray-050a15"
                     >
                         <FontAwesomeIcon icon={faClockRotateLeft} />
-                        <span className="hidden sm:inline-block ml-1">History</span>
+                        <span className="hidden sm:inline-block ml-1">
+                            History
+                        </span>
                     </Link>
                 </div>
 
                 <div className="flex grow gap-3 justify-end">
                     <Link
-                        to={`/${daoName}/${repoName}/find/${branchName}`}
+                        to={`/${daoName}/${repoName}/find/${branch?.name}`}
                         className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                     >
                         <FontAwesomeIcon icon={faMagnifyingGlass} />
-                        <span className="hidden sm:inline-block ml-2">Go to file</span>
+                        <span className="hidden sm:inline-block ml-2">
+                            Go to file
+                        </span>
                     </Link>
                     {!isMainBranch(branchName) && goshWallet?.isDaoParticipant && (
                         <Link
-                            to={`/${daoName}/${repoName}/blobs/create/${branchName}${pathName && `/${pathName}`}`}
+                            to={`/${daoName}/${repoName}/blobs/create/${
+                                branch?.name
+                            }${pathName && `/${pathName}`}`}
                             className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                         >
                             <FontAwesomeIcon icon={faFileCirclePlus} />
-                            <span className="hidden sm:inline-block ml-2">Add file</span>
+                            <span className="hidden sm:inline-block ml-2">
+                                Add file
+                            </span>
                         </Link>
                     )}
                     <Menu as="div" className="relative">
                         <Menu.Button className="btn btn--body text-sm px-4 py-1.5 !font-normal">
                             <FontAwesomeIcon icon={faCode} />
-                            <span className="hidden sm:inline-block ml-2">Code</span>
-                            <FontAwesomeIcon icon={faChevronDown} size="xs" className="ml-2" />
+                            <span className="hidden sm:inline-block ml-2">
+                                Code
+                            </span>
+                            <FontAwesomeIcon
+                                icon={faChevronDown}
+                                size="xs"
+                                className="ml-2"
+                            />
                         </Menu.Button>
                         <Transition
                             as={React.Fragment}
@@ -109,7 +136,10 @@ const RepoPage = () => {
                             <Menu.Items className="dropdown-menu !py-4 max-w-264px sm:max-w-none">
                                 <div>
                                     <h3 className="text-sm font-semibold mb-2">
-                                        <FontAwesomeIcon icon={faTerminal} className="mr-2" />
+                                        <FontAwesomeIcon
+                                            icon={faTerminal}
+                                            className="mr-2"
+                                        />
                                         Clone
                                     </h3>
                                     <div
@@ -117,15 +147,20 @@ const RepoPage = () => {
                                         items-center text-gray-0a1124/65"
                                     >
                                         <div className="text-xs font-mono px-3 py-1 overflow-hidden whitespace-nowrap">
-                                            gosh://{shortString(process.env.REACT_APP_GOSH_ADDR ?? '')}/{daoName}/{repoName}
+                                            gosh://
+                                            {shortString(
+                                                process.env
+                                                    .REACT_APP_GOSH_ADDR ?? ''
+                                            )}
+                                            /{daoName}/{repoName}
                                         </div>
                                         <CopyClipboard
                                             componentProps={{
-                                                text: `gosh://${process.env.REACT_APP_GOSH_ADDR}/${daoName}/${repoName}`
+                                                text: `gosh://${process.env.REACT_APP_GOSH_ADDR}/${daoName}/${repoName}`,
                                             }}
                                             iconContainerClassName="px-2 border-l border-gray-0a1124 hover:text-gray-0a1124"
                                             iconProps={{
-                                                size: 'sm'
+                                                size: 'sm',
                                             }}
                                         />
                                     </div>
@@ -153,36 +188,46 @@ const RepoPage = () => {
                 {!!subtree && pathName && (
                     <Link
                         className="block py-3 border-b border-gray-300 font-medium"
-                        to={`/${daoName}/${repoName}/tree/${branchName}${dirUp && `/${dirUp}`}`}
+                        to={`/${daoName}/${repoName}/tree/${branchName}${
+                            dirUp && `/${dirUp}`
+                        }`}
                     >
                         ..
                     </Link>
                 )}
                 <div className="divide-y divide-gray-c4c4c4">
-                    {!!subtree && subtree?.map((item: any, index: number) => {
-                        const path = [item.path, item.name].filter((part) => part !== '').join('/');
-                        const type = item.type === 'tree' ? 'tree' : 'blobs';
+                    {!!subtree &&
+                        subtree?.map((item: any, index: number) => {
+                            const path = [item.path, item.name]
+                                .filter((part) => part !== '')
+                                .join('/');
+                            const type =
+                                item.type === 'tree' ? 'tree' : 'blobs';
 
-                        return (
-                            <div key={index} className="py-3">
-                                <Link
-                                    className="hover:underline text-sm"
-                                    to={`/${daoName}/${repoName}/${type}/${branchName}/${path}`}
-                                >
-                                    <FontAwesomeIcon
-                                        className="mr-2"
-                                        icon={item.type === 'tree' ? faFolder : faFile}
-                                        fixedWidth
-                                    />
-                                    {item.name}
-                                </Link>
-                            </div>
-                        )
-                    })}
+                            return (
+                                <div key={index} className="py-3">
+                                    <Link
+                                        className="hover:underline text-sm"
+                                        to={`/${daoName}/${repoName}/${type}/${branchName}/${path}`}
+                                    >
+                                        <FontAwesomeIcon
+                                            className="mr-2"
+                                            icon={
+                                                item.type === 'tree'
+                                                    ? faFolder
+                                                    : faFile
+                                            }
+                                            fixedWidth
+                                        />
+                                        {item.name}
+                                    </Link>
+                                </div>
+                            );
+                        })}
                 </div>
             </div>
         </div>
     );
-}
+};
 
 export default RepoPage;

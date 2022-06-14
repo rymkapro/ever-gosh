@@ -1,19 +1,20 @@
-import React, { useEffect, useState } from "react";
-import { useOutletContext, useParams } from "react-router-dom";
-import { IGoshCommit, IGoshRepository } from "../../types/types";
-import { TRepoLayoutOutletContext } from "../RepoLayout";
-import { getCommitTime } from "../../helpers";
-import { GoshCommit } from "../../types/classes";
-import CopyClipboard from "../../components/CopyClipboard";
-import { shortString } from "../../utils";
-import Spinner from "../../components/Spinner";
-import CommitBlobs from "./CommitBlobs";
-
+import React, { useEffect, useState } from 'react';
+import { useOutletContext, useParams } from 'react-router-dom';
+import { IGoshCommit, IGoshRepository, TGoshCommit } from '../../types/types';
+import { TRepoLayoutOutletContext } from '../RepoLayout';
+import { fs, fsExists, getCommit, getCommitTime } from '../../helpers';
+import { GoshCommit } from '../../types/classes';
+import CopyClipboard from '../../components/CopyClipboard';
+import { shortString } from '../../utils';
+import Spinner from '../../components/Spinner';
+import CommitBlobs from './CommitBlobs';
+import { useGoshRepoBranches } from '../../hooks/gosh.hooks';
 
 const CommitPage = () => {
     const { goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
-    const { commitName } = useParams();
-    const [commit, setCommit] = useState<IGoshCommit>();
+    const { branchName, commitName } = useParams();
+    const { branch } = useGoshRepoBranches(goshRepo, branchName);
+    const [commit, setCommit] = useState<TGoshCommit>();
 
     const renderCommitter = (committer: string) => {
         const [pubkey] = committer.split(' ');
@@ -21,22 +22,21 @@ const CommitPage = () => {
             <CopyClipboard
                 label={shortString(pubkey)}
                 componentProps={{
-                    text: pubkey
+                    text: pubkey,
                 }}
             />
         );
-    }
+    };
 
     useEffect(() => {
-        const getCommit = async (repo: IGoshRepository, name: string) => {
+        const _getCommit = async (repo: IGoshRepository, name: string) => {
             // Get commit data
             const address = await repo.getCommitAddr(name);
-            const commit = new GoshCommit(repo.account.client, address);
-            await commit.load();
-            setCommit(commit);
-        }
+            const commitData = await getCommit(repo, address);
+            setCommit(commitData);
+        };
 
-        if (commitName) getCommit(goshRepo, commitName);
+        if (commitName) _getCommit(goshRepo, commitName);
     }, [goshRepo, commitName]);
 
     return (
@@ -51,39 +51,61 @@ const CommitPage = () => {
                 <>
                     <div>
                         <div className="font-medium py-2">
-                            {commit.meta?.content.title}
+                            {commit.content.title}
                         </div>
 
-                        {commit.meta?.content.message && (
+                        {commit.content.message && (
                             <pre className="mb-3 text-gray-050a15/65 text-sm">
-                                {commit.meta.content.message}
+                                {commit.content.message}
                             </pre>
                         )}
 
                         <div className="flex flex-wrap border-t gap-x-6 py-1 text-gray-050a15/75 text-xs">
                             <div className="flex items-center">
-                                <span className="mr-2 text-gray-050a15/65">Commit by</span>
-                                {renderCommitter(commit.meta?.content.committer || '')}
+                                <span className="mr-2 text-gray-050a15/65">
+                                    Commit by
+                                </span>
+                                {renderCommitter(
+                                    commit.content.committer || ''
+                                )}
                             </div>
                             <div>
-                                <span className="mr-2 text-gray-050a15/65">at</span>
-                                {getCommitTime(commit.meta?.content.committer || '').toLocaleString()}
+                                <span className="mr-2 text-gray-050a15/65">
+                                    at
+                                </span>
+                                {getCommitTime(
+                                    commit.content.committer || ''
+                                ).toLocaleString()}
                             </div>
                             <div className="grow flex items-center justify-start sm:justify-end">
-                                <span className="mr-2 text-gray-050a15/65">commit</span>
+                                <span className="mr-2 text-gray-050a15/65">
+                                    commit
+                                </span>
                                 <CopyClipboard
-                                    label={shortString(commit.meta?.sha ?? '', 10, 10)}
-                                    componentProps={{ text: commit.meta?.sha ?? '' }}
+                                    label={shortString(
+                                        commit.name ?? '',
+                                        10,
+                                        10
+                                    )}
+                                    componentProps={{
+                                        text: commit.name ?? '',
+                                    }}
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <CommitBlobs repo={goshRepo} commit={commit} />
+                    {branch?.snapshotAddr && (
+                        <CommitBlobs
+                            repo={goshRepo}
+                            commitAddr={commit.addr}
+                            snapshotAddr={branch.snapshotAddr}
+                        />
+                    )}
                 </>
             )}
         </div>
     );
-}
+};
 
 export default CommitPage;

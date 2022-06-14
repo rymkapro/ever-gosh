@@ -1,0 +1,117 @@
+{
+	"ABI version": 2,
+	"version": "2.2",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"value0","type":"uint256"},
+				{"name":"rootrepo","type":"address"},
+				{"name":"codeSnapshot","type":"cell"},
+				{"name":"codeCommit","type":"cell"},
+				{"name":"branch","type":"string"},
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployNewSnapshot",
+			"inputs": [
+				{"name":"newbranch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "applyDiff",
+			"inputs": [
+				{"name":"namecommit","type":"string"},
+				{"name":"diff","type":"bytes"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "cancelDiff",
+			"inputs": [
+				{"name":"nameCommit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "approve",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setSnapshotSelf",
+			"inputs": [
+				{"name":"snaphot","type":"bytes"},
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getSnapshot",
+			"inputs": [
+				{"name":"commit","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"optional(bytes)"}
+			]
+		},
+		{
+			"name": "getName",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "getBranchAdress",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"NameOfFile","type":"string"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"version","type":"string"},
+		{"name":"pubkey","type":"uint256"},
+		{"name":"_rootRepo","type":"address"},
+		{"name":"_snapshot","type":"bytes"},
+		{"name":"_oldsnapshot","type":"bytes"},
+		{"name":"_oldcommit","type":"address"},
+		{"name":"_commit","type":"address"},
+		{"name":"m_codeSnapshot","type":"cell"},
+		{"name":"m_CommitCode","type":"cell"},
+		{"name":"NameOfFile","type":"string"},
+		{"name":"_applying","type":"bool"},
+		{"name":"_name","type":"string"},
+		{"name":"_branch","type":"string"}
+	]
+}

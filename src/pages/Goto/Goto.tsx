@@ -1,13 +1,12 @@
-import React, { useState } from "react";
-import { faFile } from "@fortawesome/free-regular-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Link, useOutletContext, useParams } from "react-router-dom";
-import { useRecoilValue } from "recoil";
-import { TRepoLayoutOutletContext } from "../RepoLayout";
-import { useGoshRepoTree } from "../../hooks/gosh.hooks";
-import { goshCurrBranchSelector } from "../../store/gosh.state";
-import Spinner from "../../components/Spinner";
-
+import React, { useState } from 'react';
+import { faFile } from '@fortawesome/free-regular-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Link, useOutletContext, useParams } from 'react-router-dom';
+import { useRecoilValue } from 'recoil';
+import { TRepoLayoutOutletContext } from '../RepoLayout';
+import { useGoshRepoTree } from '../../hooks/gosh.hooks';
+import { goshCurrBranchSelector } from '../../store/gosh.state';
+import Spinner from '../../components/Spinner';
 
 const GotoPage = () => {
     const { daoName, repoName, branchName = 'main' } = useParams();
@@ -44,29 +43,32 @@ const GotoPage = () => {
                     Loading tree items...
                 </div>
             )}
-            {!!treeItems && treeItems?.map((item, index) => {
-                const path = `${item.path ? `${item.path}/` : ''}${item.name}`
-                return (
-                    <div
-                        key={index}
-                        className="flex gap-x-4 py-3 border-b border-gray-300 last:border-b-0"
-                    >
-                        <Link
-                            className="text-sm font-medium hover:underline"
-                            to={`/${daoName}/${repoName}/blobs/${branchName}/${path}`}
+            {!!treeItems &&
+                treeItems?.map((item, index) => {
+                    const path = `${item.path ? `${item.path}/` : ''}${
+                        item.name
+                    }`;
+                    return (
+                        <div
+                            key={index}
+                            className="flex gap-x-4 py-3 border-b border-gray-300 last:border-b-0"
                         >
-                            <FontAwesomeIcon
-                                className="mr-2"
-                                icon={faFile}
-                                fixedWidth
-                            />
-                            {path}
-                        </Link>
-                    </div>
-                )
-            })}
+                            <Link
+                                className="text-sm font-medium hover:underline"
+                                to={`/${daoName}/${repoName}/blobs/${branchName}/${path}`}
+                            >
+                                <FontAwesomeIcon
+                                    className="mr-2"
+                                    icon={faFile}
+                                    fixedWidth
+                                />
+                                {path}
+                            </Link>
+                        </div>
+                    );
+                })}
         </div>
     );
-}
+};
 
 export default GotoPage;

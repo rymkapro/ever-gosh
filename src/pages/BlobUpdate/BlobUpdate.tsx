@@ -87,22 +87,22 @@ const BlobUpdatePage = () => {
             const message = [values.title, values.message]
                 .filter((v) => !!v)
                 .join('\n\n');
-            await goshWallet.createCommit(
-                goshRepo,
-                branch,
-                userState.keys.public,
-                [
-                    {
-                        name: `${path ? `${path}/` : ''}${values.name}`,
-                        modified: values.content,
-                        original: blobContent ?? '',
-                    },
-                ],
-                message,
-                values.tags,
-                undefined,
-                progressCallback
-            );
+            // await goshWallet.createCommit(
+            //     goshRepo,
+            //     branch,
+            //     userState.keys.public,
+            //     [
+            //         {
+            //             name: `${path ? `${path}/` : ''}${values.name}`,
+            //             modified: values.content,
+            //             original: blobContent ?? '',
+            //         },
+            //     ],
+            //     message,
+            //     values.tags,
+            //     undefined,
+            //     progressCallback
+            // );
             await updateBranch(branch.name);
             navigate(urlBack);
         } catch (e: any) {
