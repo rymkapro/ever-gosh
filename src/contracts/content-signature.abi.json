@@ -1,0 +1,42 @@
+{
+	"ABI version": 2,
+	"version": "2.2",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"value0","type":"uint256"},
+				{"name":"value","type":"uint256"},
+				{"name":"gosh","type":"address"},
+				{"name":"dao","type":"address"},
+				{"name":"WalletCode","type":"cell"},
+				{"name":"content","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getContent",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_rootGosh","type":"address"},
+		{"name":"_goshdao","type":"address"},
+		{"name":"m_WalletCode","type":"cell"},
+		{"name":"_content","type":"string"}
+	]
+}

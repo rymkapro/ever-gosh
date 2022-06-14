@@ -128,6 +128,14 @@
 			]
 		},
 		{
+			"name": "setcontentSignature",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getAddrRepository",
 			"inputs": [
 				{"name":"name","type":"string"},
@@ -252,6 +260,7 @@
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_codeDao","type":"cell"},
 		{"name":"m_codeTag","type":"cell"},
+		{"name":"m_contentSignature","type":"cell"},
 		{"name":"m_TokenLockerCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
 		{"name":"m_SMVClientCode","type":"cell"},

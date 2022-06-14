@@ -18,7 +18,7 @@ export const MAX_ONCHAIN_FILE_SIZE = 15360;
 export const getEndpoints = (): string[] => {
     switch (process.env.REACT_APP_EVER_NETWORK) {
         case 'devnet':
-            return ['https://net.ton.dev'];
+            return ['https://vps23.ton.dev'];
         case 'mainnet':
             return ['https://network.gosh.sh'];
         case 'se':

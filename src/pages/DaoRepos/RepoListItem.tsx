@@ -38,17 +38,19 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
 
             <div className="text-sm text-gray-606060">Gosh repository</div>
 
-            <div className="flex flex-wrap gap-1 mt-2">
-                {['gosh', 'vcs', 'ever'].map((value, index) => (
-                    <button
-                        key={index}
-                        type="button"
-                        className="rounded-2xl bg-extblue/25 text-xs text-extblue px-2 py-1 hover:bg-extblue hover:text-white"
-                    >
-                        {value}
-                    </button>
-                ))}
-            </div>
+            {!!repository.meta?.tags && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                    {repository.meta.tags.map((tag, index) => (
+                        <button
+                            key={index}
+                            type="button"
+                            className="rounded-2xl bg-extblue/25 text-xs text-extblue px-2 py-1 hover:bg-extblue hover:text-white"
+                        >
+                            {tag.content}
+                        </button>
+                    ))}
+                </div>
+            )}
 
             <div className="flex gap-4 mt-3 text-xs text-gray-606060 justify-between">
                 <div className="flex gap-4">

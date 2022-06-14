@@ -111,6 +111,7 @@ export interface IGoshDao extends IContract {
         payload: string,
         keys: KeyPair
     ): Promise<void>;
+    setdev(pubkey: string, dev: boolean, keys: KeyPair): Promise<void>;
 }
 
 export interface IGoshWallet extends IContract {
@@ -198,6 +199,7 @@ export interface IGoshWallet extends IContract {
     ): Promise<void>;
     tryProposalResult(proposalAddr: string): Promise<void>;
     updateHead(): Promise<void>;
+    deployContent(repoName: string, content: string): Promise<void>;
 }
 
 export interface IGoshRepository extends IContract {
@@ -205,7 +207,10 @@ export interface IGoshRepository extends IContract {
     meta?: {
         name: string;
         branchCount: number;
-        tags: string[];
+        tags: {
+            content: string;
+            commit: string;
+        }[];
     };
 
     load(): Promise<void>;
@@ -215,7 +220,7 @@ export interface IGoshRepository extends IContract {
     getCommitAddr(commitSha: string): Promise<string>;
     getBlobAddr(blobName: string): Promise<string>;
     getTagCode(): Promise<string>;
-    getTags(): Promise<string[]>;
+    getTags(): Promise<{ content: string; commit: string }[]>;
 }
 
 export interface IGoshCommit extends IContract {
@@ -255,6 +260,18 @@ export interface IGoshBlob extends IContract {
 }
 
 export interface IGoshTag extends IContract {
+    address: string;
+    meta?: {
+        content: string;
+        commit: string;
+    };
+
+    load(): Promise<void>;
+    getContent(): Promise<string>;
+    getCommit(): Promise<string>;
+}
+
+export interface IGoshContentSignature extends IContract {
     address: string;
     meta?: {
         content: string;

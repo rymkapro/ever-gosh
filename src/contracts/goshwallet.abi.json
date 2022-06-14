@@ -12,11 +12,27 @@
 				{"name":"repositoryCode","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
 				{"name":"TagCode","type":"cell"},
+				{"name":"contentSignature","type":"cell"},
 				{"name":"lockerCode","type":"cell"},
 				{"name":"platformCode","type":"cell"},
 				{"name":"clientCode","type":"cell"},
 				{"name":"proposalCode","type":"cell"},
 				{"name":"_tip3Root","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroy",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setDev",
+			"inputs": [
+				{"name":"dev","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -170,6 +186,15 @@
 				{"name":"nameCommit","type":"string"},
 				{"name":"content","type":"string"},
 				{"name":"commit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployContent",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"content","type":"string"}
 			],
 			"outputs": [
 			]
@@ -470,11 +495,13 @@
 		{"name":"_rootgosh","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_flag","type":"bool"},
+		{"name":"_dev","type":"bool"},
 		{"name":"m_RepositoryCode","type":"cell"},
 		{"name":"m_CommitCode","type":"cell"},
 		{"name":"m_BlobCode","type":"cell"},
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_TagCode","type":"cell"},
+		{"name":"m_contentSignature","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
 		{"name":"m_SMVClientCode","type":"cell"},
 		{"name":"m_SMVProposalCode","type":"cell"}

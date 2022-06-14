@@ -8,6 +8,7 @@ import GoshRepositoryABI from '../contracts/repository.abi.json';
 import GoshCommitABI from '../contracts/commit.abi.json';
 import GoshBlobABI from '../contracts/blob.abi.json';
 import GoshTagABI from '../contracts/tag.abi.json';
+import GoshContentSignatureABI from '../contracts/content-signature.abi.json';
 import GoshSmvProposalABI from '../contracts/SMVProposal.abi.json';
 import GoshSmvLockerABI from '../contracts/SMVTokenLocker.abi.json';
 import GoshSmvClientABI from '../contracts/SMVClient.abi.json';
@@ -46,6 +47,7 @@ import {
     EGoshBlobFlag,
     TGoshTreeItem,
     IGoshTag,
+    IGoshContentSignature,
 } from './types';
 import { EGoshError, GoshError } from './errors';
 import { Buffer } from 'buffer';
@@ -281,6 +283,17 @@ export class GoshDao implements IGoshDao {
             {
                 signer: signerKeys(keys),
             }
+        );
+    }
+
+    async setdev(pubkey: string, dev: boolean, keys: KeyPair): Promise<void> {
+        await this.account.run(
+            'setdev',
+            {
+                pubkey,
+                dev,
+            },
+            { signer: signerKeys(keys) }
         );
     }
 }
@@ -870,6 +883,10 @@ export class GoshWallet implements IGoshWallet {
         await this.run('updateHead', {});
     }
 
+    async deployContent(repoName: string, content: string): Promise<void> {
+        await this.run('deployContent', { repoName, content });
+    }
+
     async run(
         functionName: string,
         input: object,
@@ -908,12 +925,12 @@ export class GoshRepository implements IGoshRepository {
 
     async load(): Promise<void> {
         const branches = await this.getBranches();
-        // const tags = await this.getTags();
+        const tags = await this.getTags();
 
         this.meta = {
             name: await this.getName(),
             branchCount: branches.length,
-            tags: [],
+            tags,
         };
     }
 
@@ -958,7 +975,7 @@ export class GoshRepository implements IGoshRepository {
         return result.decoded?.output.value0;
     }
 
-    async getTags(): Promise<string[]> {
+    async getTags(): Promise<{ content: string; commit: string }[]> {
         const tagCode = await this.getTagCode();
         const tagCodeHash = await this.account.client.boc.get_boc_hash({
             boc: tagCode,
@@ -976,11 +993,13 @@ export class GoshRepository implements IGoshRepository {
             result.result.map(async (item) => {
                 const tag = new GoshTag(this.account.client, item.id);
                 await tag.load();
-                return tag.meta?.content ?? '';
+                return tag.meta;
             })
         );
-
-        return tags.filter((tag) => !!tag);
+        return tags.reduce((t: any, item) => {
+            if (item) t.push(item);
+            return t;
+        }, []);
     }
 }
 
@@ -1137,6 +1156,35 @@ export class GoshTag implements IGoshTag {
     account: Account;
     address: string;
     meta?: IGoshTag['meta'];
+
+    constructor(client: TonClient, address: string) {
+        this.address = address;
+        this.account = new Account({ abi: this.abi }, { client, address });
+    }
+
+    async load(): Promise<void> {
+        this.meta = {
+            content: await this.getContent(),
+            commit: await this.getCommit(),
+        };
+    }
+
+    async getContent(): Promise<string> {
+        const result = await this.account.runLocal('getContent', {});
+        return result.decoded?.output.value0;
+    }
+
+    async getCommit(): Promise<string> {
+        const result = await this.account.runLocal('getCommit', {});
+        return result.decoded?.output.value0;
+    }
+}
+
+export class GoshContentSignature implements IGoshContentSignature {
+    abi: any = GoshContentSignatureABI;
+    account: Account;
+    address: string;
+    meta?: IGoshContentSignature['meta'];
 
     constructor(client: TonClient, address: string) {
         this.address = address;

@@ -57,7 +57,7 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                 />
             </div>
 
-            {/* <div className="mt-3">
+            <div className="mt-3">
                 <Field
                     name="tags"
                     component={TextField}
@@ -69,7 +69,7 @@ const FormCommitBlock = (props: TFormCommitBlockProps) => {
                         disabled: isSubmitting || isDisabled,
                     }}
                 />
-            </div> */}
+            </div>
 
             {extraFields}
 
