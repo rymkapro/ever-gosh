@@ -13,6 +13,7 @@
 				{"name":"WalletCode","type":"cell"},
 				{"name":"TagCode","type":"cell"},
 				{"name":"contentSignature","type":"cell"},
+				{"name":"codeAction","type":"cell"},
 				{"name":"lockerCode","type":"cell"},
 				{"name":"platformCode","type":"cell"},
 				{"name":"clientCode","type":"cell"},
@@ -194,7 +195,19 @@
 			"name": "deployContent",
 			"inputs": [
 				{"name":"repoName","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"label","type":"string"},
 				{"name":"content","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployAction",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"label","type":"string"},
+				{"name":"Dest","type":"cell"}
 			],
 			"outputs": [
 			]
@@ -206,6 +219,16 @@
 				{"name":"nametag","type":"string"}
 			],
 			"outputs": [
+			]
+		},
+		{
+			"name": "getAddrAction",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"label","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
 			]
 		},
 		{
@@ -502,6 +525,7 @@
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_TagCode","type":"cell"},
 		{"name":"m_contentSignature","type":"cell"},
+		{"name":"m_codeAction","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
 		{"name":"m_SMVClientCode","type":"cell"},
 		{"name":"m_SMVProposalCode","type":"cell"}

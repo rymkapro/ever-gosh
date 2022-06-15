@@ -8,7 +8,8 @@
 			"inputs": [
 				{"name":"gosh","type":"address"},
 				{"name":"WalletCode","type":"cell"},
-				{"name":"codeDao","type":"cell"}
+				{"name":"codeDao","type":"cell"},
+				{"name":"codeAction","type":"cell"}
 			],
 			"outputs": [
 			]
@@ -18,6 +19,16 @@
 			"inputs": [
 				{"name":"name","type":"string"},
 				{"name":"root_pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoneyAction",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"label","type":"string"},
+				{"name":"value","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -69,6 +80,7 @@
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"_gosh","type":"address"},
 		{"name":"m_WalletCode","type":"cell"},
-		{"name":"m_codeDao","type":"cell"}
+		{"name":"m_codeDao","type":"cell"},
+		{"name":"m_codeAction","type":"cell"}
 	]
 }

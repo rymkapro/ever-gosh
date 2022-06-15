@@ -88,6 +88,14 @@
 			]
 		},
 		{
+			"name": "setAction",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setCommit",
 			"inputs": [
 				{"name":"code","type":"cell"}
@@ -205,6 +213,22 @@
 			]
 		},
 		{
+			"name": "getContentCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getActionCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getCommitCode",
 			"inputs": [
 			],
@@ -261,6 +285,7 @@
 		{"name":"m_codeDao","type":"cell"},
 		{"name":"m_codeTag","type":"cell"},
 		{"name":"m_contentSignature","type":"cell"},
+		{"name":"m_codeAction","type":"cell"},
 		{"name":"m_TokenLockerCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
 		{"name":"m_SMVClientCode","type":"cell"},

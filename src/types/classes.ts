@@ -883,8 +883,21 @@ export class GoshWallet implements IGoshWallet {
         await this.run('updateHead', {});
     }
 
-    async deployContent(repoName: string, content: string): Promise<void> {
-        await this.run('deployContent', { repoName, content });
+    async deployAction(
+        repoName: string,
+        label: string,
+        dest: string
+    ): Promise<void> {
+        await this.run('deployAction', { repoName, label, Dest: dest });
+    }
+
+    async deployContent(
+        repoName: string,
+        commit: string,
+        label: string,
+        content: string
+    ): Promise<void> {
+        await this.run('deployContent', { repoName, commit, label, content });
     }
 
     async run(
