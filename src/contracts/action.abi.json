@@ -12,10 +12,10 @@
 				{"name":"dao","type":"address"},
 				{"name":"WalletCode","type":"cell"},
 				{"name":"repo","type":"address"},
-				{"name":"label","type":"string"},
 				{"name":"codeDest","type":"cell"},
 				{"name":"contentSignature","type":"cell"},
-				{"name":"creator","type":"address"}
+				{"name":"creator","type":"address"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -23,7 +23,8 @@
 		{
 			"name": "activate",
 			"inputs": [
-				{"name":"commit","type":"string"}
+				{"name":"commit","type":"string"},
+				{"name":"content","type":"string"}
 			],
 			"outputs": [
 			]
@@ -31,13 +32,15 @@
 		{
 			"name": "sendAction",
 			"inputs": [
-				{"name":"index","type":"uint128"}
+				{"name":"index","type":"uint128"},
+				{"name":"content","type":"string"}
 			],
 			"outputs": [
 			]
 		}
 	],
 	"data": [
+		{"key":1,"name":"_label","type":"string"}
 	],
 	"events": [
 	],
@@ -52,8 +55,9 @@
 		{"name":"_goshdao","type":"address"},
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"_label","type":"string"},
+		{"name":"_index","type":"uint128"},
 		{"name":"_repo","type":"address"},
-		{"name":"m_codeDest","type":"cell"},
+		{"name":"m_codeSatellite","type":"cell"},
 		{"name":"m_contentSignature","type":"cell"}
 	]
 }

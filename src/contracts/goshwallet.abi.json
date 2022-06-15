@@ -14,6 +14,7 @@
 				{"name":"TagCode","type":"cell"},
 				{"name":"contentSignature","type":"cell"},
 				{"name":"codeAction","type":"cell"},
+				{"name":"codeSatellite","type":"cell"},
 				{"name":"lockerCode","type":"cell"},
 				{"name":"platformCode","type":"cell"},
 				{"name":"clientCode","type":"cell"},
@@ -207,7 +208,17 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"label","type":"string"},
-				{"name":"Dest","type":"cell"}
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deploySatellite",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"label","type":"string"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -219,6 +230,33 @@
 				{"name":"nametag","type":"string"}
 			],
 			"outputs": [
+			]
+		},
+		{
+			"name": "getContentCode",
+			"inputs": [
+				{"name":"repoName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getActionCode",
+			"inputs": [
+				{"name":"repoName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getSatelliteCode",
+			"inputs": [
+				{"name":"repoName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
 			]
 		},
 		{
@@ -526,6 +564,7 @@
 		{"name":"m_TagCode","type":"cell"},
 		{"name":"m_contentSignature","type":"cell"},
 		{"name":"m_codeAction","type":"cell"},
+		{"name":"m_codeSatellite","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
 		{"name":"m_SMVClientCode","type":"cell"},
 		{"name":"m_SMVProposalCode","type":"cell"}

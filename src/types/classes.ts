@@ -883,12 +883,20 @@ export class GoshWallet implements IGoshWallet {
         await this.run('updateHead', {});
     }
 
+    async deploySatellite(
+        repoName: string,
+        label: string,
+        index: number
+    ): Promise<void> {
+        await this.run('deploySatellite', { repoName, label, index });
+    }
+
     async deployAction(
         repoName: string,
         label: string,
-        dest: string
+        index: number
     ): Promise<void> {
-        await this.run('deployAction', { repoName, label, Dest: dest });
+        await this.run('deployAction', { repoName, label, index });
     }
 
     async deployContent(
@@ -898,6 +906,27 @@ export class GoshWallet implements IGoshWallet {
         content: string
     ): Promise<void> {
         await this.run('deployContent', { repoName, commit, label, content });
+    }
+
+    async getSatelliteCode(repoName: string): Promise<string> {
+        const result = await this.account.runLocal('getSatelliteCode', {
+            repoName,
+        });
+        return result.decoded?.output.value0;
+    }
+
+    async getActionCode(repoName: string): Promise<string> {
+        const result = await this.account.runLocal('getActionCode', {
+            repoName,
+        });
+        return result.decoded?.output.value0;
+    }
+
+    async getContentCode(repoName: string): Promise<string> {
+        const result = await this.account.runLocal('getContentCode', {
+            repoName,
+        });
+        return result.decoded?.output.value0;
     }
 
     async run(

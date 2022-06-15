@@ -32,6 +32,14 @@
 			]
 		},
 		{
+			"name": "setcodeSatellite",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setTokenRoot",
 			"inputs": [
 				{"name":"code","type":"cell"}
@@ -286,6 +294,7 @@
 		{"name":"m_codeTag","type":"cell"},
 		{"name":"m_contentSignature","type":"cell"},
 		{"name":"m_codeAction","type":"cell"},
+		{"name":"m_codeSatellite","type":"cell"},
 		{"name":"m_TokenLockerCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
 		{"name":"m_SMVClientCode","type":"cell"},

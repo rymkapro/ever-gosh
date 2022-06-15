@@ -199,13 +199,21 @@ export interface IGoshWallet extends IContract {
     ): Promise<void>;
     tryProposalResult(proposalAddr: string): Promise<void>;
     updateHead(): Promise<void>;
-    deployAction(repoName: string, label: string, dest: string): Promise<void>;
+    deploySatellite(
+        repoName: string,
+        label: string,
+        index: number
+    ): Promise<void>;
+    deployAction(repoName: string, label: string, index: number): Promise<void>;
     deployContent(
         repoName: string,
         commit: string,
         label: string,
         content: string
     ): Promise<void>;
+    getSatelliteCode(repoName: string): Promise<string>;
+    getActionCode(repoName: string): Promise<string>;
+    getContentCode(repoName: string): Promise<string>;
 }
 
 export interface IGoshRepository extends IContract {
