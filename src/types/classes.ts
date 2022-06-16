@@ -9,6 +9,7 @@ import GoshCommitABI from '../contracts/commit.abi.json';
 import GoshBlobABI from '../contracts/blob.abi.json';
 import GoshTagABI from '../contracts/tag.abi.json';
 import GoshContentSignatureABI from '../contracts/content-signature.abi.json';
+import GoshActionABI from '../contracts/action.abi.json';
 import GoshSmvProposalABI from '../contracts/SMVProposal.abi.json';
 import GoshSmvLockerABI from '../contracts/SMVTokenLocker.abi.json';
 import GoshSmvClientABI from '../contracts/SMVClient.abi.json';
@@ -48,6 +49,7 @@ import {
     TGoshTreeItem,
     IGoshTag,
     IGoshContentSignature,
+    IGoshAction,
 } from './types';
 import { EGoshError, GoshError } from './errors';
 import { Buffer } from 'buffer';
@@ -1244,7 +1246,9 @@ export class GoshContentSignature implements IGoshContentSignature {
     }
 
     async load(): Promise<void> {
+        const data = await this.decodeAccountData();
         this.meta = {
+            label: data._label,
             content: await this.getContent(),
         };
     }
@@ -1252,6 +1256,43 @@ export class GoshContentSignature implements IGoshContentSignature {
     async getContent(): Promise<string> {
         const result = await this.account.runLocal('getContent', {});
         return result.decoded?.output.value0;
+    }
+
+    async decodeAccountData(): Promise<any> {
+        const account = await this.account.getAccount();
+        const result = await this.account.client.abi.decode_account_data({
+            abi: this.account.abi,
+            data: account.data,
+        });
+        return result.data;
+    }
+}
+
+export class GoshAction implements IGoshAction {
+    abi: any = GoshActionABI;
+    account: Account;
+    address: string;
+    meta?: IGoshAction['meta'];
+
+    constructor(client: TonClient, address: string) {
+        this.address = address;
+        this.account = new Account({ abi: this.abi }, { client, address });
+    }
+
+    async load(): Promise<void> {
+        const data = await this.decodeAccountData();
+        this.meta = {
+            label: data._label,
+        };
+    }
+
+    async decodeAccountData(): Promise<any> {
+        const account = await this.account.getAccount();
+        const result = await this.account.client.abi.decode_account_data({
+            abi: this.account.abi,
+            data: account.data,
+        });
+        return result.data;
     }
 }
 

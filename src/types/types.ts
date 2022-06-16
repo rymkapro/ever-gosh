@@ -288,11 +288,21 @@ export interface IGoshTag extends IContract {
 export interface IGoshContentSignature extends IContract {
     address: string;
     meta?: {
+        label: string;
         content: string;
     };
 
     load(): Promise<void>;
     getContent(): Promise<string>;
+}
+
+export interface IGoshAction extends IContract {
+    address: string;
+    meta?: {
+        label: string;
+    };
+
+    load(): Promise<void>;
 }
 
 export interface IGoshSmvProposal extends IContract {
