@@ -212,8 +212,8 @@ export interface IGoshWallet extends IContract {
         content: string
     ): Promise<void>;
     getSatelliteCode(repoName: string): Promise<string>;
-    getActionCode(repoName: string): Promise<string>;
-    getContentCode(repoName: string): Promise<string>;
+    getActionCode(repoName: string): Promise<{ code: string; hash: string }>;
+    getContentCode(repoName: string): Promise<{ code: string; hash: string }>;
 }
 
 export interface IGoshRepository extends IContract {

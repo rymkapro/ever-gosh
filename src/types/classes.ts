@@ -915,18 +915,28 @@ export class GoshWallet implements IGoshWallet {
         return result.decoded?.output.value0;
     }
 
-    async getActionCode(repoName: string): Promise<string> {
-        const result = await this.account.runLocal('getActionCode', {
+    async getActionCode(
+        repoName: string
+    ): Promise<{ code: string; hash: string }> {
+        const code = await this.account.runLocal('getActionCode', {
             repoName,
         });
-        return result.decoded?.output.value0;
+        const hash = await this.account.client.boc.get_boc_hash({
+            boc: code.decoded?.output.value0,
+        });
+        return { code: code.decoded?.output.value0, hash: hash.hash };
     }
 
-    async getContentCode(repoName: string): Promise<string> {
-        const result = await this.account.runLocal('getContentCode', {
+    async getContentCode(
+        repoName: string
+    ): Promise<{ code: string; hash: string }> {
+        const code = await this.account.runLocal('getContentCode', {
             repoName,
         });
-        return result.decoded?.output.value0;
+        const hash = await this.account.client.boc.get_boc_hash({
+            boc: code.decoded?.output.value0,
+        });
+        return { code: code.decoded?.output.value0, hash: hash.hash };
     }
 
     async run(
