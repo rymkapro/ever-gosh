@@ -275,6 +275,15 @@ const PullCreatePage = () => {
     };
 
     if (!goshWallet) return <Navigate to={`/${daoName}/${repoName}`} />;
+    if (!goshWallet?.isDaoParticipant) {
+        return (
+            <div className="bordered-block px-7 py-8">
+                <div className="text-sm text-gray-606060 text-center">
+                    Should be a DAO participant
+                </div>
+            </div>
+        );
+    }
     return (
         <div className="bordered-block px-7 py-8">
             <div className="flex items-center gap-x-4">

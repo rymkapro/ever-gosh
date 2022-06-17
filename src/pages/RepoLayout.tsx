@@ -47,7 +47,7 @@ const RepoLayout = () => {
             to: `/${daoName}/${repoName}/immutactions`,
             title: 'Immutable actions',
             icon: faPlay,
-            public: true,
+            public: false,
         },
     ];
 

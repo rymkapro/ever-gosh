@@ -52,12 +52,23 @@ const ImmutActionsPage = () => {
                     };
                 })
             );
-            setItems(items);
+            setItems(items.filter((item) => !!item.label));
         };
 
-        if (goshWallet && repoName) _getItems(goshWallet, repoName);
+        if (goshWallet?.isDaoParticipant && repoName) {
+            _getItems(goshWallet, repoName);
+        }
     }, [goshWallet, repoName]);
 
+    if (!goshWallet?.isDaoParticipant) {
+        return (
+            <div className="bordered-block px-7 py-8">
+                <div className="text-sm text-gray-606060 text-center">
+                    Should be a DAO participant
+                </div>
+            </div>
+        );
+    }
     return (
         <div className="bordered-block px-7 py-8">
             {items === undefined && (
@@ -87,7 +98,12 @@ const ImmutActionsPage = () => {
                                 </div>
                             </div>
                             <div className="flex flex-nowrap">
-                                <a href="#" className="underline">
+                                <a
+                                    href={`https://vps23.ever.live/accounts/accountDetails?id=${item.address}`}
+                                    className="underline"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
                                     {shortString(item.address, 8, 8)}
                                 </a>
                                 <CopyClipboard
