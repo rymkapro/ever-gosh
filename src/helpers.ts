@@ -2,28 +2,25 @@ import { TonClient } from '@eversdk/core';
 import { toast } from 'react-toastify';
 import cryptoJs, { SHA1 } from 'crypto-js';
 import { Buffer } from 'buffer';
-import {
-    GoshBlob,
-    GoshCommit,
-    GoshDaoCreator,
-    GoshSnapshot,
-} from './types/classes';
+import { GoshTree, GoshCommit, GoshDaoCreator } from './types/classes';
 import {
     IGoshDaoCreator,
     IGoshRepository,
-    TGoshBranch,
     TGoshCommit,
     TGoshTree,
     TGoshTreeItem,
 } from './types/types';
 import * as Diff from 'diff';
-import LightningFS from '@isomorphic-git/lightning-fs';
+// import LightningFS from '@isomorphic-git/lightning-fs';
 import { EGoshError, GoshError } from './types/errors';
 
-export const fs = new LightningFS('app.gosh');
+// export const fs = new LightningFS('app.gosh');
 
+export const ZERO_ADDR =
+    '0:0000000000000000000000000000000000000000000000000000000000000000';
 export const ZERO_COMMIT = '0000000000000000000000000000000000000000';
 export const MAX_ONCHAIN_FILE_SIZE = 15360;
+export const MAX_ONCHAIN_DIFF_SIZE = 15000;
 
 export const getEndpoints = (): string[] => {
     switch (process.env.REACT_APP_EVER_NETWORK) {
@@ -37,19 +34,19 @@ export const getEndpoints = (): string[] => {
     }
 };
 
-export const fsExists = async (pathname: string): Promise<boolean> => {
-    try {
-        await fs.promises.stat(pathname);
-        return true;
-    } catch (e: any) {
-        if (e.code === 'ENOENT' || e.code === 'ENOTDIR') {
-            return false;
-        } else {
-            console.debug('Unhandled error in `fs.exists()`', e);
-            throw e;
-        }
-    }
-};
+// export const fsExists = async (pathname: string): Promise<boolean> => {
+//     try {
+//         await fs.promises.stat(pathname);
+//         return true;
+//     } catch (e: any) {
+//         if (e.code === 'ENOENT' || e.code === 'ENOTDIR') {
+//             return false;
+//         } else {
+//             console.debug('Unhandled error in `fs.exists()`', e);
+//             throw e;
+//         }
+//     }
+// };
 
 export const getGoshDaoCreator = (client: TonClient): IGoshDaoCreator => {
     const address = process.env.REACT_APP_CREATOR_ADDR;
@@ -57,17 +54,12 @@ export const getGoshDaoCreator = (client: TonClient): IGoshDaoCreator => {
     return new GoshDaoCreator(client, address);
 };
 
-export const getCodeLanguageFromFilename = (
-    monaco: any,
-    filename: string
-): string => {
+export const getCodeLanguageFromFilename = (monaco: any, filename: string): string => {
     let splitted = filename.split('.');
     const ext = `.${splitted.slice(-1)}`;
     const found = monaco.languages
         .getLanguages()
-        .find(
-            (item: any) => item.extensions && item.extensions.indexOf(ext) >= 0
-        );
+        .find((item: any) => item.extensions && item.extensions.indexOf(ext) >= 0);
     return found?.id || 'plaintext';
 };
 
@@ -122,9 +114,7 @@ export const sha1Tree = (items: TGoshTreeItem[]) => {
             .sort((a: any, b: any) => (a.name > b.name) - (a.name < b.name))
             .map((i: any) =>
                 Buffer.concat([
-                    Buffer.from(
-                        `${i.mode === '040000' ? '40000' : i.mode} ${i.name}\0`
-                    ),
+                    Buffer.from(`${i.mode === '040000' ? '40000' : i.mode} ${i.name}\0`),
                     Buffer.from(i.sha, 'hex'),
                 ])
             )
@@ -134,24 +124,22 @@ export const sha1Tree = (items: TGoshTreeItem[]) => {
 
 export const getTreeItemsFromPath = (
     filePath: string,
-    fileContent: string | Buffer
+    fileContent: string | Buffer,
+    flags: number
 ): TGoshTreeItem[] => {
     const items: TGoshTreeItem[] = [];
 
     // Get blob sha, path and name and push it to items
     let [path, name] = splitByPath(filePath);
     const sha = sha1(fileContent, 'blob');
-    items.push({ mode: '100644', type: 'blob', sha, path, name });
+    items.push({ flags, mode: '100644', type: 'blob', sha, path, name });
 
     // Parse blob path and push subtrees to items
     while (path !== '') {
         const [dirPath, dirName] = splitByPath(path);
-        if (
-            !items.find(
-                (item) => item.path === dirPath && item.name === dirName
-            )
-        ) {
+        if (!items.find((item) => item.path === dirPath && item.name === dirName)) {
             items.push({
+                flags: 0,
                 mode: '040000',
                 type: 'tree',
                 sha: '',
@@ -167,10 +155,11 @@ export const getTreeItemsFromPath = (
 const getTreeItemsFromBlob = (content: string): TGoshTreeItem[] => {
     return content.split('\n').map((entry: string) => {
         const [head, fname] = entry.split('\t');
-        const [mode, type, sha] = head.split(' ');
+        const [flags, mode, type, sha] = head.split(' ');
         const lastSlash = fname.lastIndexOf('/');
         const path = lastSlash >= 0 ? fname.slice(0, lastSlash) : '';
         return {
+            flags: +flags,
             mode: mode as TGoshTreeItem['mode'],
             type: type as TGoshTreeItem['type'],
             sha,
@@ -199,54 +188,6 @@ export const getTreeFromItems = (items: TGoshTreeItem[]): TGoshTree => {
     return result;
 };
 
-export const getRepoTree = async (
-    repo: IGoshRepository,
-    branch: TGoshBranch
-) => {
-    // Read branch dump file if exists
-    const dumpPath = `/${repo.address}/${branch.name}.tree`;
-    if (await fsExists(dumpPath)) {
-        const content = await fs.promises.readFile(dumpPath);
-        const data = content ? JSON.parse(content as string) : {};
-        if (data.commitAddr === branch.commitAddr) {
-            return {
-                tree: getTreeFromItems(data.treeItems),
-                items: data.treeItems,
-            };
-        }
-    }
-
-    // Build tree from snapshots (if dump was not found)
-    const files = [];
-    for (const addr of branch.snapshotAddr) {
-        const snapshot = new GoshSnapshot(repo.account.client, addr);
-        const filename = await snapshot.getName();
-        files.push(filename.replace(`${branch.name}/`, ''));
-    }
-    console.debug('Files list', files);
-
-    const items = files.reduce((prev: TGoshTreeItem[], path: string) => {
-        const _items = getTreeItemsFromPath(path, '');
-        prev.push(..._items);
-        return prev;
-    }, []);
-    console.debug('Tree items', items);
-
-    const tree = getTreeFromItems(items);
-    console.debug('Tree', tree);
-
-    // Save branch dump
-    await fs.promises.writeFile(
-        dumpPath,
-        JSON.stringify({
-            commitAddr: branch.commitAddr,
-            treeItems: items,
-        })
-    );
-
-    return { tree, items };
-};
-
 /**
  * Get repository tree for specific commit
  * @param repo
@@ -254,78 +195,73 @@ export const getRepoTree = async (
  * @param filterPath Load only part of tree with provided path. Full tree will be loaded if `undefined`
  * @returns
  */
-// export const getRepoTree = async (
-//     repo: IGoshRepository,
-//     commitAddr: string,
-//     filterPath?: string
-// ): Promise<{ tree: TGoshTree; items: TGoshTreeItem[] }> => {
-//     /** Recursive walker through tree blobs */
-//     const blobTreeWalker = async (path: string, subitems: TGoshTreeItem[]) => {
-//         let trees = subitems.filter((item) => item.type === 'tree');
+export const getRepoTree = async (
+    repo: IGoshRepository,
+    commitAddr: string,
+    filterPath?: string
+): Promise<{ tree: TGoshTree; items: TGoshTreeItem[] }> => {
+    /** Recursive walker through tree blobs */
+    const blobTreeWalker = async (path: string, subitems: TGoshTreeItem[]) => {
+        let trees = subitems.filter((item) => item.type === 'tree');
 
-//         if (filterPath) {
-//             let [_path] = splitByPath(filterPath);
-//             const filtered: string[] = [filterPath, _path];
-//             while (_path !== '') {
-//                 const [__path] = splitByPath(_path);
-//                 filtered.push(__path);
-//                 _path = __path;
-//             }
+        if (filterPath) {
+            let [_path] = splitByPath(filterPath);
+            const filtered: string[] = [filterPath, _path];
+            while (_path !== '') {
+                const [__path] = splitByPath(_path);
+                filtered.push(__path);
+                _path = __path;
+            }
 
-//             trees = trees.filter(
-//                 (item) =>
-//                     filtered.indexOf(
-//                         `${item.path ? `${item.path}/` : ''}${item.name}`
-//                     ) >= 0
-//             );
-//         }
+            trees = trees.filter(
+                (item) =>
+                    filtered.indexOf(`${item.path ? `${item.path}/` : ''}${item.name}`) >=
+                    0
+            );
+        }
 
-//         for (let i = 0; i < trees.length; i++) {
-//             const tree = trees[i];
-//             const treeAddr = await repo.getBlobAddr(`tree ${tree.sha}`);
-//             const treeBlob = new GoshBlob(repo.account.client, treeAddr);
+        for (let i = 0; i < trees.length; i++) {
+            const tree = trees[i];
+            const treeAddr = await root.getTreeAddr(repo.address, `tree ${tree.sha}`);
+            const treeBlob = new GoshTree(repo.account.client, treeAddr);
 
-//             const treeContent = (await treeBlob.loadContent()).toString();
-//             const treeItems = getTreeItemsFromBlob(treeContent);
-//             const treePath = `${path ? `${path}/` : ''}${tree.name}`;
+            const treeContent = (await treeBlob.loadContent()).toString();
+            const treeItems = getTreeItemsFromBlob(treeContent);
+            const treePath = `${path ? `${path}/` : ''}${tree.name}`;
 
-//             treeItems.forEach((item) => (item.path = treePath));
-//             items.push(...treeItems);
-//             await new Promise((resolve) => setInterval(resolve, 150));
-//             await blobTreeWalker(treePath, treeItems);
-//         }
-//     };
+            treeItems.forEach((item) => (item.path = treePath));
+            items.push(...treeItems);
+            await new Promise((resolve) => setInterval(resolve, 150));
+            await blobTreeWalker(treePath, treeItems);
+        }
+    };
 
-//     // Get latest branch commit
-//     if (!commitAddr) return { tree: { '': [] }, items: [] };
-//     const commit = new GoshCommit(repo.account.client, commitAddr);
-//     await commit.load();
+    // Gosh root
+    const root = await repo.getGoshRoot();
 
-//     // Get root tree blob
-//     let rootTreeBlobContent: string = '';
-//     if (commit.meta?.sha !== ZERO_COMMIT) {
-//         const rootTreeBlobAddr = await repo.getBlobAddr(
-//             `tree ${commit.meta?.content.tree}`
-//         );
-//         const rootTreeBlob = new GoshBlob(
-//             repo.account.client,
-//             rootTreeBlobAddr
-//         );
-//         await rootTreeBlob.load();
-//         rootTreeBlobContent = (await rootTreeBlob.loadContent()).toString();
-//     }
+    // Get latest branch commit
+    if (!commitAddr) return { tree: { '': [] }, items: [] };
+    const commit = new GoshCommit(repo.account.client, commitAddr);
+    await commit.load();
 
-//     // Get root tree items and recursively get subtrees
-//     const items = rootTreeBlobContent
-//         ? getTreeItemsFromBlob(rootTreeBlobContent)
-//         : [];
-//     if (filterPath !== '') await blobTreeWalker('', items);
+    // Get root tree blob
+    let rootTreeContent: string = '';
+    if (commit.meta?.sha !== ZERO_COMMIT) {
+        const rootTreeAddr = await commit.getTree();
+        const rootTree = new GoshTree(repo.account.client, rootTreeAddr);
+        rootTreeContent = (await rootTree.loadContent()).toString();
+    }
 
-//     // Build full tree
-//     const tree = getTreeFromItems(items);
-//     console.debug('[Helpers: getRepoTree] - Tree:', tree);
-//     return { tree, items };
-// };
+    // Get root tree items and recursively get subtrees
+    const items = rootTreeContent ? getTreeItemsFromBlob(rootTreeContent) : [];
+    console.debug('Filter path:', filterPath);
+    if (filterPath !== '') await blobTreeWalker('', items);
+
+    // Build full tree
+    const tree = getTreeFromItems(items);
+    console.debug('[Helpers: getRepoTree] - Tree:', tree);
+    return { tree, items };
+};
 
 /**
  * Sort the hole tree by the longest key (this key will contain blobs only),
@@ -361,64 +297,27 @@ export const getBlobDiffPatch = (
     const shaOriginal = original ? sha1(original, 'blob') : '0000000';
     const shaModified = modified ? sha1(modified, 'blob') : '0000000';
     patch =
-        `index ${shaOriginal.slice(0, 7)}..${shaModified.slice(
-            0,
-            7
-        )} 100644\n` + patch;
+        `index ${shaOriginal.slice(0, 7)}..${shaModified.slice(0, 7)} 100644\n` + patch;
 
     if (!original) patch = patch.replace(`a/${filename}`, '/dev/null');
     if (!modified) patch = patch.replace(`b/${filename}`, '/dev/null');
     return patch;
 };
 
-// export const getBlobContent = async (repo: IGoshRepository, blobName: string): Promise<string> => {
-//     const blobWalker = async (blobName: string) => {
-//         const name = blobName.indexOf('blob ') < 0 ? `blob ${blobName}` : blobName;
-//         const blobAddr = await repo.getBlobAddr(name);
-//         const blob = new GoshBlob(repo.account.client, blobAddr);
-//         const { acc_type } = await blob.account.getAccount();
-//         if (acc_type !== AccountType.active) return;
-
-//         await blob.load();
-//         patches.push(blob.meta?.content || '');
-
-//         if (blob.meta?.prevSha) await blobWalker(blob.meta.prevSha);
-//     }
-
-//     const patches: string[] = [];
-//     await blobWalker(blobName);
-//     console.debug('[getFullBlob] - Patches:', patches);
-
-//     let content = '';
-//     patches.reverse().forEach((patch) => content = Diff.applyPatch(content, patch));
-//     console.debug('[getFullBlob] - Content:', `"${content}"`);
-//     return content;
-// }
-
 export const getCommit = async (
     repo: IGoshRepository,
     commitAddr: string
 ): Promise<TGoshCommit> => {
-    const filepath = `/${repo.address}/commits/${commitAddr}`;
-
-    let commitData: any = {};
-    if (await fsExists(filepath)) {
-        const data = await fs.promises.readFile(filepath);
-        commitData = JSON.parse(data as string);
-        console.debug('Commit', commitData);
-    } else {
-        const commit = new GoshCommit(repo.account.client, commitAddr);
-        const meta = await commit.getCommit();
-        commitData = {
-            addr: commitAddr,
-            addrRepo: meta.repo,
-            branch: meta.branch,
-            name: meta.sha,
-            content: meta.content,
-            parents: meta.parents,
-        };
-        await fs.promises.writeFile(filepath, JSON.stringify(commitData));
-    }
+    const commit = new GoshCommit(repo.account.client, commitAddr);
+    const meta = await commit.getCommit();
+    const commitData = {
+        addr: commitAddr,
+        addrRepo: meta.repo,
+        branch: meta.branch,
+        name: meta.sha,
+        content: meta.content,
+        parents: meta.parents,
+    };
 
     return {
         ...commitData,
@@ -430,8 +329,7 @@ export const getCommit = async (
 export const splitByPath = (fullPath: string): [path: string, name: string] => {
     const lastSlashIndex = fullPath.lastIndexOf('/');
     const path = lastSlashIndex >= 0 ? fullPath.slice(0, lastSlashIndex) : '';
-    const name =
-        lastSlashIndex >= 0 ? fullPath.slice(lastSlashIndex + 1) : fullPath;
+    const name = lastSlashIndex >= 0 ? fullPath.slice(lastSlashIndex + 1) : fullPath;
     return [path, name];
 };
 
@@ -515,10 +413,7 @@ export const zstd = {
  * @param filename
  * @returns
  */
-export const saveToIPFS = async (
-    content: string,
-    filename?: string
-): Promise<string> => {
+export const saveToIPFS = async (content: string, filename?: string): Promise<string> => {
     if (!process.env.REACT_APP_IPFS) throw new Error('IPFS url undefined');
 
     const form = new FormData();
@@ -544,10 +439,9 @@ export const saveToIPFS = async (
 export const loadFromIPFS = async (cid: string): Promise<Buffer> => {
     if (!process.env.REACT_APP_IPFS) throw new Error('IPFS url undefined');
 
-    const response = await fetch(
-        `${process.env.REACT_APP_IPFS}/ipfs/${cid.toString()}`,
-        { method: 'GET' }
-    );
+    const response = await fetch(`${process.env.REACT_APP_IPFS}/ipfs/${cid.toString()}`, {
+        method: 'GET',
+    });
 
     if (!response.ok)
         throw new Error(`Error while uploading (${JSON.stringify(response)})`);

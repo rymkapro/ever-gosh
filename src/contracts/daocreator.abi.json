@@ -57,6 +57,14 @@
 			"outputs": [
 				{"name":"value0","type":"string"}
 			]
+		},
+		{
+			"name": "upgrade",
+			"inputs": [
+				{"name":"state","type":"cell"}
+			],
+			"outputs": [
+			]
 		}
 	],
 	"data": [

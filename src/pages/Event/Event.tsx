@@ -315,13 +315,21 @@ const EventPage = () => {
                                     'Running'
                                 )}
                             </span>
-                            <span className="text-green-900 text-xl">
-                                {service.proposal.meta?.votes.yes}
-                            </span>
-                            <span className="mx-1">/</span>
-                            <span className="text-rose-600 text-xl">
-                                {service.proposal.meta?.votes.no}
-                            </span>
+                            <div>
+                                <span className="text-green-900 text-xs">
+                                    Accepted
+                                    <span className="text-xl ml-2">
+                                        {service.proposal.meta?.votes.yes}
+                                    </span>
+                                </span>
+                                <span className="mx-1">/</span>
+                                <span className="text-rose-600 text-xs">
+                                    <span className="text-xl mr-2">
+                                        {service.proposal.meta?.votes.no}
+                                    </span>
+                                    Rejected
+                                </span>
+                            </div>
                         </div>
                         {goshWallet &&
                             goshWallet.isDaoParticipant &&
@@ -332,7 +340,10 @@ const EventPage = () => {
                                         type="button"
                                         className="btn btn--body text-sm px-4 py-1.5"
                                         onClick={onTokensRelease}
-                                        disabled={release}
+                                        disabled={
+                                            release ||
+                                            service.locker?.meta?.isBusy
+                                        }
                                     >
                                         {release && (
                                             <Spinner className="mr-2" />
@@ -355,7 +366,10 @@ const EventPage = () => {
                                                 goshWallet
                                             )
                                         }
-                                        disabled={check}
+                                        disabled={
+                                            check ||
+                                            service.locker?.meta?.isBusy
+                                        }
                                     >
                                         {check && <Spinner className="mr-2" />}
                                         Re-check
@@ -447,7 +461,10 @@ const EventPage = () => {
                                             <button
                                                 className="btn btn--body font-medium px-4 py-1.5 w-full sm:w-auto"
                                                 type="submit"
-                                                disabled={isSubmitting}
+                                                disabled={
+                                                    isSubmitting ||
+                                                    service.locker?.meta?.isBusy
+                                                }
                                             >
                                                 {isSubmitting && (
                                                     <Spinner className="mr-2" />
@@ -463,7 +480,13 @@ const EventPage = () => {
                     <h3 className="mt-10 mb-4 text-xl font-semibold">
                         Proposal diff
                     </h3>
-                    {/* <CommitBlobs repo={service.repo} commit={service.commit} /> */}
+                    {service.commit.meta && (
+                        <CommitBlobs
+                            repo={service.repo}
+                            commit={service.commit.meta.sha}
+                            branch={service.commit.meta.branchName}
+                        />
+                    )}
                 </div>
             )}
         </div>

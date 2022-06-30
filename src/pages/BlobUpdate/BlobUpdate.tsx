@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Field, Form, Formik } from 'formik';
-import {
-    Navigate,
-    useNavigate,
-    useOutletContext,
-    useParams,
-} from 'react-router-dom';
+import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import TextField from '../../components/FormikForms/TextField';
 import { Tab } from '@headlessui/react';
@@ -16,12 +11,8 @@ import BlobEditor from '../../components/Blob/Editor';
 import FormCommitBlock from '../BlobCreate/FormCommitBlock';
 import { useMonaco } from '@monaco-editor/react';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
-import { IGoshRepository } from '../../types/types';
-import {
-    getCodeLanguageFromFilename,
-    splitByPath,
-    isMainBranch,
-} from '../../helpers';
+import { IGoshWallet, TGoshTreeItem } from '../../types/types';
+import { getCodeLanguageFromFilename, splitByPath, isMainBranch } from '../../helpers';
 import BlobDiffPreview from '../../components/Blob/DiffPreview';
 import { goshCurrBranchSelector } from '../../store/gosh.state';
 import { useRecoilValue } from 'recoil';
@@ -35,8 +26,8 @@ import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs';
 import { EGoshError, GoshError } from '../../types/errors';
 import { toast } from 'react-toastify';
 import Spinner from '../../components/Spinner';
-import { GoshBlob } from '../../types/classes';
 import { Buffer } from 'buffer';
+import { GoshCommit, GoshSnapshot } from '../../types/classes';
 
 type TFormValues = {
     name: string;
@@ -50,8 +41,7 @@ const BlobUpdatePage = () => {
     const pathName = useParams()['*'];
     const { daoName, repoName, branchName = 'main' } = useParams();
     const navigate = useNavigate();
-    const { goshRepo, goshWallet } =
-        useOutletContext<TRepoLayoutOutletContext>();
+    const { goshRepo, goshWallet } = useOutletContext<TRepoLayoutOutletContext>();
     const monaco = useMonaco();
     const userState = useRecoilValue(userStateAtom);
     const { updateBranch } = useGoshRepoBranches(goshRepo);
@@ -59,9 +49,8 @@ const BlobUpdatePage = () => {
     const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName, true);
     const treeItem = useRecoilValue(goshRepoTree.getTreeItem(pathName));
     const [activeTab, setActiveTab] = useState<number>(0);
-    const [blobContent, setBlobContent] = useState<string>();
-    const [blobCodeLanguage, setBlobCodeLanguage] =
-        useState<string>('plaintext');
+    const [blob, setBlob] = useState<{ content: string | Buffer; isIpfs: boolean }>();
+    const [blobCodeLanguage, setBlobCodeLanguage] = useState<string>('plaintext');
     const { progress, progressCallback } = useCommitProgress();
 
     const urlBack = `/${daoName}/${repoName}/blobs/${branchName}${
@@ -80,29 +69,30 @@ const BlobUpdatePage = () => {
                 });
             if (!goshWallet.isDaoParticipant)
                 throw new GoshError(EGoshError.NOT_PARTICIPANT);
-            if (values.content === blobContent)
+            if (values.content === blob?.content)
                 throw new GoshError(EGoshError.FILE_UNMODIFIED);
 
             const [path] = splitByPath(pathName || '');
             const message = [values.title, values.message]
                 .filter((v) => !!v)
                 .join('\n\n');
-            // await goshWallet.createCommit(
-            //     goshRepo,
-            //     branch,
-            //     userState.keys.public,
-            //     [
-            //         {
-            //             name: `${path ? `${path}/` : ''}${values.name}`,
-            //             modified: values.content,
-            //             original: blobContent ?? '',
-            //         },
-            //     ],
-            //     message,
-            //     values.tags,
-            //     undefined,
-            //     progressCallback
-            // );
+            await goshWallet.createCommit(
+                goshRepo,
+                branch,
+                userState.keys.public,
+                [
+                    {
+                        name: `${path ? `${path}/` : ''}${values.name}`,
+                        modified: values.content,
+                        original: blob?.content ?? '',
+                        isIpfs: blob?.isIpfs,
+                    },
+                ],
+                message,
+                values.tags,
+                undefined,
+                progressCallback
+            );
             await updateBranch(branch.name);
             navigate(urlBack);
         } catch (e: any) {
@@ -112,18 +102,54 @@ const BlobUpdatePage = () => {
     };
 
     useEffect(() => {
-        const getBlob = async (repo: IGoshRepository, treeItemSha: string) => {
-            const blobAddr = await repo.getBlobAddr(`blob ${treeItemSha}`);
-            const blob = new GoshBlob(repo.account.client, blobAddr);
-            const content = await blob.loadContent();
-            if (Buffer.isBuffer(content)) {
+        const getBlob = async (
+            wallet: IGoshWallet,
+            repoAddr: string,
+            branch: string,
+            treeItem: TGoshTreeItem,
+            commitAddr: string
+        ) => {
+            let filepath = `${treeItem.path ? `${treeItem.path}/` : ''}`;
+            filepath = `${filepath}${treeItem.name}`;
+
+            const snapAddr = await wallet.getSnapshotAddr(repoAddr, branch, filepath);
+            console.debug(snapAddr);
+
+            const commit = new GoshCommit(wallet.account.client, commitAddr);
+            const commitName = await commit.getName();
+
+            const snap = new GoshSnapshot(wallet.account.client, snapAddr);
+            const data = await snap.getSnapshot(commitName, treeItem);
+            if (Buffer.isBuffer(data.content)) {
                 toast.error(EGoshError.FILE_BINARY);
                 navigate(urlBack);
-            } else setBlobContent(content);
+            } else setBlob(data);
         };
 
-        if (goshRepo && treeItem?.sha) getBlob(goshRepo, treeItem.sha);
-    }, [goshRepo, treeItem?.sha, urlBack, navigate]);
+        if (
+            goshWallet &&
+            goshRepo.address &&
+            branch?.name &&
+            branch.commitAddr &&
+            treeItem
+        ) {
+            getBlob(
+                goshWallet,
+                goshRepo.address,
+                branch.name,
+                treeItem,
+                branch.commitAddr
+            );
+        }
+    }, [
+        goshRepo.address,
+        goshWallet,
+        branch?.name,
+        branch?.commitAddr,
+        treeItem,
+        urlBack,
+        navigate,
+    ]);
 
     useEffect(() => {
         if (monaco && pathName) {
@@ -137,23 +163,20 @@ const BlobUpdatePage = () => {
         <div className="bordered-block py-8">
             <div className="px-4 sm:px-7">
                 {goshRepoTree.tree && !treeItem && (
-                    <div className="text-gray-606060 text-sm">
-                        File not found
-                    </div>
+                    <div className="text-gray-606060 text-sm">File not found</div>
                 )}
-                {(!goshRepoTree.tree ||
-                    (treeItem && blobContent === undefined)) && (
+                {(!goshRepoTree.tree || (treeItem && blob === undefined)) && (
                     <div className="text-gray-606060 text-sm">
                         <Spinner className="mr-3" />
                         Loading file...
                     </div>
                 )}
             </div>
-            {monaco && pathName && blobContent !== undefined && (
+            {monaco && pathName && blob !== undefined && (
                 <Formik
                     initialValues={{
                         name: splitByPath(pathName)[1],
-                        content: blobContent,
+                        content: blob.content.toString(),
                         title: '',
                         message: '',
                         tags: '',
@@ -248,21 +271,16 @@ const BlobUpdatePage = () => {
                                                 language={blobCodeLanguage}
                                                 value={values.content}
                                                 onChange={(value) =>
-                                                    setFieldValue(
-                                                        'content',
-                                                        value
-                                                    )
+                                                    setFieldValue('content', value)
                                                 }
                                             />
                                         </Tab.Panel>
                                         <Tab.Panel>
                                             <BlobDiffPreview
                                                 className="pt-[1px]"
-                                                original={blobContent}
+                                                original={blob.content}
                                                 modified={values.content}
-                                                modifiedLanguage={
-                                                    blobCodeLanguage
-                                                }
+                                                modifiedLanguage={blobCodeLanguage}
                                             />
                                         </Tab.Panel>
                                     </Tab.Panels>

@@ -1,10 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-    Link,
-    useNavigate,
-    useOutletContext,
-    useParams,
-} from 'react-router-dom';
+import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
 import BranchSelect from '../../components/BranchSelect';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -31,12 +26,8 @@ const RepoPage = () => {
     const pathName = useParams()['*'] || '';
     const { daoName, repoName, branchName } = useParams();
     const navigate = useNavigate();
-    const { goshWallet, goshRepo } =
-        useOutletContext<TRepoLayoutOutletContext>();
-    const { branches, branch, updateBranch } = useGoshRepoBranches(
-        goshRepo,
-        branchName
-    );
+    const { goshWallet, goshRepo } = useOutletContext<TRepoLayoutOutletContext>();
+    const { branches, branch, updateBranch } = useGoshRepoBranches(goshRepo, branchName);
     const goshRepoTree = useGoshRepoTree(goshRepo, branch, pathName);
     const subtree = useRecoilValue(goshRepoTree.getSubtree(pathName));
 
@@ -55,9 +46,7 @@ const RepoPage = () => {
                         branches={branches}
                         onChange={(selected) => {
                             if (selected) {
-                                navigate(
-                                    `/${daoName}/${repoName}/tree/${selected.name}`
-                                );
+                                navigate(`/${daoName}/${repoName}/tree/${selected.name}`);
                             }
                         }}
                     />
@@ -67,15 +56,10 @@ const RepoPage = () => {
                         className="block text-sm text-gray-050a15/65 hover:text-gray-050a15"
                     >
                         <span className="font-semibold">
-                            <FontAwesomeIcon
-                                icon={faCodeBranch}
-                                className="mr-1"
-                            />
+                            <FontAwesomeIcon icon={faCodeBranch} className="mr-1" />
                             {branches.length}
                         </span>
-                        <span className="hidden sm:inline-block ml-1">
-                            branches
-                        </span>
+                        <span className="hidden sm:inline-block ml-1">branches</span>
                     </Link>
 
                     <Link
@@ -83,9 +67,7 @@ const RepoPage = () => {
                         className="block text-sm text-gray-050a15/65 hover:text-gray-050a15"
                     >
                         <FontAwesomeIcon icon={faClockRotateLeft} />
-                        <span className="hidden sm:inline-block ml-1">
-                            History
-                        </span>
+                        <span className="hidden sm:inline-block ml-1">History</span>
                     </Link>
                 </div>
 
@@ -95,29 +77,23 @@ const RepoPage = () => {
                         className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                     >
                         <FontAwesomeIcon icon={faMagnifyingGlass} />
-                        <span className="hidden sm:inline-block ml-2">
-                            Go to file
-                        </span>
+                        <span className="hidden sm:inline-block ml-2">Go to file</span>
                     </Link>
                     {!isMainBranch(branchName) && goshWallet?.isDaoParticipant && (
                         <Link
-                            to={`/${daoName}/${repoName}/blobs/create/${
-                                branch?.name
-                            }${pathName && `/${pathName}`}`}
+                            to={`/${daoName}/${repoName}/blobs/create/${branch?.name}${
+                                pathName && `/${pathName}`
+                            }`}
                             className="btn btn--body px-4 py-1.5 text-sm !font-normal"
                         >
                             <FontAwesomeIcon icon={faFileCirclePlus} />
-                            <span className="hidden sm:inline-block ml-2">
-                                Add file
-                            </span>
+                            <span className="hidden sm:inline-block ml-2">Add file</span>
                         </Link>
                     )}
                     <Menu as="div" className="relative">
                         <Menu.Button className="btn btn--body text-sm px-4 py-1.5 !font-normal">
                             <FontAwesomeIcon icon={faCode} />
-                            <span className="hidden sm:inline-block ml-2">
-                                Code
-                            </span>
+                            <span className="hidden sm:inline-block ml-2">Code</span>
                             <FontAwesomeIcon
                                 icon={faChevronDown}
                                 size="xs"
@@ -149,8 +125,7 @@ const RepoPage = () => {
                                         <div className="text-xs font-mono px-3 py-1 overflow-hidden whitespace-nowrap">
                                             gosh://
                                             {shortString(
-                                                process.env
-                                                    .REACT_APP_GOSH_ADDR ?? ''
+                                                process.env.REACT_APP_GOSH_ADDR ?? ''
                                             )}
                                             /{daoName}/{repoName}
                                         </div>
@@ -201,8 +176,7 @@ const RepoPage = () => {
                             const path = [item.path, item.name]
                                 .filter((part) => part !== '')
                                 .join('/');
-                            const type =
-                                item.type === 'tree' ? 'tree' : 'blobs';
+                            const type = item.type === 'tree' ? 'tree' : 'blobs';
 
                             return (
                                 <div key={index} className="py-3">
@@ -213,9 +187,7 @@ const RepoPage = () => {
                                         <FontAwesomeIcon
                                             className="mr-2"
                                             icon={
-                                                item.type === 'tree'
-                                                    ? faFolder
-                                                    : faFile
+                                                item.type === 'tree' ? faFolder : faFile
                                             }
                                             fixedWidth
                                         />

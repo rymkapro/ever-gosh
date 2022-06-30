@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useOutletContext, useParams } from 'react-router-dom';
-import { IGoshCommit, IGoshRepository, TGoshCommit } from '../../types/types';
+import { IGoshRepository, TGoshCommit } from '../../types/types';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
-import { fs, fsExists, getCommit, getCommitTime } from '../../helpers';
-import { GoshCommit } from '../../types/classes';
+import { getCommit, getCommitTime } from '../../helpers';
 import CopyClipboard from '../../components/CopyClipboard';
 import { shortString } from '../../utils';
 import Spinner from '../../components/Spinner';
@@ -50,9 +49,7 @@ const CommitPage = () => {
             {commit && (
                 <>
                     <div>
-                        <div className="font-medium py-2">
-                            {commit.content.title}
-                        </div>
+                        <div className="font-medium py-2">{commit.content.title}</div>
 
                         {commit.content.message && (
                             <pre className="mb-3 text-gray-050a15/65 text-sm">
@@ -65,28 +62,18 @@ const CommitPage = () => {
                                 <span className="mr-2 text-gray-050a15/65">
                                     Commit by
                                 </span>
-                                {renderCommitter(
-                                    commit.content.committer || ''
-                                )}
+                                {renderCommitter(commit.content.committer || '')}
                             </div>
                             <div>
-                                <span className="mr-2 text-gray-050a15/65">
-                                    at
-                                </span>
+                                <span className="mr-2 text-gray-050a15/65">at</span>
                                 {getCommitTime(
                                     commit.content.committer || ''
                                 ).toLocaleString()}
                             </div>
                             <div className="grow flex items-center justify-start sm:justify-end">
-                                <span className="mr-2 text-gray-050a15/65">
-                                    commit
-                                </span>
+                                <span className="mr-2 text-gray-050a15/65">commit</span>
                                 <CopyClipboard
-                                    label={shortString(
-                                        commit.name ?? '',
-                                        10,
-                                        10
-                                    )}
+                                    label={shortString(commit.name ?? '', 10, 10)}
                                     componentProps={{
                                         text: commit.name ?? '',
                                     }}
@@ -95,11 +82,12 @@ const CommitPage = () => {
                         </div>
                     </div>
 
-                    {branch?.snapshotAddr && (
+                    {branch && commitName && (
                         <CommitBlobs
                             repo={goshRepo}
-                            commitAddr={commit.addr}
-                            snapshotAddr={branch.snapshotAddr}
+                            branch={branch.name}
+                            commit={commitName}
+                            className="mt-4"
                         />
                     )}
                 </>

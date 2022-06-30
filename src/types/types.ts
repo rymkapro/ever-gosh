@@ -18,7 +18,8 @@ export type TUserState = TUserStatePersist & {
 export type TGoshBranch = {
     name: string;
     commitAddr: string;
-    snapshotAddr: string[];
+    deployed: number;
+    need: number;
 };
 
 export type TGoshCommitContent = {
@@ -39,6 +40,7 @@ export type TGoshCommit = {
 };
 
 export type TGoshTreeItem = {
+    flags: number;
     mode: '040000' | '100644';
     type: 'tree' | 'blob';
     sha: string;
@@ -53,6 +55,7 @@ export type TGoshTree = {
 export type TGoshDiff = {
     snapshotAddr: string;
     patch: string;
+    ipfs: string | null;
 };
 
 export type TCreateCommitCallbackParams = {
@@ -95,6 +98,7 @@ export interface IGoshRoot extends IContract {
     getRepoAddr(name: string, daoName: string): Promise<string>;
     getDaoRepoCode(daoAddress: string): Promise<string>;
     getSmvPlatformCode(): Promise<string>;
+    getTreeAddr(repoAddr: string, treeName: string): Promise<string>;
 }
 
 export interface IGoshDao extends IContract {
@@ -105,11 +109,7 @@ export interface IGoshDao extends IContract {
     };
 
     load(): Promise<void>;
-    deployWallet(
-        rootPubkey: string,
-        pubkey: string,
-        keys: KeyPair
-    ): Promise<string>;
+    deployWallet(rootPubkey: string, pubkey: string, keys: KeyPair): Promise<string>;
     getWalletAddr(rootPubkey: string, pubkey: string): Promise<string>;
     getWallets(): Promise<string[]>;
     getName(): Promise<string>;
@@ -144,6 +144,7 @@ export interface IGoshWallet extends IContract {
             name: string;
             modified: string | Buffer;
             original?: string | Buffer;
+            isIpfs?: boolean;
         }[],
         message: string,
         tags?: string,
@@ -151,53 +152,42 @@ export interface IGoshWallet extends IContract {
         callback?: ICreateCommitCallback
     ): Promise<void>;
 
-    getMoney(): Promise<void>;
     getDaoAddr(): Promise<string>;
     getRootAddr(): Promise<string>;
     getPubkey(): Promise<string>;
     deployRepo(name: string): Promise<void>;
-    deployBranch(
-        repo: IGoshRepository,
-        newName: string,
-        fromName: string
-    ): Promise<void>;
+    deployBranch(repo: IGoshRepository, newName: string, fromName: string): Promise<void>;
     deleteBranch(repo: IGoshRepository, branchName: string): Promise<void>;
     deployCommit(
-        repoName: string,
-        branch: TGoshBranch,
-        treeRootSha: string,
-        authorPubkey: string,
-        message: string,
-        parentBranch?: TGoshBranch
-    ): Promise<string>;
-    deployBlob(
         repo: IGoshRepository,
         branchName: string,
         commitName: string,
-        blobType: 'tree' | 'blob',
-        blobContent: string | Buffer,
-        blobPrevContent?: string | Buffer
-    ): Promise<string>;
-    deployTag(
-        repo: IGoshRepository,
-        commitName: string,
-        content: string
+        commitContent: string,
+        parentAddrs: string[],
+        treeAddr: string,
+        diffs: TGoshDiff[]
+    ): Promise<void>;
+    deployTree(repo: IGoshRepository, items: TGoshTreeItem[]): Promise<string>;
+    deployTag(repo: IGoshRepository, commitName: string, content: string): Promise<void>;
+    deployNewBranchSnapshot(
+        branch: string,
+        fromBranch: string,
+        name: string,
+        repoAddr: string
     ): Promise<void>;
     deployNewSnapshot(
         repoAddr: string,
         branchName: string,
         filename: string
     ): Promise<string>;
+    deleteSnapshot(addr: string): Promise<void>;
+    getSnapshotCode(branch: string, repoAddr: string): Promise<string>;
     getSnapshotAddr(
         repoAddr: string,
         branchName: string,
         filename: string
     ): Promise<string>;
-    setDiff(
-        repoName: string,
-        commitName: string,
-        diffs: TGoshDiff[]
-    ): Promise<void>;
+    setTree(repoName: string, commitName: string, treeAddr: string): Promise<void>;
     setCommit(
         repoName: string,
         branchName: string,
@@ -209,11 +199,6 @@ export interface IGoshWallet extends IContract {
         branchName: string,
         commitName: string,
         branchCommit: string
-    ): Promise<void>;
-    setBlobs(
-        repoName: string,
-        commitName: string,
-        blobAddr: string[]
     ): Promise<void>;
     getSmvLockerAddr(): Promise<string>;
     getSmvTokenBalance(): Promise<number>;
@@ -229,6 +214,8 @@ export interface IGoshWallet extends IContract {
     ): Promise<void>;
     tryProposalResult(proposalAddr: string): Promise<void>;
     updateHead(): Promise<void>;
+    getTreeAddr(repoAddr: string, treeName: string): Promise<string>;
+    getDiffAddr(repoName: string, commitName: string, index: number): Promise<string>;
 }
 
 export interface IGoshRepository extends IContract {
@@ -236,17 +223,23 @@ export interface IGoshRepository extends IContract {
     meta?: {
         name: string;
         branchCount: number;
-        tags: string[];
+        tags: {
+            content: string;
+            commit: string;
+        }[];
     };
 
     load(): Promise<void>;
+    getGoshRoot(): Promise<IGoshRoot>;
     getName(): Promise<string>;
     getBranches(): Promise<TGoshBranch[]>;
     getBranch(name: string): Promise<TGoshBranch>;
     getCommitAddr(commitSha: string): Promise<string>;
     getBlobAddr(blobName: string): Promise<string>;
     getTagCode(): Promise<string>;
-    getTags(): Promise<string[]>;
+    getTags(): Promise<{ content: string; commit: string }[]>;
+    getGoshAddr(): Promise<string>;
+    getSnapshotCode(branch: string): Promise<string>;
 }
 
 export interface IGoshCommit extends IContract {
@@ -264,16 +257,28 @@ export interface IGoshCommit extends IContract {
     getName(): Promise<string>;
     getParents(): Promise<string[]>;
     getBlobs(): Promise<string[]>;
+    getTree(): Promise<string>;
+    getNextAddr(): Promise<string>;
+}
+
+export interface IGoshDiff extends IContract {
+    address: string;
+
+    getNextAddr(): Promise<string>;
 }
 
 export interface IGoshSnapshot extends IContract {
     address: string;
 
     getName(): Promise<string>;
-    getSnapshot(commitAddr: string): Promise<string>;
+    getSnapshot(
+        commitName: string,
+        treeItem: TGoshTreeItem
+    ): Promise<{ content: string | Buffer; isIpfs: boolean }>;
+    getRepoAddr(): Promise<string>;
 }
 
-export interface IGoshBlob extends IContract {
+export interface IGoshTree extends IContract {
     address: string;
     meta?: {
         name: string;
@@ -281,15 +286,11 @@ export interface IGoshBlob extends IContract {
         ipfs: string;
         flags: number;
         commitAddr: string;
-        prevSha: string;
     };
-    content?: string | Buffer;
 
     load(): Promise<void>;
+    getTree(): Promise<any>;
     loadContent(): Promise<string | Buffer>;
-    getName(): Promise<string>;
-    getBlob(): Promise<any>;
-    getPrevSha(): Promise<string>;
 }
 
 export interface IGoshTag extends IContract {

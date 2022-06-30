@@ -122,7 +122,10 @@ export const useGoshRepoBranches = (
 
     const updateBranches = useCallback(async () => {
         const branches = await goshRepo?.getBranches();
-        if (branches) setBranches(branches);
+        const filtered = branches?.filter(
+            ({ deployed, need }) => deployed >= need
+        );
+        if (filtered) setBranches(filtered);
     }, [goshRepo, setBranches]);
 
     const updateBranch = useCallback(
@@ -162,14 +165,14 @@ export const useGoshRepoTree = (
     useEffect(() => {
         const getTree = async (repo: IGoshRepository, branch: TGoshBranch) => {
             setTree(undefined);
-            const tree = await getRepoTree(repo, branch);
+            const tree = await getRepoTree(repo, branch.commitAddr, filterPath);
             setTree(tree);
         };
 
         if (repo && branchStr && needEffect) {
             getTree(repo, JSON.parse(branchStr));
         }
-    }, [repo, branchStr, needEffect, setTree]);
+    }, [repo, branchStr, filterPath, needEffect, setTree]);
 
     return { tree, getSubtree, getTreeItems, getTreeItem };
 };

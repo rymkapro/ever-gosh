@@ -7,11 +7,18 @@
 			"name": "constructor",
 			"inputs": [
 				{"name":"value0","type":"uint256"},
+				{"name":"value1","type":"uint256"},
+				{"name":"rootgosh","type":"address"},
+				{"name":"goshdao","type":"address"},
 				{"name":"rootrepo","type":"address"},
 				{"name":"codeSnapshot","type":"cell"},
 				{"name":"codeCommit","type":"cell"},
+				{"name":"codeDiff","type":"cell"},
+				{"name":"WalletCode","type":"cell"},
 				{"name":"branch","type":"string"},
-				{"name":"name","type":"string"}
+				{"name":"name","type":"string"},
+				{"name":"snap","type":"bool"},
+				{"name":"oldbranch","type":"string"}
 			],
 			"outputs": [
 			]
@@ -19,6 +26,7 @@
 		{
 			"name": "deployNewSnapshot",
 			"inputs": [
+				{"name":"value","type":"uint256"},
 				{"name":"newbranch","type":"string"}
 			],
 			"outputs": [
@@ -28,7 +36,8 @@
 			"name": "applyDiff",
 			"inputs": [
 				{"name":"namecommit","type":"string"},
-				{"name":"diff","type":"bytes"}
+				{"components":[{"name":"snap","type":"address"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"}],"name":"diff","type":"tuple"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -49,9 +58,20 @@
 			]
 		},
 		{
+			"name": "destroy",
+			"inputs": [
+				{"name":"value","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setSnapshotSelf",
 			"inputs": [
-				{"name":"snaphot","type":"bytes"},
+				{"name":"commits","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"snapshot","type":"bytes"},
+				{"name":"ipfs","type":"optional(string)"},
 				{"name":"branch","type":"string"}
 			],
 			"outputs": [
@@ -60,10 +80,14 @@
 		{
 			"name": "getSnapshot",
 			"inputs": [
-				{"name":"commit","type":"address"}
 			],
 			"outputs": [
-				{"name":"value0","type":"optional(bytes)"}
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"bytes"},
+				{"name":"value2","type":"optional(string)"},
+				{"name":"value3","type":"string"},
+				{"name":"value4","type":"bytes"},
+				{"name":"value5","type":"optional(string)"}
 			]
 		},
 		{
@@ -101,14 +125,22 @@
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"version","type":"string"},
-		{"name":"pubkey","type":"uint256"},
+		{"name":"_pubkey","type":"uint256"},
 		{"name":"_rootRepo","type":"address"},
 		{"name":"_snapshot","type":"bytes"},
 		{"name":"_oldsnapshot","type":"bytes"},
 		{"name":"_oldcommit","type":"address"},
 		{"name":"_commit","type":"address"},
+		{"name":"_rootgosh","type":"address"},
+		{"name":"_goshdao","type":"address"},
+		{"name":"_oldcommits","type":"string"},
+		{"name":"_commits","type":"string"},
+		{"name":"_ipfs","type":"optional(string)"},
+		{"name":"_ipfsold","type":"optional(string)"},
 		{"name":"m_codeSnapshot","type":"cell"},
 		{"name":"m_CommitCode","type":"cell"},
+		{"name":"m_codeDiff","type":"cell"},
+		{"name":"m_WalletCode","type":"cell"},
 		{"name":"NameOfFile","type":"string"},
 		{"name":"_applying","type":"bool"},
 		{"name":"_name","type":"string"},

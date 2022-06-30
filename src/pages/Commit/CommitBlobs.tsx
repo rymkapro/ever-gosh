@@ -1,19 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useMonaco } from '@monaco-editor/react';
-import BlobDiffPreview from '../../components/Blob/DiffPreview';
+import { useEffect, useState } from 'react';
 import Spinner from '../../components/Spinner';
-import { getCodeLanguageFromFilename, getRepoTree, zstd } from '../../helpers';
-import { GoshBlob, GoshCommit, GoshSnapshot } from '../../types/classes';
-import { IGoshBlob, IGoshCommit, IGoshRepository } from '../../types/types';
+import { getRepoTree, loadFromIPFS, zstd } from '../../helpers';
+import { EGoshBlobFlag, IGoshRepository } from '../../types/types';
 import GoshSnapshotABI from '../../contracts/snapshot.abi.json';
 import { abiSerialized } from '@eversdk/core';
 import { Buffer } from 'buffer';
 import * as Diff2html from 'diff2html';
+import BlobDiffPreview from '../../components/Blob/DiffPreview';
+import { GoshCommit, GoshDiff, GoshSnapshot } from '../../types/classes';
 
 type TCommitBlobsType = {
+    className?: string;
     repo: IGoshRepository;
-    commitAddr: string;
-    snapshotAddr: string[];
+    branch: string;
+    commit: string;
 };
 
 const DiffHtml = (props: any) => {
@@ -29,80 +29,48 @@ const DiffHtml = (props: any) => {
 };
 
 const CommitBlobs = (props: TCommitBlobsType) => {
-    const { repo, commitAddr, snapshotAddr } = props;
-    const monaco = useMonaco();
+    const { className, repo, branch, commit } = props;
     const [isFetched, setIsFetched] = useState<boolean>(false);
-    const [isLoadingDiff, setIsLoadingDiff] = useState<boolean>(false);
-    // const [blobs, setBlobs] = useState<
-    //     {
-    //         path: string;
-    //         curr: IGoshBlob;
-    //         name?: string;
-    //         currContent?: string | Buffer;
-    //         prevContent?: string | Buffer;
-    //     }[]
-    // >([]);
     const [blobs, setBlobs] = useState<
         {
-            filepath: string;
+            filename: string;
+            content: string;
             patch: string;
         }[]
     >([]);
 
-    const loadBlobContent = useCallback(
-        async (
-            blob: IGoshBlob
-        ): Promise<{ curr: string | Buffer; prev: string | Buffer }> => {
-            const curr = await blob.loadContent();
-            let prev: string | Buffer = '';
-            if (blob.meta?.prevSha) {
-                const prevBlobAddr = await repo.getBlobAddr(
-                    `blob ${blob.meta.prevSha}`
-                );
-                const prevBlob = new GoshBlob(
-                    repo.account.client,
-                    prevBlobAddr
-                );
-                prev = await prevBlob.loadContent();
-            }
-            return { curr, prev };
-        },
-        [repo]
-    );
-
-    const loadBlobDiff = async (i: number) => {
-        // setIsLoadingDiff(true);
-        // const { curr, prev } = await loadBlobContent(blobs[i].curr);
-        // setBlobs((currArr) =>
-        //     currArr.map((item, index) => {
-        //         if (i === index)
-        //             return { ...item, currContent: curr, prevContent: prev };
-        //         return item;
-        //     })
-        // );
-        // setIsLoadingDiff(false);
-    };
-
     useEffect(() => {
         const getCommitBlobs = async (
             repo: IGoshRepository,
-            commitAddr: string,
-            snapshotAddr: string[]
+            branch: string,
+            commitName: string
         ) => {
             setIsFetched(false);
 
-            console.debug('Commit addr', commitAddr);
-            console.debug('Snapshot addr', snapshotAddr);
+            const snapCode = await repo.getSnapshotCode(branch);
+            const commitAddr = await repo.getCommitAddr(commitName);
+            const commit = new GoshCommit(repo.account.client, commitAddr);
+
+            const sources: string[] = [commitAddr];
+            let nextAddr: string = await commit.getNextAddr();
+            while (nextAddr) {
+                sources.push(nextAddr);
+                const diff = new GoshDiff(repo.account.client, nextAddr);
+                nextAddr = await diff.getNextAddr();
+            }
+
+            const tree = await getRepoTree(repo, commitAddr);
+            console.debug('Tree', tree);
 
             const messages = await repo.account.client.net.query_collection({
                 collection: 'messages',
                 filter: {
                     src: {
-                        eq: commitAddr,
+                        in: sources,
                     },
                     msg_type: { eq: 0 },
-                    dst: {
-                        in: snapshotAddr,
+                    dst_account: {
+                        code: { eq: snapCode },
                     },
                 },
                 result: 'dst boc',
@@ -116,129 +84,101 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                 });
 
                 if (decoded.name === 'applyDiff') {
-                    const compressedDiff = Buffer.from(
-                        decoded.value.diff,
-                        'hex'
-                    ).toString('base64');
-                    const decompressed = await zstd.decompress(
+                    let patch;
+                    let content;
+
+                    const snapshot = new GoshSnapshot(
                         repo.account.client,
-                        compressedDiff,
-                        true
+                        decoded.value.diff.snap
                     );
-                    console.debug('Diff', decompressed);
-                    blobs.push(decompressed);
+                    let filename = await snapshot.getName();
+                    filename = filename.replace(`${branch}/`, '');
+
+                    const treeItem = tree.items.find((item) => {
+                        const path = item.path ? `${item.path}/` : '';
+                        return `${path}${item.name}` === filename;
+                    });
+                    if (!treeItem) {
+                        console.error('Tree item not found', filename);
+                        continue;
+                    }
+                    console.debug('Tree item', treeItem);
+
+                    if (decoded.value.diff.ipfs) {
+                        content = await loadFromIPFS(decoded.value.diff.ipfs);
+                        if (
+                            (treeItem.flags & EGoshBlobFlag.COMPRESSED) ===
+                            EGoshBlobFlag.COMPRESSED
+                        ) {
+                            content = await zstd.decompress(
+                                repo.account.client,
+                                content.toString(),
+                                false
+                            );
+                            content = Buffer.from(content, 'base64');
+                        }
+                        if (
+                            (treeItem.flags & EGoshBlobFlag.BINARY) !==
+                            EGoshBlobFlag.BINARY
+                        ) {
+                            content = content.toString();
+                        }
+                    } else {
+                        const compressed = Buffer.from(
+                            decoded.value.diff.patch,
+                            'hex'
+                        ).toString('base64');
+                        patch = await zstd.decompress(
+                            repo.account.client,
+                            compressed,
+                            true
+                        );
+                    }
+
+                    blobs.push({ filename, content, patch });
                 }
             }
-            console.debug('Blobs', blobs);
-
-            // // Build repo tree by provided commit
-            // const commitTree = await getRepoTree(repo, commit.address);
-
-            // // Get commit blobs
-            // const blobAddrs = await commit.getBlobs();
-            // console.debug('[Commit blobs] - Blob addrs:', blobAddrs);
-            // const blobs: {
-            //     path: string;
-            //     curr: IGoshBlob;
-            //     name?: string;
-            //     currContent?: string | Buffer;
-            //     prevContent?: string | Buffer;
-            // }[] = [];
-            // for (let i = 0; i < blobAddrs.length; i += 10) {
-            //     const chunk = blobAddrs.slice(i, i + 10);
-            //     await Promise.all(
-            //         chunk.map(async (addr) => {
-            //             // Create blob and load it's data
-            //             const blob = new GoshBlob(repo.account.client, addr);
-            //             const name = await blob.getName();
-            //             if (name.search('blob') >= 0)
-            //                 blobs.push({ path: '', name, curr: blob });
-            //         })
-            //     );
-            //     console.debug(
-            //         '[Commit blobs] - Get blobs names chunk:',
-            //         i,
-            //         i + 10
-            //     );
-            //     await new Promise((resolve) => setInterval(resolve, 500));
-            // }
-
-            // // Load contents for first 10 blobs
-            // await Promise.all(
-            //     blobs.slice(0, 10).map(async (item, index) => {
-            //         const { curr, prev } = await loadBlobContent(item.curr);
-            //         blobs[index] = {
-            //             ...blobs[index],
-            //             currContent: curr,
-            //             prevContent: prev,
-            //         };
-            //     })
-            // );
-
-            // Update blobs names (path) from tree
-            // commitTree.items.forEach((item) => {
-            //     const found = blobs.find((bItem) => (
-            //         bItem.name === `${item.type} ${item.sha}` && !bItem.path
-            //     ));
-            //     if (found) found.path = `${item.path ? `${item.path}/` : ''}${item.name}`;
-            // });
-            // console.debug('[Commit blobs] - Ready to render blobs:', blobs);
 
             setBlobs(blobs);
             setIsFetched(true);
         };
 
-        getCommitBlobs(repo, commitAddr, snapshotAddr);
-    }, [repo, commitAddr, snapshotAddr, loadBlobContent]);
+        getCommitBlobs(repo, branch, commit);
+    }, [repo, branch, commit]);
 
     return (
-        <>
-            {(!monaco || !isFetched) && (
+        <div className={className}>
+            {!isFetched && (
                 <div className="text-gray-606060 text-sm">
                     <Spinner className="mr-3" />
                     Loading commit diff...
                 </div>
             )}
 
-            {isFetched && <DiffHtml patch={blobs} />}
+            {isFetched && (
+                <>
+                    <DiffHtml
+                        patch={blobs
+                            .filter((blob) => !!blob.patch)
+                            .map((blob) => blob.patch)}
+                    />
 
-            {monaco &&
-                isFetched &&
-                blobs.map((item, index) => {
-                    // const language = getCodeLanguageFromFilename(
-                    //     monaco,
-                    //     item.filepath
-                    // );
-                    return (
-                        <div
-                            key={index}
-                            className="my-5 border rounded overflow-hidden"
-                        >
-                            {/* <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
-                                {item.filepath}
+                    {blobs
+                        .filter((blob) => !!blob.content)
+                        .map((blob, index) => (
+                            <div
+                                key={index}
+                                className="my-5 border rounded overflow-hidden"
+                            >
+                                <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
+                                    {blob.filename}
+                                </div>
+                                <BlobDiffPreview modified={blob.content} />
                             </div>
-                            {item.patch ? (
-                                <BlobDiffPreview
-                                    original={item.patch}
-                                    modified={item.patch}
-                                    modifiedLanguage={language}
-                                />
-                            ) : (
-                                <button
-                                    className="!block btn btn--body !text-sm mx-auto px-3 py-1.5 my-4"
-                                    disabled={isLoadingDiff}
-                                    onClick={() => loadBlobDiff(index)}
-                                >
-                                    {isLoadingDiff && (
-                                        <Spinner className="mr-2" size="sm" />
-                                    )}
-                                    Load diff
-                                </button>
-                            )} */}
-                        </div>
-                    );
-                })}
-        </>
+                        ))}
+                </>
+            )}
+        </div>
     );
 };
 

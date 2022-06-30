@@ -1,18 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { faCode, faCodePullRequest } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom';
 import Spinner from '../components/Spinner';
-import {
-    useGoshRepo,
-    useGoshWallet,
-    useGoshRepoBranches,
-} from '../hooks/gosh.hooks';
+import { useGoshRepo, useGoshWallet, useGoshRepoBranches } from '../hooks/gosh.hooks';
 import { IGoshRepository, IGoshWallet } from '../types/types';
 import { classNames } from '../utils';
 import { useRecoilValue } from 'recoil';
 import { userStatePersistAtom } from '../store/user.state';
-import { fs, fsExists } from '../helpers';
 
 export type TRepoLayoutOutletContext = {
     goshRepo: IGoshRepository;
@@ -44,11 +39,6 @@ const RepoLayout = () => {
 
     useEffect(() => {
         const init = async (repo: IGoshRepository) => {
-            if (!(await fsExists(`/${repo.address}`))) {
-                await fs.promises.mkdir(`/${repo.address}`);
-                await fs.promises.mkdir(`/${repo.address}/commits`);
-            }
-
             await updateBranches();
             setIsFetched(true);
         };
@@ -87,9 +77,7 @@ const RepoLayout = () => {
                 <>
                     <div className="flex gap-x-6 mb-6 px-5 sm:px-0">
                         {tabs
-                            .filter((item) =>
-                                !goshWallet ? item.public : item
-                            )
+                            .filter((item) => (!goshWallet ? item.public : item))
                             .map((item, index) => (
                                 <NavLink
                                     key={index}

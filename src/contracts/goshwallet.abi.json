@@ -12,6 +12,8 @@
 				{"name":"WalletCode","type":"cell"},
 				{"name":"TagCode","type":"cell"},
 				{"name":"SnapshotCode","type":"cell"},
+				{"name":"codeTree","type":"cell"},
+				{"name":"codeDiff","type":"cell"},
 				{"name":"lockerCode","type":"cell"},
 				{"name":"platformCode","type":"cell"},
 				{"name":"clientCode","type":"cell"},
@@ -22,8 +24,11 @@
 			]
 		},
 		{
-			"name": "destroy",
+			"name": "sendMoney",
 			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"commit","type":"string"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -55,13 +60,50 @@
 			]
 		},
 		{
+			"name": "deployNewBranchSnapshot",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"oldbranch","type":"string"},
+				{"name":"name","type":"string"},
+				{"name":"repo","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteSnapshot",
+			"inputs": [
+				{"name":"snap","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployDiff",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"commitName","type":"string"},
+				{"name":"fullCommit","type":"string"},
+				{"name":"next","type":"address"},
+				{"name":"prev","type":"address"},
+				{"components":[{"name":"snap","type":"address"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"}],"name":"diffs","type":"tuple[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployCommit",
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"commitName","type":"string"},
 				{"name":"fullCommit","type":"string"},
-				{"name":"parents","type":"address[]"}
+				{"name":"parents","type":"address[]"},
+				{"name":"next","type":"address"},
+				{"name":"tree","type":"address"},
+				{"components":[{"name":"snap","type":"address"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"}],"name":"diffs","type":"tuple[]"}
 			],
 			"outputs": [
 			]
@@ -73,64 +115,6 @@
 				{"name":"branchName","type":"string"},
 				{"name":"branchcommit","type":"address"},
 				{"name":"commit","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "startProposalForSetCommit",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"branchName","type":"string"},
-				{"name":"branchcommit","type":"address"},
-				{"name":"commit","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setDiff",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"commitName","type":"string"},
-				{"components":[{"name":"snap","type":"address"},{"name":"patch","type":"bytes"}],"name":"diffs","type":"tuple[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setHEAD",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"branchName","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "tryProposalResult",
-			"inputs": [
-				{"name":"proposal","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "sendMoney",
-			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"commit","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "isCompletedCallback",
-			"inputs": [
-				{"name":"_platform_id","type":"uint256"},
-				{"name":"_tokenLocker","type":"address"},
-				{"name":"res","type":"optional(bool)"},
-				{"name":"propData","type":"cell"}
 			],
 			"outputs": [
 			]
@@ -155,11 +139,10 @@
 			]
 		},
 		{
-			"name": "topupCommit",
+			"name": "setHEAD",
 			"inputs": [
 				{"name":"repoName","type":"string"},
-				{"name":"commit","type":"string"},
-				{"name":"value","type":"uint128"}
+				{"name":"branchName","type":"string"}
 			],
 			"outputs": [
 			]
@@ -183,6 +166,77 @@
 				{"name":"nametag","type":"string"}
 			],
 			"outputs": [
+			]
+		},
+		{
+			"name": "deployTree",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"treeName","type":"string"},
+				{"name":"fullTree","type":"string"},
+				{"name":"ipfsTree","type":"string"},
+				{"name":"prevSha","type":"string"},
+				{"name":"flags","type":"uint8"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setTree",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"commitName","type":"string"},
+				{"name":"tree","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForSetCommit",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"branchcommit","type":"address"},
+				{"name":"commit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "tryProposalResult",
+			"inputs": [
+				{"name":"proposal","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isCompletedCallback",
+			"inputs": [
+				{"name":"_platform_id","type":"uint256"},
+				{"name":"_tokenLocker","type":"address"},
+				{"name":"res","type":"optional(bool)"},
+				{"name":"propData","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroy",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getDiffAddr",
+			"inputs": [
+				{"name":"reponame","type":"string"},
+				{"name":"commitName","type":"string"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
 			]
 		},
 		{
@@ -226,6 +280,27 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getTreeAddr",
+			"inputs": [
+				{"name":"commit","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"treeName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getSnapshotCode",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"repo","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
 			]
 		},
 		{
@@ -488,6 +563,8 @@
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_TagCode","type":"cell"},
 		{"name":"m_SnapshotCode","type":"cell"},
+		{"name":"m_codeTree","type":"cell"},
+		{"name":"m_codeDiff","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
 		{"name":"m_SMVClientCode","type":"cell"},
 		{"name":"m_SMVProposalCode","type":"cell"}

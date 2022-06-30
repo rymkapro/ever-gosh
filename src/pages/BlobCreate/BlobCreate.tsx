@@ -72,12 +72,12 @@ const BlobCreatePage = () => {
                 throw new GoshError(EGoshError.NOT_PARTICIPANT);
 
             const name = `${pathName ? `${pathName}/` : ''}${values.name}`;
-            // const exists = goshRepoTree.tree?.items.find(
-            //     (item) =>
-            //         `${item.path ? `${item.path}/` : ''}${item.name}` === name
-            // );
-            // if (exists)
-            //     throw new GoshError(EGoshError.FILE_EXISTS, { file: name });
+            const exists = goshRepoTree.tree?.items.find(
+                (item) =>
+                    `${item.path ? `${item.path}/` : ''}${item.name}` === name
+            );
+            if (exists)
+                throw new GoshError(EGoshError.FILE_EXISTS, { file: name });
 
             const message = [values.title, values.message]
                 .filter((v) => !!v)
@@ -96,10 +96,10 @@ const BlobCreatePage = () => {
                 message,
                 values.tags,
                 undefined,
-                undefined
+                progressCallback
             );
-            // await updateBranch(branch.name);
-            // navigate(urlBack);
+            await updateBranch(branch.name);
+            navigate(urlBack);
         } catch (e: any) {
             console.error(e.message);
             toast.error(e.message);

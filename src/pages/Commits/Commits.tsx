@@ -1,25 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import {
-    Link,
-    useNavigate,
-    useOutletContext,
-    useParams,
-} from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import BranchSelect from '../../components/BranchSelect';
 import CopyClipboard from '../../components/CopyClipboard';
 import Spinner from '../../components/Spinner';
-import {
-    fs,
-    fsExists,
-    getCommit,
-    getCommitTime,
-    ZERO_COMMIT,
-} from '../../helpers';
+import { getCommit, getCommitTime, ZERO_COMMIT } from '../../helpers';
 import { useGoshRepoBranches } from '../../hooks/gosh.hooks';
 import { goshCurrBranchSelector } from '../../store/gosh.state';
-import { GoshCommit } from '../../types/classes';
-import { IGoshCommit, IGoshRepository, TGoshCommit } from '../../types/types';
+import { IGoshRepository, TGoshCommit } from '../../types/types';
 import { shortString } from '../../utils';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
 
@@ -44,10 +32,7 @@ const CommitsPage = () => {
     };
 
     useEffect(() => {
-        const getCommits = async (
-            repo: IGoshRepository,
-            commitAddr: string
-        ) => {
+        const getCommits = async (repo: IGoshRepository, commitAddr: string) => {
             setCommits(undefined);
 
             const commits: TGoshCommit[] = [];
@@ -59,8 +44,7 @@ const CommitsPage = () => {
             setCommits(commits);
         };
 
-        if (goshRepo && branch?.commitAddr)
-            getCommits(goshRepo, branch.commitAddr);
+        if (goshRepo && branch?.commitAddr) getCommits(goshRepo, branch.commitAddr);
     }, [goshRepo, branch?.commitAddr]);
 
     useEffect(() => {
@@ -74,9 +58,7 @@ const CommitsPage = () => {
                 branches={branches}
                 onChange={(selected) => {
                     if (selected) {
-                        navigate(
-                            `/${daoName}/${repoName}/commits/${selected.name}`
-                        );
+                        navigate(`/${daoName}/${repoName}/commits/${selected.name}`);
                     }
                 }}
             />
@@ -113,9 +95,7 @@ const CommitsPage = () => {
                                         <span className="mr-2 text-gray-050a15/65">
                                             Commit by
                                         </span>
-                                        {renderCommitter(
-                                            commit.content.committer || ''
-                                        )}
+                                        {renderCommitter(commit.content.committer || '')}
                                     </div>
                                     <div>
                                         <span className="mr-2 text-gray-050a15/65">
