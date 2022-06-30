@@ -17,7 +17,7 @@
 				{"name":"repo","type":"address"},
 				{"name":"WalletCode","type":"cell"},
 				{"name":"CommitCode","type":"cell"},
-				{"components":[{"name":"snap","type":"address"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"}],"name":"diffs","type":"tuple[]"},
+				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"}],"name":"diffs","type":"tuple[]"},
 				{"name":"next","type":"address"},
 				{"name":"tree","type":"address"},
 				{"name":"index","type":"uint128"}
@@ -145,7 +145,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"snap","type":"address"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"}],"name":"value0","type":"tuple[]"}
+				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"}],"name":"value0","type":"tuple[]"}
 			]
 		},
 		{
@@ -235,7 +235,7 @@
 		{"name":"_commit","type":"string"},
 		{"name":"_name","type":"string"},
 		{"name":"check","type":"bool"},
-		{"components":[{"name":"snap","type":"address"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"}],"name":"_diff","type":"tuple[]"},
+		{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"}],"name":"_diff","type":"tuple[]"},
 		{"name":"_length","type":"uint256"},
 		{"name":"m_WalletCode","type":"cell"},
 		{"name":"m_CommitCode","type":"cell"},

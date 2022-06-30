@@ -12,18 +12,6 @@
 			]
 		},
 		{
-			"name": "deployRepository",
-			"inputs": [
-				{"name":"pubkey","type":"uint256"},
-				{"name":"rootpubkey","type":"uint256"},
-				{"name":"name","type":"string"},
-				{"name":"goshdao","type":"address"},
-				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "deployDao",
 			"inputs": [
 				{"name":"name","type":"string"},

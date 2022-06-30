@@ -674,7 +674,7 @@ export class GoshWallet implements IGoshWallet {
         ];
         for (const { snapshotAddr, patch, ipfs } of diffs) {
             const chunk = chunked[chunked.length - 1];
-            const item = { snap: snapshotAddr, patch, ipfs };
+            const item = { snap: snapshotAddr, patch, ipfs, commit: commitName };
 
             const chunkLen = Buffer.from(JSON.stringify(chunk.items)).byteLength;
             const itemLen = Buffer.from(JSON.stringify(item)).byteLength;
@@ -1353,10 +1353,10 @@ export class GoshTree implements IGoshTree {
         // Decompress
         if ((this.meta.flags & EGoshBlobFlag.COMPRESSED) === EGoshBlobFlag.COMPRESSED) {
             content = await zstd.decompress(this.account.client, content, false);
+            content = Buffer.from(content, 'base64');
         }
 
         // Binary or string
-        content = Buffer.from(content, 'base64');
         if ((this.meta.flags & EGoshBlobFlag.BINARY) !== EGoshBlobFlag.BINARY) {
             content = content.toString();
         }

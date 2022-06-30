@@ -7,12 +7,15 @@
 			"name": "constructor",
 			"inputs": [
 				{"name":"value0","type":"uint256"},
+				{"name":"value1","type":"uint256"},
 				{"name":"name","type":"string"},
 				{"name":"goshdao","type":"address"},
+				{"name":"rootgosh","type":"address"},
 				{"name":"CommitCode","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
 				{"name":"codeTag","type":"cell"},
-				{"name":"SnapshotCode","type":"cell"}
+				{"name":"SnapshotCode","type":"cell"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
