@@ -14,7 +14,8 @@
 				{"name":"rootGosh","type":"address"},
 				{"name":"goshdao","type":"address"},
 				{"name":"rootPubkey","type":"uint256"},
-				{"name":"WalletCode","type":"cell"}
+				{"name":"WalletCode","type":"cell"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -22,6 +23,7 @@
 		{
 			"name": "destroy",
 			"inputs": [
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]

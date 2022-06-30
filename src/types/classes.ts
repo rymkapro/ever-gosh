@@ -176,11 +176,7 @@ export class GoshDao implements IGoshDao {
         };
     }
 
-    async deployWallet(
-        rootPubkey: string,
-        pubkey: string,
-        keys: KeyPair
-    ): Promise<string> {
+    async deployWallet(pubkey: string, keys: KeyPair): Promise<string> {
         if (!this.meta) await this.load();
         if (!this.meta?.name)
             throw new GoshError(EGoshError.META_LOAD, {
@@ -189,7 +185,7 @@ export class GoshDao implements IGoshDao {
             });
 
         // Topup GoshDao, deploy and topup GoshWallet
-        const walletAddr = await this.getWalletAddr(rootPubkey, pubkey);
+        const walletAddr = await this.getWalletAddr(pubkey, 0);
         console.debug('[Deploy wallet] - GoshWallet addr:', walletAddr);
         const wallet = new GoshWallet(this.account.client, walletAddr);
         const acc = await wallet.account.getAccount();
@@ -234,10 +230,10 @@ export class GoshDao implements IGoshDao {
         return walletAddr;
     }
 
-    async getWalletAddr(rootPubkey: string, pubkey: string): Promise<string> {
+    async getWalletAddr(pubkey: string, index: number): Promise<string> {
         const result = await this.account.runLocal('getAddrWallet', {
-            pubkeyroot: rootPubkey,
             pubkey,
+            index,
         });
         return result.decoded?.output.value0;
     }

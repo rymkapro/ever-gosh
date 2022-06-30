@@ -1,13 +1,12 @@
-import React, { useState } from "react";
-import { useQuery } from "react-query";
-import { Link } from "react-router-dom";
-import { useRecoilValue } from "recoil";
-import Spinner from "../../components/Spinner";
-import { useGoshRoot } from "../../hooks/gosh.hooks";
-import { userStateAtom } from "../../store/user.state";
-import { GoshDao, GoshSmvTokenRoot, GoshWallet } from "../../types/classes";
-import { IGoshDao } from "../../types/types";
-
+import { useState } from 'react';
+import { useQuery } from 'react-query';
+import { Link } from 'react-router-dom';
+import { useRecoilValue } from 'recoil';
+import Spinner from '../../components/Spinner';
+import { useGoshRoot } from '../../hooks/gosh.hooks';
+import { userStateAtom } from '../../store/user.state';
+import { GoshDao, GoshSmvTokenRoot, GoshWallet } from '../../types/classes';
+import { IGoshDao } from '../../types/types';
 
 const DaosPage = () => {
     const userState = useRecoilValue(userStateAtom);
@@ -16,31 +15,46 @@ const DaosPage = () => {
 
     const daoListQuery = useQuery(
         ['daoList'],
-        async (): Promise<{ dao: IGoshDao; supply: number; }[]> => {
+        async (): Promise<{ dao: IGoshDao; supply: number }[]> => {
             if (!goshRoot || !userState.keys) return [];
 
             // Get GoshWallet code by user's pubkey and get all user's wallets
-            const walletCode = await goshRoot.getDaoWalletCode(`0x${userState.keys.public}`);
-            const walletsAddrs = await goshRoot.account.client.net.query_collection({
+            const walletCode = await goshRoot.getDaoWalletCode(
+                `0x${userState.keys.public}`
+            );
+            const walletsQuery = await goshRoot.account.client.net.query_collection({
                 collection: 'accounts',
                 filter: {
-                    code: { eq: walletCode }
+                    code: { eq: walletCode },
                 },
-                result: 'id'
+                result: 'id',
             });
 
-            // Get GoshDaos from user's GoshWallets
+            // Get GoshDaos addresses from user's GoshWallets
+            const daoAddrs = new Set(
+                await Promise.all(
+                    (walletsQuery?.result || []).map(async (item: any) => {
+                        const goshWallet = new GoshWallet(
+                            goshRoot.account.client,
+                            item.id
+                        );
+                        return await goshWallet.getDaoAddr();
+                    })
+                )
+            );
+
             return await Promise.all(
-                (walletsAddrs?.result || []).map(async (item: any) => {
+                Array.from(daoAddrs).map(async (addr) => {
                     // Get GoshDao object
-                    const goshWallet = new GoshWallet(goshRoot.account.client, item.id);
-                    const daoAddr = await goshWallet.getDaoAddr();
-                    const dao = new GoshDao(goshRoot.account.client, daoAddr);
+                    const dao = new GoshDao(goshRoot.account.client, addr);
                     await dao.load();
 
                     // Get GoshDao total supply
                     const smvTokenRootAddr = await dao.getSmvRootTokenAddr();
-                    const smvTokenRoot = new GoshSmvTokenRoot(dao.account.client, smvTokenRootAddr);
+                    const smvTokenRoot = new GoshSmvTokenRoot(
+                        dao.account.client,
+                        smvTokenRootAddr
+                    );
                     const totalSupply = await smvTokenRoot.getTotalSupply();
 
                     return { dao, supply: totalSupply };
@@ -52,8 +66,10 @@ const DaosPage = () => {
             select: (data) => {
                 if (!search) return data;
                 const pattern = new RegExp(search, 'i');
-                return data.filter(({ dao }) => dao.meta && dao.meta.name.search(pattern) >= 0);
-            }
+                return data.filter(
+                    ({ dao }) => dao.meta && dao.meta.name.search(pattern) >= 0
+                );
+            },
         }
     );
 
@@ -86,12 +102,17 @@ const DaosPage = () => {
                     </div>
                 )}
                 {daoListQuery.isFetched && !daoListQuery.data?.length && (
-                    <div className="text-gray-606060 text-center">You have no organizations yet</div>
+                    <div className="text-gray-606060 text-center">
+                        You have no organizations yet
+                    </div>
                 )}
 
                 <div className="divide-y divide-gray-c4c4c4">
                     {daoListQuery.data?.map((item, index) => (
-                        <div key={index} className="py-2 flex flex-wrap items-center justify-between gap-2">
+                        <div
+                            key={index}
+                            className="py-2 flex flex-wrap items-center justify-between gap-2"
+                        >
                             <div className="basis-full sm:basis-0 sm:grow">
                                 <Link
                                     to={`/${item.dao.meta?.name}`}
@@ -101,7 +122,9 @@ const DaosPage = () => {
                                 </Link>
                             </div>
                             <div>
-                                <span className="text-gray-606060 text-sm mr-2">Total supply:</span>
+                                <span className="text-gray-606060 text-sm mr-2">
+                                    Total supply:
+                                </span>
                                 {item.supply}
                             </div>
                         </div>
@@ -110,6 +133,6 @@ const DaosPage = () => {
             </div>
         </>
     );
-}
+};
 
 export default DaosPage;

@@ -19,7 +19,8 @@
 				{"name":"CommitCode","type":"cell"},
 				{"components":[{"name":"snap","type":"address"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"}],"name":"diffs","type":"tuple[]"},
 				{"name":"next","type":"address"},
-				{"name":"tree","type":"address"}
+				{"name":"tree","type":"address"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -37,7 +38,8 @@
 				{"name":"pubkey","type":"uint256"},
 				{"name":"branchName","type":"string"},
 				{"name":"branchCommit","type":"address"},
-				{"name":"newC","type":"address"}
+				{"name":"newC","type":"address"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -123,6 +125,7 @@
 		{
 			"name": "destroy",
 			"inputs": [
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -131,7 +134,8 @@
 			"name": "setTree",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
-				{"name":"tree","type":"address"}
+				{"name":"tree","type":"address"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]

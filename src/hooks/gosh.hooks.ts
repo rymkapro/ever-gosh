@@ -10,12 +10,7 @@ import {
     goshRepoTreeSelector,
 } from '../store/gosh.state';
 import { userStateAtom } from '../store/user.state';
-import {
-    GoshDao,
-    GoshRoot,
-    GoshWallet,
-    GoshRepository,
-} from '../types/classes';
+import { GoshDao, GoshRoot, GoshWallet, GoshRepository } from '../types/classes';
 import {
     IGoshDao,
     IGoshRepository,
@@ -63,11 +58,7 @@ export const useGoshWallet = (daoName?: string) => {
 
     useEffect(() => {
         const createWallet = async (goshDao: IGoshDao, keys: KeyPair) => {
-            const rootPubkey = await goshDao.getRootPubkey();
-            const goshWalletAddr = await goshDao.getWalletAddr(
-                rootPubkey,
-                `0x${keys.public}`
-            );
+            const goshWalletAddr = await goshDao.getWalletAddr(`0x${keys.public}`, 0);
             const goshWallet = new GoshWallet(
                 goshDao.account.client,
                 goshWalletAddr,
@@ -93,16 +84,9 @@ export const useGoshRepo = (daoName?: string, name?: string) => {
     const [goshRepo, setGoshRepo] = useState<IGoshRepository>();
 
     useEffect(() => {
-        const createRepo = async (
-            root: IGoshRoot,
-            daoName: string,
-            name: string
-        ) => {
+        const createRepo = async (root: IGoshRoot, daoName: string, name: string) => {
             const repoAddr = await root.getRepoAddr(name, daoName);
-            const repository = new GoshRepository(
-                root.account.client,
-                repoAddr
-            );
+            const repository = new GoshRepository(root.account.client, repoAddr);
             setGoshRepo(repository);
         };
 
@@ -122,9 +106,7 @@ export const useGoshRepoBranches = (
 
     const updateBranches = useCallback(async () => {
         const branches = await goshRepo?.getBranches();
-        const filtered = branches?.filter(
-            ({ deployed, need }) => deployed >= need
-        );
+        const filtered = branches?.filter(({ deployed, need }) => deployed >= need);
         if (filtered) setBranches(filtered);
     }, [goshRepo, setBranches]);
 
@@ -133,9 +115,7 @@ export const useGoshRepoBranches = (
             const branch = await goshRepo?.getBranch(branchName);
             if (branch) {
                 setBranches((currVal) =>
-                    currVal.map((item) =>
-                        item.name !== branch.name ? item : branch
-                    )
+                    currVal.map((item) => (item.name !== branch.name ? item : branch))
                 );
             }
         },
@@ -156,10 +136,8 @@ export const useGoshRepoTree = (
     const needEffect = !disableEffect || (disableEffect && !tree);
     const branchStr = JSON.stringify(branch);
 
-    const getSubtree = (path?: string) =>
-        goshRepoTreeSelector({ type: 'tree', path });
-    const getTreeItems = (path?: string) =>
-        goshRepoTreeSelector({ type: 'items', path });
+    const getSubtree = (path?: string) => goshRepoTreeSelector({ type: 'tree', path });
+    const getTreeItems = (path?: string) => goshRepoTreeSelector({ type: 'items', path });
     const getTreeItem = (path?: string) => goshRepoBlobSelector(path);
 
     useEffect(() => {

@@ -17,7 +17,8 @@
 				{"name":"WalletCode","type":"cell"},
 				{"components":[{"name":"snap","type":"address"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"}],"name":"diffs","type":"tuple[]"},
 				{"name":"next","type":"address"},
-				{"name":"prev","type":"address"}
+				{"name":"prev","type":"address"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -93,6 +94,7 @@
 		{
 			"name": "destroy",
 			"inputs": [
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -150,7 +152,6 @@
 		{"name":"_approved","type":"uint128"},
 		{"name":"_branchName","type":"string"},
 		{"name":"_branchCommit","type":"address"},
-		{"name":"_newC","type":"address"},
-		{"name":"_check","type":"map(address,int128)"}
+		{"name":"_newC","type":"address"}
 	]
 }

@@ -109,8 +109,8 @@ export interface IGoshDao extends IContract {
     };
 
     load(): Promise<void>;
-    deployWallet(rootPubkey: string, pubkey: string, keys: KeyPair): Promise<string>;
-    getWalletAddr(rootPubkey: string, pubkey: string): Promise<string>;
+    deployWallet(pubkey: string, keys: KeyPair): Promise<string>;
+    getWalletAddr(pubkey: string, index: number): Promise<string>;
     getWallets(): Promise<string[]>;
     getName(): Promise<string>;
     getRootPubkey(): Promise<string>;

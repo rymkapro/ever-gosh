@@ -18,7 +18,8 @@
 				{"name":"branch","type":"string"},
 				{"name":"name","type":"string"},
 				{"name":"snap","type":"bool"},
-				{"name":"oldbranch","type":"string"}
+				{"name":"oldbranch","type":"string"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -27,7 +28,8 @@
 			"name": "deployNewSnapshot",
 			"inputs": [
 				{"name":"value","type":"uint256"},
-				{"name":"newbranch","type":"string"}
+				{"name":"newbranch","type":"string"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -60,7 +62,8 @@
 		{
 			"name": "destroy",
 			"inputs": [
-				{"name":"value","type":"uint256"}
+				{"name":"value","type":"uint256"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]

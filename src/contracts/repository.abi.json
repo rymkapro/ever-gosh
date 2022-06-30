@@ -40,7 +40,8 @@
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
 				{"name":"newname","type":"string"},
-				{"name":"fromname","type":"string"}
+				{"name":"fromname","type":"string"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -49,7 +50,8 @@
 			"name": "deleteBranch",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
-				{"name":"name","type":"string"}
+				{"name":"name","type":"string"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -74,7 +76,8 @@
 			"name": "setHEAD",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
-				{"name":"nameBranch","type":"string"}
+				{"name":"nameBranch","type":"string"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]

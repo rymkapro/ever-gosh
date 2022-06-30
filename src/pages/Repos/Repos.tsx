@@ -1,13 +1,12 @@
-import React, { useState } from "react";
-import { useQuery } from "react-query";
-import { useRecoilValue } from "recoil";
-import Spinner from "../../components/Spinner";
-import { useGoshRoot } from "../../hooks/gosh.hooks";
-import { userStateAtom } from "../../store/user.state";
-import { GoshDao, GoshRepository, GoshWallet } from "../../types/classes";
-import { IGoshRepository } from "../../types/types";
-import RepoListItem from "../DaoRepos/RepoListItem";
-
+import { useState } from 'react';
+import { useQuery } from 'react-query';
+import { useRecoilValue } from 'recoil';
+import Spinner from '../../components/Spinner';
+import { useGoshRoot } from '../../hooks/gosh.hooks';
+import { userStateAtom } from '../../store/user.state';
+import { GoshDao, GoshRepository, GoshWallet } from '../../types/classes';
+import { IGoshRepository } from '../../types/types';
+import RepoListItem from '../DaoRepos/RepoListItem';
 
 const RepositoriesPage = () => {
     const userState = useRecoilValue(userStateAtom);
@@ -15,47 +14,59 @@ const RepositoriesPage = () => {
     const [search, setSearch] = useState<string>();
     const repoListQuery = useQuery(
         ['userRepositoryList'],
-        async (): Promise<{ repo: IGoshRepository; daoName?: string; }[]> => {
+        async (): Promise<{ repo: IGoshRepository; daoName?: string }[]> => {
             if (!goshRoot || !userState.keys) return [];
 
             // Get GoshWallet code by user's pubkey and get all user's wallets
-            const walletCode = await goshRoot.getDaoWalletCode(`0x${userState.keys.public}`);
-            const walletCodeHash = await goshRoot.account.client.boc.get_boc_hash({ boc: walletCode });
+            const walletCode = await goshRoot.getDaoWalletCode(
+                `0x${userState.keys.public}`
+            );
+            const walletCodeHash = await goshRoot.account.client.boc.get_boc_hash({
+                boc: walletCode,
+            });
             const walletAddrs = await goshRoot.account.client.net.query_collection({
                 collection: 'accounts',
                 filter: {
-                    code_hash: { eq: walletCodeHash.hash }
+                    code_hash: { eq: walletCodeHash.hash },
                 },
-                result: 'id'
+                result: 'id',
             });
 
             // Get GoshDaos from user's GoshWallets
-            const daos = await Promise.all(
-                (walletAddrs?.result || []).map(async (item: any) => {
-                    // Get GoshDao object
-                    const wallet = new GoshWallet(goshRoot.account.client, item.id);
-                    const daoAddr = await wallet.getDaoAddr();
-                    return new GoshDao(goshRoot.account.client, daoAddr);
-                })
+            const daoAddrs = new Set(
+                await Promise.all(
+                    (walletAddrs?.result || []).map(async (item: any) => {
+                        const wallet = new GoshWallet(goshRoot.account.client, item.id);
+                        return await wallet.getDaoAddr();
+                    })
+                )
             );
+            const daos = Array.from(daoAddrs).map((addr) => {
+                return new GoshDao(goshRoot.account.client, addr);
+            });
 
             // Get repos for each DAO
             const repos = await Promise.all(
                 daos.map(async (dao) => {
                     const repoCode = await goshRoot.getDaoRepoCode(dao.address);
-                    const repoCodeHash = await goshRoot.account.client.boc.get_boc_hash({ boc: repoCode });
+                    const repoCodeHash = await goshRoot.account.client.boc.get_boc_hash({
+                        boc: repoCode,
+                    });
                     const repoAddrs = await goshRoot.account.client.net.query_collection({
                         collection: 'accounts',
                         filter: {
-                            code_hash: { eq: repoCodeHash.hash }
+                            code_hash: { eq: repoCodeHash.hash },
                         },
-                        result: 'id'
+                        result: 'id',
                     });
 
                     await dao.load();
                     const repos = await Promise.all(
                         (repoAddrs?.result || []).map(async (item) => {
-                            const repo = new GoshRepository(goshRoot.account.client, item.id);
+                            const repo = new GoshRepository(
+                                goshRoot.account.client,
+                                item.id
+                            );
                             await repo.load();
                             return repo;
                         })
@@ -75,9 +86,9 @@ const RepositoriesPage = () => {
                 if (!search) return data;
                 const pattern = new RegExp(search, 'i');
                 return data.filter((item) => {
-                    return (`${item.daoName}/${item.repo.meta?.name}`.search(pattern) >= 0)
+                    return `${item.daoName}/${item.repo.meta?.name}`.search(pattern) >= 0;
                 });
-            }
+            },
         }
     );
 
@@ -110,19 +121,20 @@ const RepositoriesPage = () => {
                     </div>
                 )}
 
-                {repoListQuery.data?.map(({ daoName, repo }, index) => (
-                    daoName && (
-                        <RepoListItem
-                            key={index}
-                            daoName={daoName}
-                            repository={repo}
-                            daoLink
-                        />
-                    )
-                ))}
+                {repoListQuery.data?.map(
+                    ({ daoName, repo }, index) =>
+                        daoName && (
+                            <RepoListItem
+                                key={index}
+                                daoName={daoName}
+                                repository={repo}
+                                daoLink
+                            />
+                        )
+                )}
             </div>
         </>
     );
-}
+};
 
 export default RepositoriesPage;
