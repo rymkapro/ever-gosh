@@ -30,7 +30,6 @@ import {
     saveToIPFS,
     ZERO_COMMIT,
     getBlobDiffPatch,
-    MAX_ONCHAIN_FILE_SIZE,
 } from '../helpers';
 import {
     IGoshTree,
@@ -1300,12 +1299,13 @@ export class GoshSnapshot implements IGoshSnapshot {
     async getSnapshot(
         commitName: string,
         treeItem: TGoshTreeItem
-    ): Promise<{ content: string | Buffer; isIpfs: boolean }> {
+    ): Promise<{ content: string | Buffer; patched: string; isIpfs: boolean }> {
         // Read snapshot data
         let patched = '';
         let ipfs = null;
         const result = await this.account.runLocal('getSnapshot', {});
         const { value0, value1, value2, value4, value5 } = result.decoded?.output;
+
         if (value0 === commitName) {
             patched = value1;
             ipfs = value2;
@@ -1314,6 +1314,11 @@ export class GoshSnapshot implements IGoshSnapshot {
             ipfs = value5;
         }
 
+        // Always read patch (may be needed for commit history)
+        let patchedRaw = Buffer.from(patched, 'hex').toString('base64');
+        patchedRaw = await zstd.decompress(this.account.client, patchedRaw, true);
+
+        // Prepare content for whole app usage
         let content: Buffer | string;
         if (ipfs) {
             content = await loadFromIPFS(ipfs);
@@ -1332,7 +1337,7 @@ export class GoshSnapshot implements IGoshSnapshot {
             content = content.toString();
         }
 
-        return { content, isIpfs: !!ipfs };
+        return { content, patched: patchedRaw, isIpfs: !!ipfs };
     }
 
     async getRepoAddr(): Promise<string> {
@@ -1351,43 +1356,8 @@ export class GoshTree implements IGoshTree {
         this.account = new Account({ abi: this.abi }, { client, address });
     }
 
-    // async loadContent(): Promise<string | Buffer> {
-    //     if (!this.meta) await this.load();
-    //     if (this.meta?.flags === undefined) throw new GoshError(EGoshError.META_LOAD);
-
-    //     let content;
-
-    //     // Backward compatibility
-    //     if (this.meta.flags === 0) {
-    //         this.meta.flags |= EGoshBlobFlag.COMPRESSED;
-    //         if (this.meta.ipfs) this.meta.flags |= EGoshBlobFlag.IPFS;
-    //     }
-
-    //     // Load from IPFS or blockchain
-    //     if ((this.meta.flags & EGoshBlobFlag.IPFS) === EGoshBlobFlag.IPFS) {
-    //         content = await loadFromIPFS(this.meta.ipfs);
-    //         content = content.toString();
-    //     } else {
-    //         content = this.meta.content;
-    //     }
-
-    //     // Decompress
-    //     if ((this.meta.flags & EGoshBlobFlag.COMPRESSED) === EGoshBlobFlag.COMPRESSED) {
-    //         content = await zstd.decompress(this.account.client, content, false);
-    //         content = Buffer.from(content, 'base64');
-    //     }
-
-    //     // Binary or string
-    //     if ((this.meta.flags & EGoshBlobFlag.BINARY) !== EGoshBlobFlag.BINARY) {
-    //         content = content.toString();
-    //     }
-
-    //     return content;
-    // }
-
     async getTree(): Promise<TGoshTreeItem[]> {
         const result = await this.account.runLocal('gettree', {});
-        console.debug('getTree', result.decoded?.output);
         return Object.values(result.decoded?.output.value0).map((item: any) => ({
             flags: +item.flags,
             mode: item.mode,

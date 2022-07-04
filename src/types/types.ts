@@ -274,7 +274,7 @@ export interface IGoshSnapshot extends IContract {
     getSnapshot(
         commitName: string,
         treeItem: TGoshTreeItem
-    ): Promise<{ content: string | Buffer; isIpfs: boolean }>;
+    ): Promise<{ content: string | Buffer; patched: string; isIpfs: boolean }>;
     getRepoAddr(): Promise<string>;
 }
 

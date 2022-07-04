@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import Spinner from '../../components/Spinner';
 import { getRepoTree, loadFromIPFS, zstd } from '../../helpers';
-import { EGoshBlobFlag, IGoshRepository } from '../../types/types';
-import { abiSerialized, SortDirection } from '@eversdk/core';
+import { IGoshRepository } from '../../types/types';
+import { abiSerialized } from '@eversdk/core';
 import { Buffer } from 'buffer';
-import * as Diff2html from 'diff2html';
 import BlobDiffPreview from '../../components/Blob/DiffPreview';
-import { GoshCommit, GoshDiff, GoshSnapshot } from '../../types/classes';
+import { GoshCommit, GoshSnapshot } from '../../types/classes';
 import GoshSnapshotAbi from '../../contracts/snapshot.abi.json';
 import * as Diff from 'diff';
 
@@ -15,18 +14,6 @@ type TCommitBlobsType = {
     repo: IGoshRepository;
     branch: string;
     commit: string;
-};
-
-const DiffHtml = (props: any) => {
-    return (
-        <div
-            dangerouslySetInnerHTML={{
-                __html: Diff2html.html(props.patch.join('\n\n'), {
-                    drawFileList: false,
-                }),
-            }}
-        />
-    );
 };
 
 const CommitBlobs = (props: TCommitBlobsType) => {
@@ -70,6 +57,7 @@ const CommitBlobs = (props: TCommitBlobsType) => {
     const getMessages = async (
         addr: string,
         commit: string,
+        reached: boolean = false,
         cursor: string = '',
         msgs: any[] = []
     ) => {
@@ -115,12 +103,13 @@ const CommitBlobs = (props: TCommitBlobsType) => {
             console.debug('Decoded', decoded);
             if (decoded.name === 'applyDiff') {
                 msgs.push(decoded.value);
-                if (decoded.value.namecommit === commit) return msgs;
+                if (reached) return msgs;
+                if (decoded.value.namecommit === commit) reached = true;
             }
         }
 
         if (messages.pageInfo.hasPreviousPage) {
-            await getMessages(addr, commit, messages.pageInfo.startCursor, msgs);
+            await getMessages(addr, commit, reached, messages.pageInfo.startCursor, msgs);
         }
         return msgs;
     };
@@ -186,36 +175,62 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                 }
 
                 const data = await snap.getSnapshot(commitName, treeItem);
+                console.debug('Snap data', data);
                 if (Buffer.isBuffer(data.content)) {
                     _blobs.push({ filename, prev: data.content, curr: data.content });
                     continue;
                 }
 
-                let content = data.content;
-                console.debug('Snap content', content);
                 const snapMsgs = await getMessages(item.snap, commitName);
                 console.debug('Snap msgs', snapMsgs);
 
-                const _blob = { filename, prev: '', curr: '' };
-                for (const item of snapMsgs) {
-                    const patch = await zstd.decompress(
-                        snap.account.client,
-                        Buffer.from(item.diff.patch, 'hex').toString('base64'),
-                        true
-                    );
-                    console.debug('Patch', patch);
+                const _blob = { filename, prev: '', curr: data.content };
+                let _commitReached = false;
+                for (let i = 0; i < snapMsgs.length; i++) {
+                    const item = snapMsgs[i];
+                    if (!_commitReached && item.namecommit === commitName)
+                        _commitReached = true;
 
-                    if (item.namecommit === commitName) {
-                        if (!Buffer.isBuffer(content)) _blob.curr = content;
-                    }
+                    if (item.diff.ipfs) {
+                        const compressed = (
+                            await loadFromIPFS(item.diff.ipfs)
+                        ).toString();
+                        const decompressed = await zstd.decompress(
+                            repo.account.client,
+                            compressed,
+                            true
+                        );
+                        if (!_commitReached) _blob.curr = decompressed;
+                        else _blob.prev = decompressed;
 
-                    const reversedPatch = reversePatch(patch);
-                    console.debug('Reversed patch', reversedPatch);
-                    if (!Buffer.isBuffer(content)) {
-                        content = Diff.applyPatch(content, reversedPatch);
-                        _blob.prev = content;
+                        console.debug('ipfs blob', { ..._blob });
+                    } else {
+                        const prevItem = i > 0 ? snapMsgs[i - 1] : null;
+                        if (prevItem && prevItem.diff.ipfs) {
+                            if (prevItem.namecommit === commitName) {
+                                _blob.curr = _blob.prev;
+                                _blob.prev = data.patched;
+                                continue;
+                            } else _blob.curr = data.patched;
+                        }
+
+                        if (prevItem && !prevItem.diff.ipfs) {
+                            if (prevItem.namecommit === commitName) continue;
+                        }
+
+                        const patch = await zstd.decompress(
+                            snap.account.client,
+                            Buffer.from(item.diff.patch, 'hex').toString('base64'),
+                            true
+                        );
+
+                        const reversedPatch = reversePatch(patch);
+                        const reversed = Diff.applyPatch(_blob.curr, reversedPatch);
+                        if (!_commitReached) _blob.curr = reversed;
+                        else _blob.prev = reversed;
+
+                        console.debug('patch blob', { ..._blob });
                     }
-                    console.debug('Reversed content', content);
                 }
                 console.debug('Blob', _blob);
                 _blobs.push(_blob);
