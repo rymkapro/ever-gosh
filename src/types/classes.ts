@@ -744,15 +744,15 @@ export class GoshWallet implements IGoshWallet {
         if (!repo.meta) throw new GoshError(EGoshError.NO_REPO);
 
         // Calculate tree sha and prepare content
-        const content = items
-            .map(
-                (item) =>
-                    `${item.flags} ${item.mode} ${item.type} ${item.sha}\t${item.name}`
-            )
-            .join('\n');
+        // const content = items
+        //     .map(
+        //         (item) =>
+        //             `${item.flags} ${item.mode} ${item.type} ${item.sha}\t${item.name}`
+        //     )
+        //     .join('\n');
 
         const sha = sha1Tree(items);
-        const prepared = await zstd.compress(this.account.client, content);
+        // const prepared = await zstd.compress(this.account.client, content);
         if (!sha) {
             const details = { items };
             throw new Error(
@@ -771,13 +771,13 @@ export class GoshWallet implements IGoshWallet {
         }
 
         // Upload to ipfs (if needed) and generate flags
-        let ipfs = '';
-        let flags = 0 | EGoshBlobFlag.COMPRESSED;
-        if (prepared.length > MAX_ONCHAIN_FILE_SIZE) {
-            console.debug('[Deploy tree] - Save blob to ipfs');
-            ipfs = await saveToIPFS(prepared);
-            flags |= EGoshBlobFlag.IPFS;
-        }
+        // let ipfs = '';
+        // let flags = 0 | EGoshBlobFlag.COMPRESSED;
+        // if (prepared.length > MAX_ONCHAIN_FILE_SIZE) {
+        //     console.debug('[Deploy tree] - Save blob to ipfs');
+        //     ipfs = await saveToIPFS(prepared);
+        //     flags |= EGoshBlobFlag.IPFS;
+        // }
 
         // Deploy tree and get address
         console.debug('Deploy tree\n', {
