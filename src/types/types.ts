@@ -160,7 +160,7 @@ export interface IGoshWallet extends IContract {
     deleteBranch(repo: IGoshRepository, branchName: string): Promise<void>;
     deployCommit(
         repo: IGoshRepository,
-        branchName: string,
+        branch: TGoshBranch,
         commitName: string,
         commitContent: string,
         parentAddrs: string[],
@@ -280,17 +280,9 @@ export interface IGoshSnapshot extends IContract {
 
 export interface IGoshTree extends IContract {
     address: string;
-    meta?: {
-        name: string;
-        content: string;
-        ipfs: string;
-        flags: number;
-        commitAddr: string;
-    };
 
-    load(): Promise<void>;
-    getTree(): Promise<any>;
-    loadContent(): Promise<string | Buffer>;
+    getTree(): Promise<TGoshTreeItem[]>;
+    getSha(): Promise<any>;
 }
 
 export interface IGoshTag extends IContract {

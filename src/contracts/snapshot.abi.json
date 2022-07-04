@@ -47,7 +47,6 @@
 		{
 			"name": "cancelDiff",
 			"inputs": [
-				{"name":"nameCommit","type":"string"}
 			],
 			"outputs": [
 			]
@@ -132,8 +131,8 @@
 		{"name":"_rootRepo","type":"address"},
 		{"name":"_snapshot","type":"bytes"},
 		{"name":"_oldsnapshot","type":"bytes"},
-		{"name":"_oldcommit","type":"address"},
-		{"name":"_commit","type":"address"},
+		{"name":"_olddiff","type":"address"},
+		{"name":"_diff","type":"address"},
 		{"name":"_rootgosh","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_oldcommits","type":"string"},

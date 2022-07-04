@@ -449,7 +449,7 @@ export class GoshWallet implements IGoshWallet {
         // Deploy commit
         await this.deployCommit(
             repo,
-            branch.name,
+            branch,
             futureCommit.name,
             futureCommit.content,
             futureCommit.parents,
@@ -650,7 +650,7 @@ export class GoshWallet implements IGoshWallet {
 
     async deployCommit(
         repo: IGoshRepository,
-        branchName: string,
+        branch: TGoshBranch,
         commitName: string,
         commitContent: string,
         parentAddrs: string[],
@@ -667,7 +667,7 @@ export class GoshWallet implements IGoshWallet {
         // Split diffs by chunks of diffs
         const chunked: any[] = [
             {
-                addr: await repo.getCommitAddr(commitName),
+                addr: await this.getDiffAddr(repo.meta.name, commitName, 0),
                 index: 0,
                 items: [],
             },
@@ -689,45 +689,55 @@ export class GoshWallet implements IGoshWallet {
                 });
             }
         }
-
-        // Generate next, prev for chunks
-        for (let i = 0; i < chunked.length; i++) {
-            chunked[i].next = i < chunked.length - 1 ? chunked[i + 1].addr : '';
-            chunked[i].prev = i > 0 ? chunked[i - 1].addr : '';
-        }
         console.debug('Deploy commit diffs:', chunked);
 
-        // Deploy commit/diffs
+        // Deploy diffs
         const repoName = repo.meta.name;
         await Promise.all(
             chunked.map(async (chunk) => {
-                if (chunk.index === 0) {
-                    console.debug('Deploy commit', chunk);
-                    await this.run('deployCommit', {
-                        repoName,
-                        branchName,
-                        commitName,
-                        fullCommit: commitContent,
-                        parents: parentAddrs,
-                        next: chunk.next,
-                        tree: treeAddr,
-                        diffs: chunk.items,
-                    });
-                } else {
-                    console.debug('Deploy diff', chunk);
-                    await this.run('deployDiff', {
-                        repoName,
-                        branchName,
-                        commitName,
-                        fullCommit: commitContent,
-                        prev: chunk.prev,
-                        next: chunk.next,
-                        diffs: chunk.items,
-                        index: chunk.index,
-                    });
-                }
+                const last = chunk.index === chunked.length - 1;
+                console.debug('Deploy diff', {
+                    repoName,
+                    branchName: branch.name,
+                    branchcommit: branch.commitAddr,
+                    commitName,
+                    fullCommit: commitContent,
+                    diffs: chunk.items,
+                    index: chunk.index,
+                    last,
+                });
+                await this.run('deployDiff', {
+                    repoName,
+                    branchName: branch.name,
+                    branchcommit: branch.commitAddr,
+                    commitName,
+                    fullCommit: commitContent,
+                    diffs: chunk.items,
+                    index: chunk.index,
+                    last,
+                });
             })
         );
+
+        // Deploy commit
+        console.debug('Deploy commit', {
+            repoName,
+            branchName: branch.name,
+            commitName,
+            fullCommit: commitContent,
+            parents: parentAddrs,
+            diff: chunked[0].addr,
+            tree: treeAddr,
+        });
+        await this.run('deployCommit', {
+            repoName,
+            branchName: branch.name,
+            commitName,
+            fullCommit: commitContent,
+            parents: parentAddrs,
+            diff: chunked[0].addr,
+            tree: treeAddr,
+        });
     }
 
     async deployTree(repo: IGoshRepository, items: TGoshTreeItem[]): Promise<string> {
@@ -751,7 +761,8 @@ export class GoshWallet implements IGoshWallet {
         }
 
         // Blob name and check if not deployed
-        const name = `tree ${sha}`;
+        const name = sha;
+        // const name = `tree ${sha}`;
         const addr = await this.getTreeAddr(repo.address, name);
         const blob = new GoshTree(this.account.client, addr);
         const blobAcc = await blob.account.getAccount();
@@ -769,14 +780,38 @@ export class GoshWallet implements IGoshWallet {
         }
 
         // Deploy tree and get address
+        console.debug('Deploy tree\n', {
+            repoName: repo.meta?.name,
+            shaTree: name,
+            datatree: items.map(({ flags, mode, type, name, sha }) => ({
+                flags: flags.toString(),
+                mode,
+                typeObj: type,
+                name,
+                sha1: sha,
+            })),
+            ipfs: null,
+        });
         await this.run('deployTree', {
             repoName: repo.meta?.name,
-            treeName: name,
-            fullTree: !ipfs ? prepared : '',
-            ipfsTree: ipfs,
-            flags,
-            prevSha: '',
+            shaTree: name,
+            datatree: items.map(({ flags, mode, type, name, sha }) => ({
+                flags: flags.toString(),
+                mode,
+                typeObj: type,
+                name,
+                sha1: sha,
+            })),
+            ipfs: null,
         });
+        // await this.run('deployTree', {
+        //     repoName: repo.meta?.name,
+        //     treeName: name,
+        //     fullTree: !ipfs ? prepared : '',
+        //     ipfsTree: ipfs,
+        //     flags,
+        //     prevSha: '',
+        // });
         return addr;
     }
 
@@ -1269,9 +1304,7 @@ export class GoshSnapshot implements IGoshSnapshot {
         // Read snapshot data
         let patched = '';
         let ipfs = null;
-        const result = await this.account.runLocal('getSnapshot', {
-            commit: commitName,
-        });
+        const result = await this.account.runLocal('getSnapshot', {});
         const { value0, value1, value2, value4, value5 } = result.decoded?.output;
         if (value0 === commitName) {
             patched = value1;
@@ -1312,65 +1345,61 @@ export class GoshTree implements IGoshTree {
     abi: any = GoshTreeABI;
     account: Account;
     address: string;
-    meta?: IGoshTree['meta'];
 
     constructor(client: TonClient, address: string) {
         this.address = address;
         this.account = new Account({ abi: this.abi }, { client, address });
     }
 
-    async load(): Promise<void> {
-        const meta = await this.getTree();
-        this.meta = {
-            name: meta.sha,
-            content: meta.content,
-            ipfs: meta.ipfs,
-            flags: +meta.flags,
-            commitAddr: meta.commit,
-        };
-    }
+    // async loadContent(): Promise<string | Buffer> {
+    //     if (!this.meta) await this.load();
+    //     if (this.meta?.flags === undefined) throw new GoshError(EGoshError.META_LOAD);
 
-    async loadContent(): Promise<string | Buffer> {
-        if (!this.meta) await this.load();
-        if (this.meta?.flags === undefined) throw new GoshError(EGoshError.META_LOAD);
+    //     let content;
 
-        let content;
+    //     // Backward compatibility
+    //     if (this.meta.flags === 0) {
+    //         this.meta.flags |= EGoshBlobFlag.COMPRESSED;
+    //         if (this.meta.ipfs) this.meta.flags |= EGoshBlobFlag.IPFS;
+    //     }
 
-        // Backward compatibility
-        if (this.meta.flags === 0) {
-            this.meta.flags |= EGoshBlobFlag.COMPRESSED;
-            if (this.meta.ipfs) this.meta.flags |= EGoshBlobFlag.IPFS;
-        }
+    //     // Load from IPFS or blockchain
+    //     if ((this.meta.flags & EGoshBlobFlag.IPFS) === EGoshBlobFlag.IPFS) {
+    //         content = await loadFromIPFS(this.meta.ipfs);
+    //         content = content.toString();
+    //     } else {
+    //         content = this.meta.content;
+    //     }
 
-        // Load from IPFS or blockchain
-        if ((this.meta.flags & EGoshBlobFlag.IPFS) === EGoshBlobFlag.IPFS) {
-            content = await loadFromIPFS(this.meta.ipfs);
-            content = content.toString();
-        } else {
-            content = this.meta.content;
-        }
+    //     // Decompress
+    //     if ((this.meta.flags & EGoshBlobFlag.COMPRESSED) === EGoshBlobFlag.COMPRESSED) {
+    //         content = await zstd.decompress(this.account.client, content, false);
+    //         content = Buffer.from(content, 'base64');
+    //     }
 
-        // Decompress
-        if ((this.meta.flags & EGoshBlobFlag.COMPRESSED) === EGoshBlobFlag.COMPRESSED) {
-            content = await zstd.decompress(this.account.client, content, false);
-            content = Buffer.from(content, 'base64');
-        }
+    //     // Binary or string
+    //     if ((this.meta.flags & EGoshBlobFlag.BINARY) !== EGoshBlobFlag.BINARY) {
+    //         content = content.toString();
+    //     }
 
-        // Binary or string
-        if ((this.meta.flags & EGoshBlobFlag.BINARY) !== EGoshBlobFlag.BINARY) {
-            content = content.toString();
-        }
+    //     return content;
+    // }
 
-        return content;
-    }
-
-    async getName(): Promise<string> {
-        const result = await this.account.runLocal('getNameBlob', {});
-        return result.decoded?.output.value0;
-    }
-
-    async getTree(): Promise<any> {
+    async getTree(): Promise<TGoshTreeItem[]> {
         const result = await this.account.runLocal('gettree', {});
+        console.debug('getTree', result.decoded?.output);
+        return Object.values(result.decoded?.output.value0).map((item: any) => ({
+            flags: +item.flags,
+            mode: item.mode,
+            type: item.typeObj,
+            sha: item.sha1,
+            path: '',
+            name: item.name,
+        }));
+    }
+
+    async getSha(): Promise<any> {
+        const result = await this.account.runLocal('getsha', {});
         return result.decoded?.output;
     }
 }

@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import Spinner from '../../components/Spinner';
 import { getRepoTree, loadFromIPFS, zstd } from '../../helpers';
 import { EGoshBlobFlag, IGoshRepository } from '../../types/types';
-import GoshSnapshotABI from '../../contracts/snapshot.abi.json';
-import { abiSerialized } from '@eversdk/core';
+import { abiSerialized, SortDirection } from '@eversdk/core';
 import { Buffer } from 'buffer';
 import * as Diff2html from 'diff2html';
 import BlobDiffPreview from '../../components/Blob/DiffPreview';
 import { GoshCommit, GoshDiff, GoshSnapshot } from '../../types/classes';
+import GoshSnapshotAbi from '../../contracts/snapshot.abi.json';
+import * as Diff from 'diff';
 
 type TCommitBlobsType = {
     className?: string;
@@ -34,10 +35,95 @@ const CommitBlobs = (props: TCommitBlobsType) => {
     const [blobs, setBlobs] = useState<
         {
             filename: string;
-            content: string;
-            patch: string;
+            prev: string;
+            curr: string;
         }[]
     >([]);
+
+    const reversePatch = (patch: string) => {
+        const parsedDiff = Diff.parsePatch(patch)[0];
+
+        const { oldFileName, newFileName, oldHeader, newHeader, hunks } = parsedDiff;
+
+        parsedDiff.oldFileName = newFileName;
+        parsedDiff.oldHeader = newHeader;
+        parsedDiff.newFileName = oldFileName;
+        parsedDiff.newHeader = oldHeader;
+
+        for (const hunk of hunks) {
+            const { oldLines, oldStart, newLines, newStart, lines } = hunk;
+            hunk.oldLines = newLines;
+            hunk.oldStart = newStart;
+            hunk.newLines = oldLines;
+            hunk.newStart = oldStart;
+
+            hunk.lines = lines.map((l) => {
+                if (l.startsWith('-')) return `+${l.slice(1)}`;
+                if (l.startsWith('+')) return `-${l.slice(1)}`;
+                return l;
+            });
+        }
+
+        return parsedDiff;
+    };
+
+    const getMessages = async (
+        addr: string,
+        commit: string,
+        cursor: string = '',
+        msgs: any[] = []
+    ) => {
+        const queryString = `
+        query{
+            blockchain{
+                account(
+                  address:"${addr}"
+                ) {
+                messages(msg_type:IntIn, last:50, before:"${cursor}") {
+                  edges{
+                    node{
+                      boc
+                      created_at
+                    }
+                    cursor
+                  }
+                  pageInfo{
+                    hasPreviousPage
+                    startCursor
+                  }
+                }
+              }
+            }
+          }`;
+        const query = await repo.account.client.net.query({
+            query: queryString,
+        });
+        const messages = query.result.data.blockchain.account.messages;
+        messages.edges.sort(
+            (a: any, b: any) =>
+                //@ts-ignore
+                (a.node.created_at < b.node.created_at) -
+                //@ts-ignore
+                (a.node.created_at > b.node.created_at)
+        );
+        for (const item of messages.edges) {
+            const decoded = await repo.account.client.abi.decode_message({
+                abi: abiSerialized(GoshSnapshotAbi),
+                message: item.node.boc,
+                allow_partial: true,
+            });
+            console.debug('Decoded', decoded);
+            if (decoded.name === 'applyDiff') {
+                msgs.push(decoded.value);
+                if (decoded.value.namecommit === commit) return msgs;
+            }
+        }
+
+        if (messages.pageInfo.hasPreviousPage) {
+            await getMessages(addr, commit, messages.pageInfo.startCursor, msgs);
+        }
+        return msgs;
+    };
 
     useEffect(() => {
         const getCommitBlobs = async (
@@ -47,17 +133,8 @@ const CommitBlobs = (props: TCommitBlobsType) => {
         ) => {
             setIsFetched(false);
 
-            const snapCode = await repo.getSnapshotCode(branch);
             const commitAddr = await repo.getCommitAddr(commitName);
             const commit = new GoshCommit(repo.account.client, commitAddr);
-
-            const sources: string[] = [commitAddr];
-            let nextAddr: string = await commit.getNextAddr();
-            while (nextAddr) {
-                sources.push(nextAddr);
-                const diff = new GoshDiff(repo.account.client, nextAddr);
-                nextAddr = await diff.getNextAddr();
-            }
 
             const tree = await getRepoTree(repo, commitAddr);
             console.debug('Tree', tree);
@@ -65,81 +142,86 @@ const CommitBlobs = (props: TCommitBlobsType) => {
             const messages = await repo.account.client.net.query_collection({
                 collection: 'messages',
                 filter: {
-                    src: {
-                        in: sources,
+                    dst: {
+                        eq: commitAddr,
                     },
                     msg_type: { eq: 0 },
-                    dst_account: {
-                        code: { eq: snapCode },
-                    },
                 },
-                result: 'dst boc',
+                result: 'dst boc created_at',
             });
+            console.debug(messages.result);
 
             const blobs: any[] = [];
             for (const message of messages.result) {
-                const decoded = await repo.account.client.abi.decode_message({
-                    abi: abiSerialized(GoshSnapshotABI),
-                    message: message.boc,
-                });
-
-                if (decoded.name === 'applyDiff') {
-                    let patch;
-                    let content;
-
-                    const snapshot = new GoshSnapshot(
-                        repo.account.client,
-                        decoded.value.diff.snap
-                    );
-                    let filename = await snapshot.getName();
-                    filename = filename.replace(`${branch}/`, '');
-
-                    const treeItem = tree.items.find((item) => {
-                        const path = item.path ? `${item.path}/` : '';
-                        return `${path}${item.name}` === filename;
+                try {
+                    const decoded = await repo.account.client.abi.decode_message({
+                        abi: abiSerialized(commit.abi),
+                        message: message.boc,
+                        allow_partial: true,
                     });
-                    if (!treeItem) {
-                        console.error('Tree item not found', filename);
-                        continue;
-                    }
-                    console.debug('Tree item', treeItem);
+                    // console.debug('Decoded', decoded);
 
-                    if (decoded.value.diff.ipfs) {
-                        content = await loadFromIPFS(decoded.value.diff.ipfs);
-                        if (
-                            (treeItem.flags & EGoshBlobFlag.COMPRESSED) ===
-                            EGoshBlobFlag.COMPRESSED
-                        ) {
-                            content = await zstd.decompress(
-                                repo.account.client,
-                                content.toString(),
-                                false
-                            );
-                            content = Buffer.from(content, 'base64');
-                        }
-                        if (
-                            (treeItem.flags & EGoshBlobFlag.BINARY) !==
-                            EGoshBlobFlag.BINARY
-                        ) {
-                            content = content.toString();
-                        }
-                    } else {
-                        const compressed = Buffer.from(
-                            decoded.value.diff.patch,
-                            'hex'
-                        ).toString('base64');
-                        patch = await zstd.decompress(
-                            repo.account.client,
-                            compressed,
-                            true
-                        );
+                    if (decoded.name === 'getAcceptedDiff') {
+                        blobs.push({
+                            snap: decoded.value.value0.snap,
+                            commit: decoded.value.value0.commit,
+                        });
                     }
-
-                    blobs.push({ filename, content, patch });
-                }
+                } catch {}
             }
 
-            setBlobs(blobs);
+            const _blobs: any[] = [];
+            for (const item of blobs) {
+                const snap = new GoshSnapshot(repo.account.client, item.snap);
+                let filename = await snap.getName();
+                filename = filename.split('/').slice(1).join('/');
+
+                const treeItem = tree.items.find((item) => {
+                    const path = item.path ? `${item.path}/` : '';
+                    return `${path}${item.name}` === filename;
+                });
+                if (!treeItem) {
+                    console.error('Tree item not found', filename);
+                    continue;
+                }
+
+                const data = await snap.getSnapshot(commitName, treeItem);
+                if (Buffer.isBuffer(data.content)) {
+                    _blobs.push({ filename, prev: data.content, curr: data.content });
+                    continue;
+                }
+
+                let content = data.content;
+                console.debug('Snap content', content);
+                const snapMsgs = await getMessages(item.snap, commitName);
+                console.debug('Snap msgs', snapMsgs);
+
+                const _blob = { filename, prev: '', curr: '' };
+                for (const item of snapMsgs) {
+                    const patch = await zstd.decompress(
+                        snap.account.client,
+                        Buffer.from(item.diff.patch, 'hex').toString('base64'),
+                        true
+                    );
+                    console.debug('Patch', patch);
+
+                    if (item.namecommit === commitName) {
+                        if (!Buffer.isBuffer(content)) _blob.curr = content;
+                    }
+
+                    const reversedPatch = reversePatch(patch);
+                    console.debug('Reversed patch', reversedPatch);
+                    if (!Buffer.isBuffer(content)) {
+                        content = Diff.applyPatch(content, reversedPatch);
+                        _blob.prev = content;
+                    }
+                    console.debug('Reversed content', content);
+                }
+                console.debug('Blob', _blob);
+                _blobs.push(_blob);
+            }
+
+            setBlobs(_blobs);
             setIsFetched(true);
         };
 
@@ -155,29 +237,15 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                 </div>
             )}
 
-            {isFetched && (
-                <>
-                    <DiffHtml
-                        patch={blobs
-                            .filter((blob) => !!blob.patch)
-                            .map((blob) => blob.patch)}
-                    />
-
-                    {blobs
-                        .filter((blob) => !!blob.content)
-                        .map((blob, index) => (
-                            <div
-                                key={index}
-                                className="my-5 border rounded overflow-hidden"
-                            >
-                                <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
-                                    {blob.filename}
-                                </div>
-                                <BlobDiffPreview modified={blob.content} />
-                            </div>
-                        ))}
-                </>
-            )}
+            {isFetched &&
+                blobs.map((blob, index) => (
+                    <div key={index} className="my-5 border rounded overflow-hidden">
+                        <div className="bg-gray-100 border-b px-3 py-1.5 text-sm font-semibold">
+                            {blob.filename}
+                        </div>
+                        <BlobDiffPreview modified={blob.curr} original={blob.prev} />
+                    </div>
+                ))}
         </div>
     );
 };

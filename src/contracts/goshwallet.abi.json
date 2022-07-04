@@ -45,8 +45,26 @@
 			"name": "sendMoney",
 			"inputs": [
 				{"name":"repo","type":"address"},
+				{"name":"commit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoneyDiff",
+			"inputs": [
+				{"name":"repo","type":"address"},
 				{"name":"commit","type":"string"},
 				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoneyTree",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"shaTree","type":"string"}
 			],
 			"outputs": [
 			]
@@ -101,12 +119,12 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
+				{"name":"branchcommit","type":"address"},
 				{"name":"commitName","type":"string"},
 				{"name":"fullCommit","type":"string"},
-				{"name":"next","type":"address"},
-				{"name":"prev","type":"address"},
 				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"}],"name":"diffs","type":"tuple[]"},
-				{"name":"index","type":"uint128"}
+				{"name":"index","type":"uint128"},
+				{"name":"last","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -119,9 +137,8 @@
 				{"name":"commitName","type":"string"},
 				{"name":"fullCommit","type":"string"},
 				{"name":"parents","type":"address[]"},
-				{"name":"next","type":"address"},
-				{"name":"tree","type":"address"},
-				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"}],"name":"diffs","type":"tuple[]"}
+				{"name":"diff","type":"address"},
+				{"name":"tree","type":"address"}
 			],
 			"outputs": [
 			]
@@ -131,7 +148,6 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
-				{"name":"branchcommit","type":"address"},
 				{"name":"commit","type":"string"}
 			],
 			"outputs": [
@@ -190,11 +206,9 @@
 			"name": "deployTree",
 			"inputs": [
 				{"name":"repoName","type":"string"},
-				{"name":"treeName","type":"string"},
-				{"name":"fullTree","type":"string"},
-				{"name":"ipfsTree","type":"string"},
-				{"name":"prevSha","type":"string"},
-				{"name":"flags","type":"uint8"}
+				{"name":"shaTree","type":"string"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"}],"name":"datatree","type":"tuple[]"},
+				{"name":"ipfs","type":"optional(string)"}
 			],
 			"outputs": [
 			]
@@ -214,7 +228,6 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
-				{"name":"branchcommit","type":"address"},
 				{"name":"commit","type":"string"}
 			],
 			"outputs": [
@@ -310,7 +323,6 @@
 		{
 			"name": "getTreeAddr",
 			"inputs": [
-				{"name":"commit","type":"string"},
 				{"name":"repo","type":"address"},
 				{"name":"treeName","type":"string"}
 			],

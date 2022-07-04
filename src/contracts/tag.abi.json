@@ -11,7 +11,7 @@
 				{"name":"nameCommit","type":"string"},
 				{"name":"commit","type":"address"},
 				{"name":"content","type":"string"},
-				{"name":"gosh","type":"address"},
+				{"name":"goshaddr","type":"address"},
 				{"name":"goshdao","type":"address"},
 				{"name":"WalletCode","type":"cell"},
 				{"name":"index","type":"uint128"}

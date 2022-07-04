@@ -6,7 +6,7 @@
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"gosh","type":"address"},
+				{"name":"goshaddr","type":"address"},
 				{"name":"WalletCode","type":"cell"},
 				{"name":"codeDao","type":"cell"}
 			],
