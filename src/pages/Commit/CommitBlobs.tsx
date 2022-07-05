@@ -102,6 +102,7 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                     allow_partial: true,
                 });
                 console.debug('Decoded', decoded);
+                if (decoded.name === 'destroy') return msgs;
                 if (decoded.name === 'applyDiff') {
                     msgs.push(decoded.value);
                     if (reached) return msgs;
