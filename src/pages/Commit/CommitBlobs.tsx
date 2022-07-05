@@ -95,17 +95,19 @@ const CommitBlobs = (props: TCommitBlobsType) => {
                 (a.node.created_at > b.node.created_at)
         );
         for (const item of messages.edges) {
-            const decoded = await repo.account.client.abi.decode_message({
-                abi: abiSerialized(GoshSnapshotAbi),
-                message: item.node.boc,
-                allow_partial: true,
-            });
-            console.debug('Decoded', decoded);
-            if (decoded.name === 'applyDiff') {
-                msgs.push(decoded.value);
-                if (reached) return msgs;
-                if (decoded.value.namecommit === commit) reached = true;
-            }
+            try {
+                const decoded = await repo.account.client.abi.decode_message({
+                    abi: abiSerialized(GoshSnapshotAbi),
+                    message: item.node.boc,
+                    allow_partial: true,
+                });
+                console.debug('Decoded', decoded);
+                if (decoded.name === 'applyDiff') {
+                    msgs.push(decoded.value);
+                    if (reached) return msgs;
+                    if (decoded.value.namecommit === commit) reached = true;
+                }
+            } catch {}
         }
 
         if (messages.pageInfo.hasPreviousPage) {
