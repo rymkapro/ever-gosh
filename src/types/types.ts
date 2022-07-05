@@ -59,10 +59,12 @@ export type TGoshDiff = {
 };
 
 export type TCreateCommitCallbackParams = {
-    tree?: boolean;
+    diffsPrepare?: boolean;
+    treePrepare?: boolean;
+    treeDeploy?: boolean;
+    treeSet?: boolean;
     commitDeploy?: boolean;
-    blobsDeploy?: { counter: number; total: number };
-    blobsSet?: { counter: number; total: number };
+    tagsDeploy?: boolean;
     completed?: boolean;
 };
 

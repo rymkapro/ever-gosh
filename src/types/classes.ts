@@ -422,7 +422,7 @@ export class GoshWallet implements IGoshWallet {
         const updatedTree = getTreeFromItems(items);
         calculateSubtrees(updatedTree);
         const updatedTreeRootSha = sha1Tree(updatedTree['']);
-        !!callback && callback({ tree: true });
+        !!callback && callback({ diffsPrepare: true, treePrepare: true });
         console.debug('[Create commit] - Updated tree:', updatedTree);
 
         // Prepare commit
@@ -444,6 +444,7 @@ export class GoshWallet implements IGoshWallet {
             const addr = await this.deployTree(repo, subtree);
             console.debug('Subtree addr:', addr);
         }
+        !!callback && callback({ treeDeploy: true });
 
         // Deploy commit
         await this.deployCommit(
@@ -464,9 +465,11 @@ export class GoshWallet implements IGoshWallet {
             console.debug('[Create commit] - Deploy tag:', i, tagsList[i]);
             await this.deployTag(repo, futureCommit.name, tagsList[i]);
         }
+        !!callback && callback({ tagsDeploy: true });
 
         // Set tree
         await this.setTree(repo.meta.name, futureCommit.name, treeRootAddr);
+        !!callback && callback({ treeSet: true });
 
         // Set repo commit if not proposal or start new proposal
         if (!isMainBranch(branch.name)) {

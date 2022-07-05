@@ -1,42 +1,46 @@
-import React from "react";
-import Spinner from "../../components/Spinner";
-import { TCreateCommitCallbackParams } from "../../types/types";
-
+import Spinner from '../../components/Spinner';
+import { TCreateCommitCallbackParams } from '../../types/types';
 
 const Result = (props: any) => {
-    return (
-        <span className="mr-3">
-            {!props.flag ? <Spinner size="sm" /> : 'OK'}
-        </span>
-    );
-}
+    return <span className="mr-3">{!props.flag ? <Spinner size="sm" /> : 'OK'}</span>;
+};
 
 const CommitProgress = (props: TCreateCommitCallbackParams) => {
     const {
-        tree,
+        diffsPrepare,
+        treePrepare,
+        treeDeploy,
+        treeSet,
         commitDeploy,
-        blobsDeploy,
-        blobsSet,
-        completed
+        tagsDeploy,
+        completed,
     } = props;
     return (
         <div className="text-sm text-gray-050a15/70 bg-gray-050a15/5 rounded p-3">
             <code className="flex flex-col gap-2">
                 <div>
-                    <Result flag={tree} />
+                    <Result flag={diffsPrepare} />
+                    Prepare diffs...
+                </div>
+                <div>
+                    <Result flag={treePrepare} />
                     Build updated tree...
+                </div>
+                <div>
+                    <Result flag={treeDeploy} />
+                    Deploy trees...
                 </div>
                 <div>
                     <Result flag={commitDeploy} />
                     Deploy commit...
                 </div>
                 <div>
-                    <Result flag={blobsDeploy && blobsDeploy?.counter === blobsDeploy?.total} />
-                    Deploy blobs... {blobsDeploy?.counter ?? 0} / {blobsDeploy?.total ?? 0}
+                    <Result flag={tagsDeploy} />
+                    Deploy tags...
                 </div>
                 <div>
-                    <Result flag={blobsSet && blobsSet?.counter === blobsSet?.total} />
-                    Set blobs for commit... {blobsSet?.counter ?? 0} / {blobsSet?.total ?? 0}
+                    <Result flag={treeSet} />
+                    Update commit tree...
                 </div>
                 <div>
                     <Result flag={completed} />
@@ -45,6 +49,6 @@ const CommitProgress = (props: TCreateCommitCallbackParams) => {
             </code>
         </div>
     );
-}
+};
 
 export default CommitProgress;
