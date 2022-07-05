@@ -11,7 +11,7 @@ import BlobEditor from '../../components/Blob/Editor';
 import FormCommitBlock from '../BlobCreate/FormCommitBlock';
 import { useMonaco } from '@monaco-editor/react';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
-import { IGoshWallet, TGoshTreeItem } from '../../types/types';
+import { IGoshRepository, IGoshWallet, TGoshTreeItem } from '../../types/types';
 import { getCodeLanguageFromFilename, splitByPath, isMainBranch } from '../../helpers';
 import BlobDiffPreview from '../../components/Blob/DiffPreview';
 import { goshCurrBranchSelector } from '../../store/gosh.state';
@@ -104,7 +104,7 @@ const BlobUpdatePage = () => {
     useEffect(() => {
         const getBlob = async (
             wallet: IGoshWallet,
-            repoAddr: string,
+            repo: IGoshRepository,
             branch: string,
             treeItem: TGoshTreeItem,
             commitAddr: string
@@ -112,7 +112,7 @@ const BlobUpdatePage = () => {
             let filepath = `${treeItem.path ? `${treeItem.path}/` : ''}`;
             filepath = `${filepath}${treeItem.name}`;
 
-            const snapAddr = await wallet.getSnapshotAddr(repoAddr, branch, filepath);
+            const snapAddr = await repo.getSnapshotAddr(branch, filepath);
             console.debug(snapAddr);
 
             const commit = new GoshCommit(wallet.account.client, commitAddr);
@@ -126,23 +126,11 @@ const BlobUpdatePage = () => {
             } else setBlob(data);
         };
 
-        if (
-            goshWallet &&
-            goshRepo.address &&
-            branch?.name &&
-            branch.commitAddr &&
-            treeItem
-        ) {
-            getBlob(
-                goshWallet,
-                goshRepo.address,
-                branch.name,
-                treeItem,
-                branch.commitAddr
-            );
+        if (goshWallet && goshRepo && branch?.name && branch.commitAddr && treeItem) {
+            getBlob(goshWallet, goshRepo, branch.name, treeItem, branch.commitAddr);
         }
     }, [
-        goshRepo.address,
+        goshRepo,
         goshWallet,
         branch?.name,
         branch?.commitAddr,

@@ -240,6 +240,7 @@ export interface IGoshRepository extends IContract {
     getTags(): Promise<{ content: string; commit: string }[]>;
     getGoshAddr(): Promise<string>;
     getSnapshotCode(branch: string): Promise<string>;
+    getSnapshotAddr(branch: string, filename: string): Promise<string>;
 }
 
 export interface IGoshCommit extends IContract {

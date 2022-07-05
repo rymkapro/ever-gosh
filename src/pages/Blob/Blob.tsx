@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import BranchSelect from '../../components/BranchSelect';
-import { IGoshWallet, TGoshTreeItem } from '../../types/types';
+import { IGoshRepository, IGoshWallet, TGoshTreeItem } from '../../types/types';
 import { TRepoLayoutOutletContext } from '../RepoLayout';
 import { useMonaco } from '@monaco-editor/react';
 import { getCodeLanguageFromFilename, isMainBranch } from '../../helpers';
@@ -37,7 +37,7 @@ const BlobPage = () => {
     useEffect(() => {
         const getBlob = async (
             wallet: IGoshWallet,
-            repoAddr: string,
+            repo: IGoshRepository,
             branchName: string,
             commitAddr: string,
             treeItem: TGoshTreeItem
@@ -50,28 +50,16 @@ const BlobPage = () => {
             let filepath = `${treeItem.path ? `${treeItem.path}/` : ''}`;
             filepath = `${filepath}${treeItem.name}`;
 
-            const snapAddr = await wallet.getSnapshotAddr(repoAddr, branchName, filepath);
+            const snapAddr = await repo.getSnapshotAddr(branchName, filepath);
             const snap = new GoshSnapshot(wallet.account.client, snapAddr);
             const data = await snap.getSnapshot(commitName, treeItem);
             setBlob({ content: data.content });
         };
 
-        if (
-            goshWallet &&
-            goshRepo.address &&
-            branch?.name &&
-            branch.commitAddr &&
-            treeItem
-        ) {
-            getBlob(
-                goshWallet,
-                goshRepo.address,
-                branch.name,
-                branch.commitAddr,
-                treeItem
-            );
+        if (goshWallet && goshRepo && branch?.name && branch.commitAddr && treeItem) {
+            getBlob(goshWallet, goshRepo, branch.name, branch.commitAddr, treeItem);
         }
-    }, [goshWallet, goshRepo.address, branch?.name, branch?.commitAddr, treeItem]);
+    }, [goshWallet, goshRepo, branch?.name, branch?.commitAddr, treeItem]);
 
     return (
         <div className="bordered-block px-7 py-8">

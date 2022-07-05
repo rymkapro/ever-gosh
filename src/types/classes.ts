@@ -1190,6 +1190,14 @@ export class GoshRepository implements IGoshRepository {
         const result = await this.account.runLocal('getSnapCode', { branch });
         return result.decoded?.output.value0;
     }
+
+    async getSnapshotAddr(branch: string, filename: string): Promise<string> {
+        const result = await this.account.runLocal('getSnapshotAddr', {
+            branch,
+            name: filename,
+        });
+        return result.decoded?.output.value0;
+    }
 }
 
 export class GoshCommit implements IGoshCommit {

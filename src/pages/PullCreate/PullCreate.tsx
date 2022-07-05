@@ -82,7 +82,7 @@ const PullCreatePage = () => {
     useEffect(() => {
         const getBlob = async (
             wallet: IGoshWallet,
-            repoAddr: string,
+            repo: IGoshRepository,
             branch: TGoshBranch,
             item: TGoshTreeItem
         ): Promise<{ content: string | Buffer; isIpfs: boolean }> => {
@@ -90,11 +90,7 @@ const PullCreatePage = () => {
             const commitName = await commit.getName();
 
             const filename = `${item.path ? `${item.path}/` : ''}${item.name}`;
-            const snapAddr = await wallet.getSnapshotAddr(
-                repoAddr,
-                branch.name,
-                filename
-            );
+            const snapAddr = await repo.getSnapshotAddr(branch.name, filename);
             const snap = new GoshSnapshot(wallet.account.client, snapAddr);
             const data = await snap.getSnapshot(commitName, item);
             return data;
@@ -158,13 +154,8 @@ const PullCreatePage = () => {
                         (tItem) => tItem.path === item.path && tItem.name === item.name
                     );
                     if (from && to) {
-                        const fromBlob = await getBlob(
-                            wallet,
-                            repo.address,
-                            branchFrom,
-                            from
-                        );
-                        const toBlob = await getBlob(wallet, repo.address, branchTo, to);
+                        const fromBlob = await getBlob(wallet, repo, branchFrom, from);
+                        const toBlob = await getBlob(wallet, repo, branchTo, to);
                         compare.push({
                             to: { item: to, blob: toBlob },
                             from: { item: from, blob: fromBlob },
@@ -182,12 +173,7 @@ const PullCreatePage = () => {
                 }
                 for (let i = 0; i < added.length; i++) {
                     const item = added[i];
-                    const fromBlob = await getBlob(
-                        wallet,
-                        repo.address,
-                        branchFrom,
-                        item
-                    );
+                    const fromBlob = await getBlob(wallet, repo, branchFrom, item);
                     compare.push({
                         to: undefined,
                         from: { item, blob: fromBlob },
